@@ -23,31 +23,31 @@
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
   <component>
-    <type>org.exoplatform.forum.extras.injection.ProfileInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.ProfileInjector</type>
   </component>
 
   <component>
-    <type>org.exoplatform.forum.extras.injection.CategoryInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.CategoryInjector</type>
   </component>
   
     <component>
-    <type>org.exoplatform.forum.extras.injection.ForumInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.ForumInjector</type>
   </component>
 
   <component>
-    <type>org.exoplatform.forum.extras.injection.TopicInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.TopicInjector</type>
   </component>
   
   <component>
-    <type>org.exoplatform.forum.extras.injection.PostInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.PostInjector</type>
   </component>
 
   <component>
-    <type>org.exoplatform.forum.extras.injection.AttachmentInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.AttachmentInjector</type>
   </component>
   
   <component>
-    <type>org.exoplatform.forum.extras.injection.MembershipInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.MembershipInjector</type>
   </component>
   
   <component>
@@ -59,37 +59,37 @@
     <component-plugin>
       <name>profile</name>
       <set-method>addInjector</set-method>
-      <type>org.exoplatform.forum.extras.injection.ProfileInjector</type>
+      <type>org.exoplatform.forum.extras.injection.forum.ProfileInjector</type>
     </component-plugin>
     <component-plugin>
       <name>category</name>
       <set-method>addInjector</set-method>
-      <type>org.exoplatform.forum.extras.injection.CategoryInjector</type>
+      <type>org.exoplatform.forum.extras.injection.forum.CategoryInjector</type>
     </component-plugin>
     <component-plugin>
       <name>forum</name>
       <set-method>addInjector</set-method>
-      <type>org.exoplatform.forum.extras.injection.ForumInjector</type>
+      <type>org.exoplatform.forum.extras.injection.forum.ForumInjector</type>
     </component-plugin>
     <component-plugin>
       <name>topic</name>
       <set-method>addInjector</set-method>
-      <type>org.exoplatform.forum.extras.injection.TopicInjector</type>
+      <type>org.exoplatform.forum.extras.injection.forum.TopicInjector</type>
     </component-plugin>
     <component-plugin>
       <name>post</name>
       <set-method>addInjector</set-method>
-      <type>org.exoplatform.forum.extras.injection.PostInjector</type>
+      <type>org.exoplatform.forum.extras.injection.forum.PostInjector</type>
     </component-plugin>
     <component-plugin>
       <name>membership</name>
       <set-method>addInjector</set-method>
-      <type>org.exoplatform.forum.extras.injection.MembershipInjector</type>
+      <type>org.exoplatform.forum.extras.injection.forum.MembershipInjector</type>
     </component-plugin>
     <component-plugin>
       <name>attachment</name>
       <set-method>addInjector</set-method>
-      <type>org.exoplatform.forum.extras.injection.AttachmentInjector</type>
+      <type>org.exoplatform.forum.extras.injection.forum.AttachmentInjector</type>
     </component-plugin>
   </external-component-plugins>
 </configuration>
