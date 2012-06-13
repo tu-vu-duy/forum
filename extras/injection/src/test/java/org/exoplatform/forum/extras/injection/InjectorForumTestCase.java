@@ -42,15 +42,7 @@ import org.exoplatform.services.organization.OrganizationService;
  * @author <a href="mailto:thanhvc@exoplatform.com">Thanh Vu</a>
  * @version $Revision$
  */
-@ConfiguredBy({
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.portal-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.test.jcr-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.identity-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.component.core.test.configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.jcr-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.portal-configuration.xml")
-})
-public class InjectorTestCase extends AbstractKernelTest {
+public class InjectorForumTestCase extends BaseTestCase {
 
   private OrganizationService organizationService;
   private ForumService forumService;
@@ -77,7 +69,7 @@ public class InjectorTestCase extends AbstractKernelTest {
   public void setUp() throws Exception {
 
     //
-    begin();
+    super.begin();
     
     //
     profileInjector = (ProfileInjector) getContainer().getComponentInstanceOfType(ProfileInjector.class);
@@ -140,7 +132,7 @@ public class InjectorTestCase extends AbstractKernelTest {
     }
     
     //
-    end();
+    super.tearDown();
   }
   
   public void testDefaultProfile() throws Exception {

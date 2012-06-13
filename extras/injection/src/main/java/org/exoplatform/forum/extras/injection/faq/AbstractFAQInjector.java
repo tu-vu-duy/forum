@@ -116,14 +116,14 @@ abstract public class AbstractFAQInjector extends DataInjector {
 
   }
   
-  protected int userNumber(String base) throws Exception {
+  public int userNumber(String base) throws Exception {
     Query query = new Query();
     query.setUserName(base + "*");
     
     return userHandler.findUsersByQuery(query).getSize();
   }
   
-  protected int categoryNumber(String base) throws Exception {
+  public int categoryNumber(String base) throws Exception {
     StringBuffer sb = new StringBuffer(FAQNodeTypes.JCR_ROOT);
     sb.append("/").append(locator.getForumCategoriesLocation()).append("/element(*,");
     sb.append(Utils.CATEGORY_HOME).append(")[jcr:like(exo:name, '%").append(base).append("%')]");

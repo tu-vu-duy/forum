@@ -33,37 +33,63 @@
   <component>
     <type>org.exoplatform.services.bench.DataInjectorService</type>
   </component>
-
+  
+  <!-- Forum Injector Definition-->
   <component>
-    <type>org.exoplatform.forum.extras.injection.ProfileInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.ProfileInjector</type>
   </component>
 
   <component>
-    <type>org.exoplatform.forum.extras.injection.CategoryInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.CategoryInjector</type>
   </component>
   
     <component>
-    <type>org.exoplatform.forum.extras.injection.ForumInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.ForumInjector</type>
   </component>
 
   <component>
-    <type>org.exoplatform.forum.extras.injection.TopicInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.TopicInjector</type>
   </component>
   
   <component>
-    <type>org.exoplatform.forum.extras.injection.PostInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.PostInjector</type>
   </component>
 
   <component>
-    <type>org.exoplatform.forum.extras.injection.MembershipInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.MembershipInjector</type>
   </component>
   
   <component>
-    <type>org.exoplatform.forum.extras.injection.AttachmentInjector</type>
+    <type>org.exoplatform.forum.extras.injection.forum.AttachmentInjector</type>
   </component>
+  
+  <!-- FAQ Injector Definition-->
+    <component>
+    <type>org.exoplatform.forum.extras.injection.faq.CategoryInjector</type>
+  </component>
+    <component>
+    <type>org.exoplatform.forum.extras.injection.faq.AnswerInjector</type>
+  </component>
+    <component>
+    <type>org.exoplatform.forum.extras.injection.faq.ProfileInjector</type>
+  </component>
+    <component>
+    <type>org.exoplatform.forum.extras.injection.faq.QuestionInjector</type>
+  </component>
+    <component>
+    <type>org.exoplatform.forum.extras.injection.faq.CommentInjector</type>
+  </component>
+
+  <!-- POLL Injector Definition-->
 
   <component>
     <type>org.exoplatform.services.jcr.ext.app.ThreadLocalSessionProviderService</type>
+  </component>
+  
+  
+  <component>
+    <key>org.exoplatform.faq.service.FAQService</key>
+    <type>org.exoplatform.faq.service.impl.FAQServiceImpl</type>
   </component>
   
   <component>
