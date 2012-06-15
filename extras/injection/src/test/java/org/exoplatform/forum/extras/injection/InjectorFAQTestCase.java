@@ -23,13 +23,16 @@ import java.util.List;
 
 import org.exoplatform.faq.service.Category;
 import org.exoplatform.faq.service.FAQService;
+import org.exoplatform.faq.service.Question;
 import org.exoplatform.forum.extras.injection.faq.AnswerInjector;
+import org.exoplatform.forum.extras.injection.faq.AttachmentInjector;
 import org.exoplatform.forum.extras.injection.faq.CategoryInjector;
 import org.exoplatform.forum.extras.injection.faq.CommentInjector;
 import org.exoplatform.forum.extras.injection.faq.ProfileInjector;
 import org.exoplatform.forum.extras.injection.faq.QuestionInjector;
 
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.UserHandler;
 
 /**
  * @author <a href="mailto:thanhvc@exoplatform.com">Thanh Vu</a>
@@ -39,6 +42,7 @@ public class InjectorFAQTestCase extends BaseTestCase {
 
   private OrganizationService organizationService;
   private FAQService faqService;
+  private UserHandler userHandler;
  
   //
   private AnswerInjector answerInjector;
@@ -46,7 +50,7 @@ public class InjectorFAQTestCase extends BaseTestCase {
   private CommentInjector commentInjector;
   private ProfileInjector profileInjector;
   private QuestionInjector questionInjector;
-  
+  private AttachmentInjector attachmentInjector;
   
   
   private HashMap<String, String> params;
@@ -65,11 +69,13 @@ public class InjectorFAQTestCase extends BaseTestCase {
     answerInjector = (AnswerInjector) getContainer().getComponentInstanceOfType(AnswerInjector.class);
     commentInjector = (CommentInjector) getContainer().getComponentInstanceOfType(CommentInjector.class);
     questionInjector = (QuestionInjector) getContainer().getComponentInstanceOfType(QuestionInjector.class);
+    attachmentInjector = (AttachmentInjector) getContainer().getComponentInstanceOfType(AttachmentInjector.class);
     
     
     //
     organizationService = (OrganizationService) getContainer().getComponentInstanceOfType(OrganizationService.class);
     faqService = (FAQService) getContainer().getComponentInstanceOfType(FAQService.class);
+    userHandler = organizationService.getUserHandler();
     
     
     assertNotNull(profileInjector);
@@ -77,6 +83,7 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(answerInjector);
     assertNotNull(commentInjector);
     assertNotNull(questionInjector);
+    assertNotNull(attachmentInjector);
     assertNotNull(organizationService);
     assertNotNull(faqService);
     
@@ -88,14 +95,19 @@ public class InjectorFAQTestCase extends BaseTestCase {
   @Override
   public void tearDown() throws Exception {
     //
-    List<Category> list =  faqService.getAllCategories();
-    for(Category cat : list) {
-      faqService.removeCategory(cat.getId());
+    List<Category> categories =  faqService.getAllCategories();
+    for (Category cat : categories) {
+      faqService.removeCategory(cat.getPath());
+    }
+    
+    List<Question> questions = faqService.getAllQuestions().getAll();
+    for (Question ques : questions) {
+      faqService.removeQuestion(ques.getId());
     }
     
     //
     for(String user : users) {
-      organizationService.getUserHandler().removeUser(user, true);
+      userHandler.removeUser(user, true);
     }
     
     super.tearDown();
@@ -117,7 +129,37 @@ public class InjectorFAQTestCase extends BaseTestCase {
     performCategoryTest("foo", "bar");
   }
   
+  public void testDefaultQuestion() throws Exception {
+    performQuestionTest(null, null, null);
+  }
   
+  public void testPrefixQuestion() throws Exception {
+    performQuestionTest("foo", "bar", "baz");
+  }
+  
+  public void testDefaultAnswer() throws Exception {
+    performAnswerTest(null, null, null, null);
+  }
+  
+  public void testPrefixAnswer() throws Exception {
+    performAnswerTest("foo", "far", "bar", "baz");
+  }
+  
+  public void testDefaultComment() throws Exception {
+    performCommentTest(null, null, null, null, null);
+  }
+  
+  public void testPrefixComment() throws Exception {
+    performCommentTest("foo", "far", "bar", "baz", "bee");
+  }
+  
+  public void testDefaultAttachment() throws Exception {
+    performAttachmentTest(null, null, null, null, null);
+  }
+  
+  public void testPrefixAttachment() throws Exception {
+    performAttachmentTest("foo", "far", "bar", "baz", "bee");
+  }
   
   private void performProfileTest(String prefix) throws Exception {
     //
@@ -131,44 +173,38 @@ public class InjectorFAQTestCase extends BaseTestCase {
     }
 
     profileInjector.inject(params);
-    
-    assertNotNull(organizationService.getUserHandler().findUserByName(baseName + "0"));
-    assertNotNull(organizationService.getUserHandler().findUserByName(baseName + "1"));
-    assertNotNull(organizationService.getUserHandler().findUserByName(baseName + "2"));
-    assertNotNull(organizationService.getUserHandler().findUserByName(baseName + "3"));
-    assertNotNull(organizationService.getUserHandler().findUserByName(baseName + "4"));
-    
-    //
     assertEquals(5, profileInjector.userNumber(baseName));
+    assertNotNull(userHandler.findUserByName(baseName + "0"));
+    assertNotNull(userHandler.findUserByName(baseName + "1"));
+    assertNotNull(userHandler.findUserByName(baseName + "2"));
+    assertNotNull(userHandler.findUserByName(baseName + "3"));
+    assertNotNull(userHandler.findUserByName(baseName + "4"));
     
     //
     cleanProfile(baseName, 5);
   }
   
   private void performCategoryTest(String userPrefix, String catPrefix) throws Exception {
-
     //
     String userBaseName = (userPrefix == null ? "bench.user" : userPrefix);
     String catBaseName = (catPrefix == null ? "bench.cat" : catPrefix);
     assertClean(userBaseName, catBaseName, null);
-
+    
     //
     params.put("number", "3");
     if (userPrefix != null) {
       params.put("prefix", userPrefix);      
     }
     
-    profileInjector.inject(params);
-    
-    assertNotNull(organizationService.getUserHandler().findUserByName(userBaseName + "0"));
-    assertNotNull(organizationService.getUserHandler().findUserByName(userBaseName + "1"));
-    assertNotNull(organizationService.getUserHandler().findUserByName(userBaseName + "2"));
-    
-
     //
-    params.put("number", "2");
-    params.put("fromUser", "0");
-    params.put("toUser", "2");
+    profileInjector.inject(params);
+    assertEquals(3, profileInjector.userNumber(userBaseName));
+    assertNotNull(userHandler.findUserByName(userBaseName + "0"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "1"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "2"));
+    
+    params.put("number", "6");
+    params.put("depth", "3");
     if (userPrefix != null) {
       params.put("userPrefix", userPrefix);
     }
@@ -178,32 +214,297 @@ public class InjectorFAQTestCase extends BaseTestCase {
     }
     
     categoryInjector.inject(params);
-    //
     assertEquals(6, categoryInjector.categoryNumber(catBaseName));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "0"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "3"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "4"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "5"));
     
-    categoryInjector.inject(params);
-    //
-    assertEquals(12, categoryInjector.categoryNumber(catBaseName));
-
-    //
     cleanProfile(userBaseName, 3);
   }
   
+  private void performQuestionTest(String userPrefix, String catPrefix, String quesPrefix) throws Exception {
+    String userBaseName = (userPrefix == null ? "bench.user" : userPrefix);
+    String catBaseName = (catPrefix == null ? "bench.cat" : catPrefix);
+    String quesBaseName = (quesPrefix == null ? "bench.ques" : quesPrefix);
+    assertClean(userBaseName, catBaseName, quesBaseName);
+
+    params.put("number", "3");
+    if (userPrefix != null) {
+      params.put("prefix", userPrefix);      
+    }
     
+    profileInjector.inject(params);
+    
+    assertNotNull(userHandler.findUserByName(userBaseName + "0"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "1"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("depth", "1");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
+    
+    categoryInjector.inject(params);
+    assertEquals(3, categoryInjector.categoryNumber(catBaseName));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "0"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
+    
+    params.put("number", "6");
+    params.put("toCat", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
+    questionInjector.inject(params);
+    assertEquals(6, questionInjector.questionNumber(quesBaseName));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "0"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "3"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "4"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "5"));
+    
+    cleanProfile(userBaseName, 3);
+  }
   
-  private void assertClean(String userBaseName, String categoryBaseName, String forumBaseName) throws Exception {
+  private void performAnswerTest(String userPrefix, String catPrefix, String quesPrefix, String answerPrefix) throws Exception {
+    String userBaseName = (userPrefix == null ? "bench.user" : userPrefix);
+    String catBaseName = (catPrefix == null ? "bench.cat" : catPrefix);
+    String quesBaseName = (quesPrefix == null ? "bench.ques" : quesPrefix);
+    String answerBaseName = (answerPrefix == null ? "bench.answer" : answerPrefix);
+    assertClean(userBaseName, catBaseName, quesBaseName);
+
+    params.put("number", "3");
+    if (userPrefix != null) {
+      params.put("prefix", userPrefix);      
+    }
+    
+    profileInjector.inject(params);
+    
+    assertNotNull(userHandler.findUserByName(userBaseName + "0"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "1"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("depth", "1");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
+    
+    categoryInjector.inject(params);
+    assertEquals(3, categoryInjector.categoryNumber(catBaseName));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "0"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("toCat", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
+    questionInjector.inject(params);
+    assertEquals(3, questionInjector.questionNumber(quesBaseName));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "0"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
+    
+    params.put("number", "6");
+    params.put("toQues", "0");
+    if (answerPrefix != null) {
+      params.put("answerPrefix", answerPrefix);
+    }
+    answerInjector.inject(params);
+    assertEquals(6, answerInjector.answerNumber(answerBaseName));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "0"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "1"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "2"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "3"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "4"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "5"));
+    
+    cleanProfile(userBaseName, 3);
+  }
+  
+  private void performCommentTest(String userPrefix, String catPrefix, String quesPrefix, String answerPrefix, String commentPrefix) throws Exception {
+    String userBaseName = (userPrefix == null ? "bench.user" : userPrefix);
+    String catBaseName = (catPrefix == null ? "bench.cat" : catPrefix);
+    String quesBaseName = (quesPrefix == null ? "bench.ques" : quesPrefix);
+    String answerBaseName = (answerPrefix == null ? "bench.answer" : answerPrefix);
+    String commentBaseName = (commentPrefix == null ? "bench.comment" : commentPrefix);
+    assertClean(userBaseName, catBaseName, quesBaseName);
+
+    params.put("number", "3");
+    if (userPrefix != null) {
+      params.put("prefix", userPrefix);      
+    }
+    
+    profileInjector.inject(params);
+    
+    assertNotNull(userHandler.findUserByName(userBaseName + "0"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "1"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("depth", "1");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
+    
+    categoryInjector.inject(params);
+    assertEquals(3, categoryInjector.categoryNumber(catBaseName));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "0"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("toCat", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
+    questionInjector.inject(params);
+    assertEquals(3, questionInjector.questionNumber(quesBaseName));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "0"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("toQues", "0");
+    if (answerPrefix != null) {
+      params.put("answerPrefix", answerPrefix);
+    }
+    answerInjector.inject(params);
+    assertEquals(3, answerInjector.answerNumber(answerBaseName));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "0"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "1"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "2"));
+    
+    params.put("number", "6");
+    params.put("toQues", "0");
+    if (commentPrefix != null) {
+      params.put("commentPrefix", commentPrefix);
+    }
+    commentInjector.inject(params);
+    assertEquals(6, commentInjector.commentNumber(commentBaseName));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "0"));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "1"));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "2"));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "3"));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "4"));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "5"));
+    
+    cleanProfile(userBaseName, 3);
+  }
+  
+  private void performAttachmentTest(String userPrefix, String catPrefix, String quesPrefix, String answerPrefix, String commentPrefix) throws Exception {
+    String userBaseName = (userPrefix == null ? "bench.user" : userPrefix);
+    String catBaseName = (catPrefix == null ? "bench.cat" : catPrefix);
+    String quesBaseName = (quesPrefix == null ? "bench.ques" : quesPrefix);
+    String answerBaseName = (answerPrefix == null ? "bench.answer" : answerPrefix);
+    String commentBaseName = (commentPrefix == null ? "bench.comment" : commentPrefix);
+    assertClean(userBaseName, catBaseName, quesBaseName);
+
+    params.put("number", "3");
+    if (userPrefix != null) {
+      params.put("prefix", userPrefix);      
+    }
+    
+    profileInjector.inject(params);
+    
+    assertNotNull(userHandler.findUserByName(userBaseName + "0"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "1"));
+    assertNotNull(userHandler.findUserByName(userBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("depth", "1");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
+    
+    categoryInjector.inject(params);
+    assertEquals(3, categoryInjector.categoryNumber(catBaseName));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "0"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
+    assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("toCat", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
+    questionInjector.inject(params);
+    assertEquals(3, questionInjector.questionNumber(quesBaseName));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "0"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
+    assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("toQues", "0");
+    if (answerPrefix != null) {
+      params.put("answerPrefix", answerPrefix);
+    }
+    answerInjector.inject(params);
+    assertEquals(3, answerInjector.answerNumber(answerBaseName));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "0"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "1"));
+    assertNotNull(answerInjector.getAnswerByName(answerBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("toQues", "0");
+    if (commentPrefix != null) {
+      params.put("commentPrefix", commentPrefix);
+    }
+    commentInjector.inject(params);
+    assertEquals(3, commentInjector.commentNumber(commentBaseName));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "0"));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "1"));
+    assertNotNull(commentInjector.getCommentByName(commentBaseName + "2"));
+    
+    params.put("number", "3");
+    params.put("fromQues", "0");
+    params.put("toQues", "2");
+    params.put("byteSize", "50");
+    
+    attachmentInjector.inject(params);
+    
+    assertEquals(3, attachmentInjector.getQuestionByName(quesBaseName + "0").getAttachMent().size());
+    assertEquals(3, attachmentInjector.getQuestionByName(quesBaseName + "1").getAttachMent().size());
+    assertEquals(3, attachmentInjector.getQuestionByName(quesBaseName + "2").getAttachMent().size());
+    
+    cleanProfile(userBaseName, 3);
+  }
+  
+  private void assertClean(String userBaseName, String categoryBaseName, String questionBaseName) throws Exception {
     if (userBaseName != null) {
-      assertEquals(null, organizationService.getUserHandler().findUserByName(userBaseName + "0"));
+      assertNull(userHandler.findUserByName(userBaseName + "0"));
+      assertNull(categoryInjector.getCategoryByName(categoryBaseName + "0"));
+      assertNull(questionInjector.getQuestionByName(questionBaseName + "0"));
     }
   }
   
   private void cleanProfile(String prefix, int number) {
 
-    for (int i = 0; i < number; ++i) {
+    for (int i = 0; i < number; i++) {
       users.add(prefix + i);
     }
-
   }
-  
- 
 }
