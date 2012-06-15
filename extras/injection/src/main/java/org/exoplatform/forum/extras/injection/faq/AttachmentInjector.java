@@ -37,34 +37,22 @@ public class AttachmentInjector extends AbstractFAQInjector {
   
   /** . */
   private static final String BYTE_SIZE = "byteSize";
-  
-  /** . */
-  private static final String USER_PREFIX = "userPrefix";
-  
-  /** . */
-  private static final String CATEGORY_PREFIX = "catPrefix";
-  
+
   /** . */
   private static final String QUESTION_PREFIX = "quesPrefix";
-  
-  /** . */
-  private static final String ANSWER_PREFIX = "answerPrefix";
-  
-  /** . */
-  private static final String COMMENT_PREFIX = "commentPrefix";
 
   @Override
   public void inject(HashMap<String, String> params) throws Exception {
     int number = param(params, NUMBER);
     int fromQues = param(params, FROM_QUES);
     int toQues = param(params, TO_QUES);
-    String userPrefix = params.get(USER_PREFIX);
-    String catPrefix = params.get(CATEGORY_PREFIX);
+
     String questionPrefix = params.get(QUESTION_PREFIX);
-    String answerPrefix = params.get(ANSWER_PREFIX);
-    String commentPrefix = params.get(COMMENT_PREFIX);
-    init(userPrefix, catPrefix, questionPrefix, answerPrefix, commentPrefix, 0);
+
+    //
+    init(null, null, questionPrefix, null, null, 0);
     
+    //
     int byteSize = param(params, BYTE_SIZE);
     if (byteSize < 0 || byteSize > 99) {
       getLog().info("ByteSize is invalid with '" + byteSize + "' wrong. Please set it exactly in range 0 - 99 (words). Aborting injection ..." );
@@ -78,7 +66,7 @@ public class AttachmentInjector extends AbstractFAQInjector {
       questionName = questionBase + i;
       question = getQuestionByName(questionName);
       if (question == null) {
-        getLog().info("question name is '" + questionName + "' wrong. Aborting injection ..." );
+        getLog().info("Question name is '" + questionName + "' wrong. Aborting injection ..." );
         return;
       }
       

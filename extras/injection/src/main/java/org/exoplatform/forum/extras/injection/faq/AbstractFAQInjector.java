@@ -63,9 +63,6 @@ abstract public class AbstractFAQInjector extends DataInjector {
   protected final static String DOMAIN = "exoplatform.int";
   
   /** . */
-  protected static final List<String> USERS = Arrays.asList(new String[] { "root", "demo", "mary", "john" });
-  
-  /** . */
   protected String userBase;
   
   /** . */

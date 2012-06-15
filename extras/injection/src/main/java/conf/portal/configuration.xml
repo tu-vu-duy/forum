@@ -22,6 +22,7 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
+  <!-- Forum Data Injection Configuration -->
   <component>
     <type>org.exoplatform.forum.extras.injection.forum.ProfileInjector</type>
   </component>
@@ -50,6 +51,10 @@
     <type>org.exoplatform.forum.extras.injection.forum.MembershipInjector</type>
   </component>
   
+  <!-- Poll Data Injection Configuration -->
+  
+  <!-- FAQ Data Injection Configuration -->
+  
   <component>
     <type>org.exoplatform.services.bench.DataInjectorService</type>
   </component>
@@ -57,12 +62,12 @@
   <external-component-plugins>
     <target-component>org.exoplatform.services.bench.DataInjectorService</target-component>
     <component-plugin>
-      <name>profile</name>
+      <name>forum-profile</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.ProfileInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>category</name>
+      <name>forum-category</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.CategoryInjector</type>
     </component-plugin>
@@ -72,22 +77,22 @@
       <type>org.exoplatform.forum.extras.injection.forum.ForumInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>topic</name>
+      <name>forum-topic</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.TopicInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>post</name>
+      <name>forum-post</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.PostInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>membership</name>
+      <name>forum-membership</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.MembershipInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>attachment</name>
+      <name>forum-attachment</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.AttachmentInjector</type>
     </component-plugin>

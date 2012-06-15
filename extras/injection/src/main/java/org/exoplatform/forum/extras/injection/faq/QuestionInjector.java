@@ -1,8 +1,6 @@
 package org.exoplatform.forum.extras.injection.faq;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 import org.exoplatform.faq.service.Category;
 import org.exoplatform.faq.service.Question;
@@ -13,43 +11,47 @@ public class QuestionInjector extends AbstractFAQInjector {
   private static final String NUMBER = "number";
   
   /** . */
+  private static final String CATEGORY_PREFIX = "catPrefix";
+  
+  /** . */
   private static final String TO_CAT = "toCat";
   
   /** . */
   private static final String USER_PREFIX = "userPrefix";
   
-  /** . */
-  private static final String CATEGORY_PREFIX = "catPrefix";
+  /**  . */
+  private static final String TO_USER = "toUser";
   
   /** . */
   private static final String QUESTION_PREFIX = "quesPrefix";
-  
-  /** . */
-  private List<String> users   = Arrays.asList(new String[] { "root", "demo", "mary", "john" });
-  
+ 
   @Override
   public void inject(HashMap<String, String> params) throws Exception {
     int number = param(params, NUMBER);
-    int to = param(params, TO_CAT);
+    int toCat = param(params, TO_CAT);
     String userPrefix = params.get(USER_PREFIX);
+    String toUser = params.get(TO_USER);
     String categoryPrefix = params.get(CATEGORY_PREFIX);
     String questionPrefix = params.get(QUESTION_PREFIX);
+    
     init(userPrefix, categoryPrefix, questionPrefix, null, null, 0);
 
-    String categoryName = categoryBase + to;
+    //
+    String categoryName = categoryBase + toCat;
     Category cat = getCategoryByName(categoryName);
     if (cat == null) {
       getLog().info("Category name '" + categoryName + "' is wrong. Aborting injection ..." );
       return;
     }
 
-    String owner = null;
+    //TODO Need to verify this user whether valid or not.
+    String owner = userPrefix + toUser;
+    
     String questionName = null;
 
     for (int i = 0; i < number; i++) {
       questionName = questionName();
-      owner = users.get(random.nextInt(4));
-      
+     
       Question question = new Question();
       question.setAuthor(owner);
       question.setCategoryId(cat.getId());
