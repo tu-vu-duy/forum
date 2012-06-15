@@ -64,20 +64,23 @@
   </component>
   
   <!-- FAQ Injector Definition-->
-    <component>
+  <component>
     <type>org.exoplatform.forum.extras.injection.faq.CategoryInjector</type>
   </component>
-    <component>
+  <component>
     <type>org.exoplatform.forum.extras.injection.faq.AnswerInjector</type>
   </component>
-    <component>
+  <component>
     <type>org.exoplatform.forum.extras.injection.faq.ProfileInjector</type>
   </component>
-    <component>
+  <component>
     <type>org.exoplatform.forum.extras.injection.faq.QuestionInjector</type>
   </component>
-    <component>
+  <component>
     <type>org.exoplatform.forum.extras.injection.faq.CommentInjector</type>
+  </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.AttachmentInjector</type>
   </component>
 
   <!-- POLL Injector Definition-->
