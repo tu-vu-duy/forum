@@ -43,13 +43,11 @@ public class AttachmentInjector extends AbstractFAQInjector {
 
   @Override
   public void inject(HashMap<String, String> params) throws Exception {
+    //
     int number = param(params, NUMBER);
     int fromQues = param(params, FROM_QUES);
     int toQues = param(params, TO_QUES);
-
     String questionPrefix = params.get(QUESTION_PREFIX);
-
-    //
     init(null, null, questionPrefix, null, null, 0);
     
     //
@@ -59,10 +57,12 @@ public class AttachmentInjector extends AbstractFAQInjector {
       return;
     }
     
+    //
     String questionName = null;
     Question question = null;
     
     for (int i = fromQues; i <= toQues; ++i) {
+      //
       questionName = questionBase + i;
       question = getQuestionByName(questionName);
       if (question == null) {
@@ -70,14 +70,17 @@ public class AttachmentInjector extends AbstractFAQInjector {
         return;
       }
       
+      //
       generateAttachments(question, QUESTION_PREFIX, number, byteSize);
       faqService.saveQuestion(question, false, faqSetting);
       
+      //
       getLog().info("Uploads " + number + " attachments into '" + questionName + "' with each attachment's " + byteSize + " byte(s)");
     }
   }
   
   private void generateAttachments(Question question, String prefix, int number, int byteSize) throws Exception {
+    //
     if (question.getAttachMent() == null || question.getAttachMent().size() == 0) {
       question.setAttachMent(new ArrayList<FileAttachment>());
     }
@@ -89,6 +92,7 @@ public class AttachmentInjector extends AbstractFAQInjector {
     FileAttachment att = null;
     
     for (int i = 0; i < number; i++) {
+      //
       attId = generateId(prefix + baseNumber, Utils.ATTACHMENT, byteSize, i);
       att = new FileAttachment();
       att.setId(attId);
@@ -99,6 +103,8 @@ public class AttachmentInjector extends AbstractFAQInjector {
       long fileSize = (long) byteSize * 1024;
       att.setSize(fileSize);
       question.getAttachMent().add(att);
+      
+      //
       baseNumber++;
     }
   }

@@ -1,8 +1,6 @@
 package org.exoplatform.forum.extras.injection.faq;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 
 import javax.jcr.Node;
@@ -295,7 +293,7 @@ abstract public class AbstractFAQInjector extends DataInjector {
       question.setQuestion(questionName);
       question.setPath(quesNodePath.substring(quesNodePath.indexOf(KSDataLocation.Locations.FAQ_CATEGORIES_HOME)));
       question.setTopicIdDiscuss(reader.string(FAQNodeTypes.EXO_TOPIC_ID_DISCUSS));
-      question.setUsersWatch(reader.strings(FAQNodeTypes.EXO_USER_WATCHING));
+      question.setUsersVote(reader.strings(FAQNodeTypes.EXO_USERS_VOTE));
       
       return question;
     }
@@ -315,6 +313,8 @@ abstract public class AbstractFAQInjector extends DataInjector {
       PropertyReader reader = new PropertyReader(answerNode);
       answer.setDateResponse(reader.date(FAQNodeTypes.EXO_DATE_RESPONSE));
       answer.setId(reader.string(FAQNodeTypes.EXO_ID));
+      answer.setLanguage(reader.string(FAQNodeTypes.EXO_LANGUAGE));
+      answer.setUsersVoteAnswer(reader.strings(FAQNodeTypes.EXO_USERS_VOTE_ANSWER));
       
       return answer;
     }

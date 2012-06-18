@@ -24,31 +24,36 @@ public class AnswerInjector extends AbstractFAQInjector {
   
   @Override
   public void inject(HashMap<String, String> params) throws Exception {
+    //
     int number = param(params, NUMBER);
     int fromQues = param(params, FROM_QUES);
     int toQues = param(params, TO_QUES);
     String questionPrefix = params.get(QUESTION_PREFIX);
     String answerPrefix = params.get(ANSWER_PREFIX);
+    init(null, null, questionPrefix, answerPrefix, null, 0);
     
     //
-    init(null, null, questionPrefix, answerPrefix, null, 0);
-
-    int q = fromQues;
-    for (;q <= toQues; q++) {
-      
-      String questionName = questionBase + q;
-      Question question = getQuestionByName(questionName);
+    String questionName = null;
+    String answerName = null;
+    Question question = null;
+    Answer answer = null;
+    
+    for (int i = fromQues;i <= toQues; i++) {
+      //
+      questionName = questionBase + i;
+      question = getQuestionByName(questionName);
       if (question == null) {
         getLog().info("Question name '" + questionName + "' is wrong. Aborting injection ..." );
         return;
       }
       
       //
-      String answerName = null;
-      for (int i = 0; i < number; i++) {
+      for (int j = 0; j < number; j++) {
+        //
         answerName = answerName();
        
-        Answer answer = new Answer();
+        //
+        answer = new Answer();
         answer.setFullName(answerName);
         answer.setLanguage("English");
         answer.setMarksVoteAnswer(0.0);
@@ -57,12 +62,13 @@ public class AnswerInjector extends AbstractFAQInjector {
         answer.setResponseBy(question.getAuthor());
         answer.setResponses(lorem.getParagraphs(1));
         
+        //
         faqService.saveAnswer(question.getPath(), answer, true);
         answerNumber++;
         
+        //
         getLog().info("Answer '" + answerName + "' created by " + question.getAuthor());
       }
     }
-    
   }
 }

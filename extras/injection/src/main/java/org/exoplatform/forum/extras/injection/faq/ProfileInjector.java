@@ -9,7 +9,7 @@ public class ProfileInjector extends AbstractFAQInjector {
   /** . */
   private static final String NUMBER = "number";
 
-  private static final String PREFIX = "prefix";
+  private static final String PREFIX = "userPrefix";
   
   @Override
   public void inject(HashMap<String, String> params) throws Exception {

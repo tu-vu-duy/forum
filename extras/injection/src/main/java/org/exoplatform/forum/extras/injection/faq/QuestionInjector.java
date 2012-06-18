@@ -27,13 +27,13 @@ public class QuestionInjector extends AbstractFAQInjector {
  
   @Override
   public void inject(HashMap<String, String> params) throws Exception {
+    //
     int number = param(params, NUMBER);
     int toCat = param(params, TO_CAT);
     String userPrefix = params.get(USER_PREFIX);
     String toUser = params.get(TO_USER);
     String categoryPrefix = params.get(CATEGORY_PREFIX);
     String questionPrefix = params.get(QUESTION_PREFIX);
-    
     init(userPrefix, categoryPrefix, questionPrefix, null, null, 0);
 
     //
@@ -45,14 +45,18 @@ public class QuestionInjector extends AbstractFAQInjector {
     }
 
     //TODO Need to verify this user whether valid or not.
-    String owner = userPrefix + toUser;
+    String owner = userBase + toUser;
     
+    //
     String questionName = null;
+    Question question = null;
 
     for (int i = 0; i < number; i++) {
+      //
       questionName = questionName();
-     
-      Question question = new Question();
+      
+      //
+      question = new Question();
       question.setAuthor(owner);
       question.setCategoryId(cat.getId());
       question.setCategoryPath(cat.getPath());
@@ -67,9 +71,11 @@ public class QuestionInjector extends AbstractFAQInjector {
       question.setTopicIdDiscuss("");
       question.setUsersWatch(new String[] {""});
       
+      //
       faqService.saveQuestion(question, true, faqSetting);
       questionNumber++;
       
+      //
       getLog().info("Question '" + questionName + "' created by " + owner);
     }
   }

@@ -31,7 +31,7 @@
     <type>org.exoplatform.forum.extras.injection.forum.CategoryInjector</type>
   </component>
   
-    <component>
+  <component>
     <type>org.exoplatform.forum.extras.injection.forum.ForumInjector</type>
   </component>
 
@@ -54,6 +54,27 @@
   <!-- Poll Data Injection Configuration -->
   
   <!-- FAQ Data Injection Configuration -->
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.CategoryInjector</type>
+  </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.AnswerInjector</type>
+  </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.ProfileInjector</type>
+  </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.QuestionInjector</type>
+  </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.CommentInjector</type>
+  </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.AttachmentInjector</type>
+  </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.MembershipInjector</type>
+  </component>
   
   <component>
     <type>org.exoplatform.services.bench.DataInjectorService</type>

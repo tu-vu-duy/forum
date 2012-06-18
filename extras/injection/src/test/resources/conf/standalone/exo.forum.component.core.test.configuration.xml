@@ -82,6 +82,9 @@
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.AttachmentInjector</type>
   </component>
+  <component>
+    <type>org.exoplatform.forum.extras.injection.faq.MembershipInjector</type>
+  </component>
 
   <!-- POLL Injector Definition-->
 
