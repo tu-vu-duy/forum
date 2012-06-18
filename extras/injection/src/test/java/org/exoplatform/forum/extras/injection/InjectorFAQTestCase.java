@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.exoplatform.faq.service.Answer;
 import org.exoplatform.faq.service.Category;
 import org.exoplatform.faq.service.FAQService;
 import org.exoplatform.faq.service.Question;
@@ -32,7 +31,6 @@ import org.exoplatform.forum.extras.injection.faq.CommentInjector;
 import org.exoplatform.forum.extras.injection.faq.MembershipInjector;
 import org.exoplatform.forum.extras.injection.faq.ProfileInjector;
 import org.exoplatform.forum.extras.injection.faq.QuestionInjector;
-
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.UserHandler;
 
@@ -214,11 +212,9 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(userHandler.findUserByName(userBaseName + "1"));
     assertNotNull(userHandler.findUserByName(userBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "6");
-    if (userPrefix != null) {
-      params.put("userPrefix", userPrefix);
-    }
-    
     if (catPrefix != null) {
       params.put("catPrefix", catPrefix);
     }
@@ -252,11 +248,9 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(userHandler.findUserByName(userBaseName + "1"));
     assertNotNull(userHandler.findUserByName(userBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
-    if (userPrefix != null) {
-      params.put("userPrefix", userPrefix);
-    }
-    
     if (catPrefix != null) {
       params.put("catPrefix", catPrefix);
     }
@@ -267,9 +261,17 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "6");
     params.put("toCat", "0");
     params.put("toUser", "0");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
     if (quesPrefix != null) {
       params.put("quesPrefix", quesPrefix);
     }
@@ -303,11 +305,9 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(userHandler.findUserByName(userBaseName + "1"));
     assertNotNull(userHandler.findUserByName(userBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
-    if (userPrefix != null) {
-      params.put("userPrefix", userPrefix);
-    }
-    
     if (catPrefix != null) {
       params.put("catPrefix", catPrefix);
     }
@@ -318,9 +318,17 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toCat", "0");
     params.put("toUser", "0");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
     if (quesPrefix != null) {
       params.put("quesPrefix", quesPrefix);
     }
@@ -330,8 +338,13 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "6");
     params.put("toQues", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     if (answerPrefix != null) {
       params.put("answerPrefix", answerPrefix);
     }
@@ -366,11 +379,9 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(userHandler.findUserByName(userBaseName + "1"));
     assertNotNull(userHandler.findUserByName(userBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
-    if (userPrefix != null) {
-      params.put("userPrefix", userPrefix);
-    }
-    
     if (catPrefix != null) {
       params.put("catPrefix", catPrefix);
     }
@@ -381,9 +392,17 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toCat", "0");
     params.put("toUser", "0");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
     if (quesPrefix != null) {
       params.put("quesPrefix", quesPrefix);
     }
@@ -393,8 +412,13 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toQues", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     if (answerPrefix != null) {
       params.put("answerPrefix", answerPrefix);
     }
@@ -404,8 +428,13 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(answerInjector.getAnswerByName(answerBaseName + "1"));
     assertNotNull(answerInjector.getAnswerByName(answerBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "6");
     params.put("toQues", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     if (commentPrefix != null) {
       params.put("commentPrefix", commentPrefix);
     }
@@ -440,11 +469,9 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(userHandler.findUserByName(userBaseName + "1"));
     assertNotNull(userHandler.findUserByName(userBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
-    if (userPrefix != null) {
-      params.put("userPrefix", userPrefix);
-    }
-    
     if (catPrefix != null) {
       params.put("catPrefix", catPrefix);
     }
@@ -455,9 +482,17 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toCat", "0");
     params.put("toUser", "0");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
     if (quesPrefix != null) {
       params.put("quesPrefix", quesPrefix);
     }
@@ -467,8 +502,13 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toQues", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     if (answerPrefix != null) {
       params.put("answerPrefix", answerPrefix);
     }
@@ -478,8 +518,13 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(answerInjector.getAnswerByName(answerBaseName + "1"));
     assertNotNull(answerInjector.getAnswerByName(answerBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toQues", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     if (commentPrefix != null) {
       params.put("commentPrefix", commentPrefix);
     }
@@ -489,13 +534,16 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(commentInjector.getCommentByName(commentBaseName + "1"));
     assertNotNull(commentInjector.getCommentByName(commentBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("fromQues", "0");
     params.put("toQues", "2");
     params.put("byteSize", "50");
-    
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     attachmentInjector.inject(params);
-    
     assertEquals(3, attachmentInjector.getQuestionByName(quesBaseName + "0").getAttachMent().size());
     assertEquals(3, attachmentInjector.getQuestionByName(quesBaseName + "1").getAttachMent().size());
     assertEquals(3, attachmentInjector.getQuestionByName(quesBaseName + "2").getAttachMent().size());
@@ -521,6 +569,8 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(userHandler.findUserByName(userBaseName + "1"));
     assertNotNull(userHandler.findUserByName(userBaseName + "2"));
     
+    //
+    params.clear();
     params.put("number", "3");
     if (catPrefix != null) {
       params.put("catPrefix", catPrefix);
@@ -532,21 +582,34 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "1"));
     assertNotNull(categoryInjector.getCategoryByName(catBaseName + "2"));
     
-    // 
+    //
+    params.clear();
     params.put("type", "category");
     params.put("toType", "2");
     params.put("fromUser", "0");
     params.put("toUser", "2");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
     if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
       params.put("typePrefix", catPrefix);
     }
     membershipInjector.inject(params);
     assertEquals(3, categoryInjector.getCategoryByName(catBaseName + "2").getModerators().length);
     assertEquals(3, categoryInjector.getCategoryByName(catBaseName + "2").getUserPrivate().length);
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toCat", "0");
     params.put("toUser", "0");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
     if (quesPrefix != null) {
       params.put("quesPrefix", quesPrefix);
     }
@@ -556,19 +619,32 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "1"));
     assertNotNull(questionInjector.getQuestionByName(quesBaseName + "2"));
     
-    // 
+    //
+    params.clear();
     params.put("type", "question");
     params.put("toType", "1");
     params.put("fromUser", "0");
     params.put("toUser", "2");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    if (catPrefix != null) {
+      params.put("catPrefix", catPrefix);
+    }
     if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
       params.put("typePrefix", quesPrefix);
     }
     membershipInjector.inject(params);
     assertEquals(3, questionInjector.getQuestionByName(quesBaseName + "1").getUsersVote().length);
     
+    //
+    params.clear();
     params.put("number", "3");
     params.put("toQues", "0");
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     if (answerPrefix != null) {
       params.put("answerPrefix", answerPrefix);
     }
@@ -578,12 +654,20 @@ public class InjectorFAQTestCase extends BaseTestCase {
     assertNotNull(answerInjector.getAnswerByName(answerBaseName + "1"));
     assertNotNull(answerInjector.getAnswerByName(answerBaseName + "2"));
     
-    // 
+    //
+    params.clear();
     params.put("type", "answer");
     params.put("toType", "0");
     params.put("fromUser", "0");
     params.put("toUser", "2");
+    if (userPrefix != null) {
+      params.put("userPrefix", userPrefix);
+    }
+    if (quesPrefix != null) {
+      params.put("quesPrefix", quesPrefix);
+    }
     if (answerPrefix != null) {
+      params.put("answerPrefix", answerPrefix);
       params.put("typePrefix", answerPrefix);
     }
     membershipInjector.inject(params);
