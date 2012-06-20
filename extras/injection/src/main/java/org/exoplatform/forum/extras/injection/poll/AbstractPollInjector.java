@@ -32,8 +32,6 @@ public abstract class AbstractPollInjector extends DataInjector {
 
   public static final String           DEFAULT_GROUP_PREFIX        = "bench.group";
 
-  public static final String           GROUP_PARENT_ID             = "spaces";
-
   protected static final int           OPTION_DEFAULT_SIZE         = 5;
 
   protected static PollService         pollService;
@@ -134,9 +132,8 @@ public abstract class AbstractPollInjector extends DataInjector {
   }
 
   public int groupNumber(String base) throws Exception {
-    Group parent = groupHandler.findGroupById(GROUP_PARENT_ID);
     int count = 0;
-    for (Object gr : groupHandler.findGroups(parent)) {
+    for (Object gr : groupHandler.findGroups(null)) {
       if (((Group) gr).getGroupName().contains(base)) {
         count++;
       }
@@ -145,7 +142,7 @@ public abstract class AbstractPollInjector extends DataInjector {
   }
 
   public Group getGroupByName(String groupName) throws Exception {
-    return groupHandler.findGroupById(GROUP_PARENT_ID + "/" + groupName);
+    return groupHandler.findGroupById("/" + groupName);
   }
 
   public Poll getPublicPollByName(String pollName) throws Exception {

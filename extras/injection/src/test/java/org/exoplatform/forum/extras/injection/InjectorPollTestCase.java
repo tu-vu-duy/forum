@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.exoplatform.forum.extras.injection.poll.AbstractPollInjector;
 import org.exoplatform.forum.extras.injection.poll.GroupInjector;
 import org.exoplatform.forum.extras.injection.poll.PollInjector;
 import org.exoplatform.poll.service.PollService;
@@ -85,8 +84,7 @@ public class InjectorPollTestCase extends BaseTestCase {
   }
 
   private void removeAllGroup() throws Exception {
-    Group parent = groupHandler.findGroupById(AbstractPollInjector.GROUP_PARENT_ID);
-    for (Object gr : groupHandler.findGroups(parent)) {
+    for (Object gr : groupHandler.findGroups(null)) {
       groupHandler.removeGroup((Group) gr, false);
     }
   }

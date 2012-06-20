@@ -38,8 +38,7 @@ public class GroupInjector extends AbstractPollInjector {
     int number = getIntParam(params, NUMBER);
     String prefix = getStringValueParam(params, PREFIX, DEFAULT_GROUP_PREFIX);
     init(prefix, null, null, null);
-    Group parent = groupHandler.findGroupById(GROUP_PARENT_ID);
-    
+
     for (int i = 1; i <= number; i++) {
       //
       String groupName = groupName();
@@ -49,7 +48,7 @@ public class GroupInjector extends AbstractPollInjector {
       group.setDescription(groupName);
       try {
         // Save group
-        groupHandler.addChild(parent, group, true);
+        groupHandler.addChild(null, group, true);
         //
         ++groupNumber;
 

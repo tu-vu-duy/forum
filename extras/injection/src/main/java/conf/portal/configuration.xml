@@ -22,6 +22,7 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
+  <!-- Forum Injector Definition-->
   <component>
     <type>org.exoplatform.forum.extras.injection.forum.ProfileInjector</type>
   </component>
@@ -58,62 +59,79 @@
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.CategoryInjector</type>
   </component>
+
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.AnswerInjector</type>
   </component>
+
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.ProfileInjector</type>
   </component>
+
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.QuestionInjector</type>
   </component>
+
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.CommentInjector</type>
   </component>
+
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.AttachmentInjector</type>
   </component>
+
   <component>
     <type>org.exoplatform.forum.extras.injection.faq.MembershipInjector</type>
+  </component>
+  
+  <!-- Poll Injector Definition-->
+  <component>
+    <type>org.exoplatform.forum.extras.injection.poll.GroupInjector</type>
+  </component>
+
+  <component>
+    <type>org.exoplatform.forum.extras.injection.poll.PollInjector</type>
   </component>
 
   <external-component-plugins>
     <target-component>org.exoplatform.services.bench.DataInjectorService</target-component>
+
     <component-plugin>
-      <name>profile</name>
+      <name>forumProfile</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.ProfileInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>category</name>
+      <name>forumCategory</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.CategoryInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>forum</name>
+      <name>forumForum</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.ForumInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>topic</name>
+      <name>forumTopic</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.TopicInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>post</name>
+      <name>forumPost</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.PostInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>membership</name>
+      <name>forumMembership</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.MembershipInjector</type>
     </component-plugin>
     <component-plugin>
-      <name>attachment</name>
+      <name>forumAttachment</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.forum.AttachmentInjector</type>
     </component-plugin>
+
     <component-plugin>
       <name>faqProfile</name>
       <set-method>addInjector</set-method>
@@ -149,5 +167,17 @@
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.faq.MembershipInjector</type>
     </component-plugin>
+
+    <component-plugin>
+      <name>pollGroup</name>
+      <set-method>addInjector</set-method>
+      <type>org.exoplatform.forum.extras.injection.poll.GroupInjector</type>
+    </component-plugin>
+    <component-plugin>
+      <name>pollPoll</name>
+      <set-method>addInjector</set-method>
+      <type>org.exoplatform.forum.extras.injection.poll.PollInjector</type>
+    </component-plugin>
+
   </external-component-plugins>
 </configuration>
