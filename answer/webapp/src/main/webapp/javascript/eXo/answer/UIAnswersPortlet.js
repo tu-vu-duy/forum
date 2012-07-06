@@ -2,6 +2,10 @@ if(!eXo.answer){
 	eXo.answer = {} ;
 }
 
+if(!gj) {
+	gj = window.jQuery;
+}
+
 function UIAnswersPortlet() {
   this.viewImage = true;
   this.scrollManagerLoaded = false;

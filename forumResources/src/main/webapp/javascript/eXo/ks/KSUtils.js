@@ -1,3 +1,5 @@
+
+
 if (!eXo.ks) {
 	eXo.ks = {};
 }
@@ -12,6 +14,7 @@ KSUtils.prototype.findFirstDescendantByClass = function(parent, classChild) {
 	}
 	return null;
 };
+
 
 KSUtils.prototype.findDescendantsByClass = function(parent, classChild) {
 	var allchildrents = [];
@@ -53,8 +56,9 @@ KSUtils.prototype.returnFalse = function() {
 KSUtils.prototype.setMaskLayer = function(id) {
 	var DOMUtil = eXo.core.DOMUtil;
 	var KSUtils = eXo.ks.KSUtils;
-	var portlet = document.getElementById(id);
-	if (portlet) {
+	var portlet = gj('div#'+id);
+	if (portlet.length > 0) {
+		var jmaskLayer = 
 		var masklayer = DOMUtil.findFirstDescendantByClass(portlet, "div", "KSMaskLayer");
 		var popupAction = DOMUtil.findFirstDescendantByClass(portlet, "span", "UIKSPopupAction");
 		var popupWindow = KSUtils.findFirstDescendantByClass(popupAction, "UIPopupWindow");
