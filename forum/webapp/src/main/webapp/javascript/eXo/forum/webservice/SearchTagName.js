@@ -77,7 +77,7 @@ SearchTagName.prototype.submitInput = function(event) {
 };
 
 SearchTagName.prototype.searchIpBanWrapper = function(event) {
-	var key = eXo.core.Keyboard.getKeynum(event);
+	var key = eXo.forum.ForumUtils.getKeynum(event);
 	if(key == 13){
 		var object = eXo.forum.webservice.SearchTagName;
 		var str = String(object.searchTagNameNode.value);

@@ -82,6 +82,9 @@
       <path>/javascript/eXo/forum/CheckBoxManager.js</path>
     </script>
     <depends>
+      <module>ForumUtils</module>
+    </depends>
+    <depends>
       <module>base</module>
     </depends>
   </module>
@@ -125,12 +128,6 @@
       <module>maskLayerControl</module>
     </depends>
     <depends>
-      <module>KSUtils</module>
-    </depends>
-    <depends>
-      <module>KSPopupSelectCategory</module>
-    </depends>
-    <depends>
       <module>Keyboard</module>
     </depends>
     <depends>
@@ -154,41 +151,13 @@
   </module>
 
   <module>
-    <name>KSPopupSelectCategory</name>
-    <script>
-      <name>eXo.ks.UIPopupSelectCategory</name>
-      <path>/javascript/eXo/ks/UIPopupSelectCategory.js</path>
-    </script>
-    <depends>
-      <module>DOMUtil</module>
-    </depends>
-  </module>
-
-  <module>
-    <name>KSUtils</name>
-    <script>
-      <name>eXo.ks.KSUtils</name>
-      <path>/javascript/eXo/ks/KSUtils.js</path>
-    </script>
-    <depends>
-      <module>KSPopupSelectCategory</module>
-    </depends>
-    <depends>
-      <module>DOMUtil</module>
-    </depends>
-    <depends>
-      <module>base</module>
-    </depends>
-  </module>
-
-  <module>
     <name>sliderControl</name>
     <script>
       <name>eXo.ks.UISliderControl</name>
       <path>/javascript/eXo/ks/UISliderControl.js</path>
     </script>
     <depends>
-      <module>DOMUtil</module>
+      <module>ForumUtils</module>
     </depends>
     <depends>
       <module>base</module>

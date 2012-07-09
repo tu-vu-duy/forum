@@ -47,13 +47,16 @@
       <path>/javascript/eXo/forum/UIForumPortlet.js</path>
     </script>
     <depends>
-      <module>forumResources</module>
-    </depends>
-    <depends>
       <module>UIContextMenu</module>
     </depends>
     <depends>
       <module>CheckBoxManager</module>
+    </depends>
+    <depends>
+      <module>forumResources</module>
+    </depends>
+    <depends>
+      <module>ForumUtils</module>
     </depends>
     <depends>
       <module>navigation</module>
@@ -66,9 +69,6 @@
       <name>eXo.forum.webservice.SearchTagName</name>
       <path>/javascript/eXo/forum/webservice/SearchTagName.js</path>
     </script>
-    <depends>
-      <module>KSUtils</module>
-    </depends>
   </module>
 
   <module>
@@ -77,9 +77,6 @@
       <name>eXo.forum.ForumSendNotification</name>
       <path>/javascript/eXo/forum/ForumSendNotification.js</path>
     </script>
-    <depends>
-      <module>KSUtils</module>
-    </depends>
     <depends>
       <module>cometd</module>
     </depends>
@@ -92,9 +89,6 @@
       <path>/javascript/eXo/forum/ForumTotalJob.js</path>
     </script>
     <depends>
-      <module>KSUtils</module>
-    </depends>
-    <depends>
       <module>cometd</module>
     </depends>
   </module>
@@ -105,9 +99,6 @@
       <name>eXo.forum.webservice.SearchIpBan</name>
       <path>/javascript/eXo/forum/webservice/SearchIpBan.js</path>
     </script>
-    <depends>
-      <module>KSUtils</module>
-    </depends>
     <depends>
       <module>base</module>
     </depends>

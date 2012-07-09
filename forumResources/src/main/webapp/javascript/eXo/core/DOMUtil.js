@@ -353,7 +353,7 @@ DOMUtil.prototype.getStyle = function(element, style, intValue) {
 
 /* TODO: review this function: document.onclick */
 /*
- * user for method eXo.ks.UIPopupSelectCategory.show();
+ * user for method eXo.webui.UIPopupSelectCategory.show();
  * reference file : UIPopupSelectCategory.js
  */
  /**

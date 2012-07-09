@@ -188,8 +188,8 @@ UIAnswersPortlet.prototype.showFullScreen = function (imageNode, containerNode) 
 };
 
 UIAnswersPortlet.prototype.showMenu = function (obj, evt) {
-  var menu = obj.find('div.UIRightClickPopupMenu:first');
-  eXo.ks.UIPopupSelectCategory.show(obj, evt);
+  var menu = gj(obj).find('div.UIRightClickPopupMenu:first');
+  eXo.webui.UIPopupSelectCategory.show(obj, evt);
   var top = menu.offset().top;
   menu.css('top', -(top + 20));
 };
@@ -550,7 +550,7 @@ UIAnswersPortlet.prototype.submitSearch = function (id) {
 };
 
 UIAnswersPortlet.prototype.submitOnKey = function (event) {
-  var key = eXo.core.Keyboard.getKeynum(event);
+  var key = eXo.forum.ForumUtils.getKeynum(event);
   if (key == 13) {
     var searchLinkElm = eXo.core.DOMUtil.findFirstDescendantByClass(this, "a", "ActionSearch");
     if (searchLinkElm) {
