@@ -553,7 +553,7 @@ UIAnswersPortlet.prototype.openDiscussLink = function (link) {
 UIAnswersPortlet.prototype.executeLink = function (evt) {
   var onclickAction = String(this.getAttribute("actions"));
   eval(onclickAction);
-  eXo.ks.EventManager.cancelEvent(evt);
+  eXo.forum.ForumUtils.cancelEvent(evt);
   return false;
 };
 
@@ -605,7 +605,7 @@ UIAnswersPortlet.prototype.submitOnKey = function (event) {
       var link = String(searchLinkElm.href);
       link = link.replace("javascript:", "");
       eval(link);
-      eXo.ks.EventManager.cancelEvent(event);
+      eXo.forum.ForumUtils.cancelEvent(event);
       return false;
     }
   }

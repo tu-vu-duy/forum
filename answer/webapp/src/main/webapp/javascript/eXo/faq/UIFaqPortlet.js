@@ -9,7 +9,7 @@ function UIFaqPortlet() {
 UIFaqPortlet.prototype.executeLink = function (evt) {
   var onclickAction = String(this.getAttribute("actions"));
   eval(onclickAction);
-  eXo.ks.EventManager.cancelEvent(evt);
+  eXo.forum.ForumUtils.cancelEvent(evt);
   return false;
 };
 

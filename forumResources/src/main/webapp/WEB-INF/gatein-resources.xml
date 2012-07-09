@@ -21,6 +21,70 @@
       <module>base</module>
     </depends>
   </module>
+  
+  <module>
+    <name>ForumUtils</name>
+    <script>
+      <name>eXo.forum.ForumUtils</name>
+      <path>/javascript/eXo/forum/ForumUtils.js</path>
+    </script>
+    <depends>
+      <module>ForumPlugins</module>
+    </depends>
+    <depends>
+      <module>base</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>ForumPlugins</name>
+    <script>
+      <name>eXo.forum.ForumPlugins</name>
+      <path>/javascript/eXo/forum/ForumPlugins.js</path>
+    </script>
+    <depends>
+      <module>base</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>EventManager</name>
+    <script>
+      <name>eXo.forum.EventManager</name>
+      <path>/javascript/eXo/forum/EventManager.js</path>
+    </script>
+    <depends>
+      <module>ForumUtils</module>
+    </depends>
+    <depends>
+      <module>base</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>UIContextMenu</name>
+    <script>
+      <name>eXo.forum.UIContextMenu</name>
+      <path>/javascript/eXo/forum/UIContextMenu.js</path>
+    </script>
+    <depends>
+      <module>EventManager</module>
+    </depends>
+    <depends>
+      <module>base</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>CheckBoxManager</name>
+    <script>
+      <name>eXo.forum.CheckBox</name>
+      <path>/javascript/eXo/forum/CheckBoxManager.js</path>
+    </script>
+    <depends>
+      <module>base</module>
+    </depends>
+  </module>
 
   <module>
     <name>KSBrowser</name>
@@ -71,6 +135,9 @@
     </depends>
     <depends>
       <module>KSBrowser</module>
+    </depends>
+    <depends>
+      <module>ForumUtils</module>
     </depends>
     <depends>
       <module>DOMUtil</module>

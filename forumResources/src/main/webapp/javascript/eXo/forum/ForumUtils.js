@@ -1,9 +1,38 @@
-(function () {
+(function ($) {
 	var ForumUtils = {
+			cancelEvent = function(evt) {
+				var _e = evt || window.event;
+				_e.cancelBubble = true;
+			},
+			returnFalse = function() {
+				return false;
+			},
+			isChrome = function() {
+				var str = String(navigator.userAgent).toLowerCase();
+				return (str.indexOf('chrome') >= 0 && window.chrome != null && window.chrome != undefined);
+			},
+			
+			// hide all popup menu.
+			hideElementList = new Array(),
+			hideElements = function() {
+				var l = ForumUtils.hideElementList.lenght;
+				for (var i = 0; l  > 0 &&  i < l; i++) {
+					ForumUtils.hideElementList[i].hide();
+				}
+				ForumUtils.hideElementList.clear() ;
+			},
+			addhideElement = function(elm) {
+				var object = $(elm);
+				if (!ForumUtils.hideElementList.contains(object)) {
+					ForumUtils.hideElementList.push(object) ;
+				}
+			},
+			
+			// mask layer of uiForm popup 
 			setMaskLayer = function(id) {
-				var portlet = gj('div#'+id);
+				var portlet = $('div#'+id);
 				if (portlet.exists()) {
-					var jmaskLayer =  gj('div.KSMaskLayer');
+					var jmaskLayer =  $('div.KSMaskLayer');
 					var jpopupAction = jmaskLayer.find('span.UIKSPopupAction');
 					var jpopupWindow = jpopupAction.find('.UIPopupWindow');
 					jmaskLayer.css('width', 'auto').css('height', 'auto');
@@ -34,12 +63,34 @@
 					masklayer.unselectable = "no";
 				}
 			},
-			returnFalse = function() {
-				return false;
+			
+			// show users menu
+			showUserMenu = function(obj, event) {
+				var event = event || window.event;
+				var jobj = $(obj);
+				var jPopup = jobj.find(".UIPopupInfoMenu");
+				if (!jPopup.exists())
+					return;
+				var uiPopup = jPopup.find(".UIPopupInfoContent");
+				uiPopup.click(ForumUtils.cancel);
+				ForumUtils.hideElements();
+				jPopup.css('visibility', 'inherit')
+				      .css('display', 'inline');
+				if (ForumUtils.isChrome()) {
+					jPopup.css('float', 'right');
+				}
+				var Browser = eXo.core.Browser;
+				var X = Browser.findMouseRelativeX(jPopup, event, false);
+				var Y = Browser.findMouseRelativeY(jPopup, event);
+				ForumUtils.cancelEvent(event);
+				uiPopup.css('left', (X - 37) + 'px');
+				uiPopup.css('top', (Y + 5) + 'px');
+				ForumUtils.addhideElement(jPopup);
 			}
 	};
-	
+
+	$(document).click(ForumUtils.hideElements);
 	window.eXo = window.eXo || {};
 	window.eXo.forum = window.eXo.forum || {};
 	window.eXo.forum.ForumUtils = ForumUtils;
-})();
+})(gj);

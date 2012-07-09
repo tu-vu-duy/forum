@@ -59,6 +59,15 @@
       <module>forumResources</module>
     </depends>
     <depends>
+      <module>UIContextMenu</module>
+    </depends>
+    <depends>
+      <module>CheckBoxManager</module>
+    </depends>
+    <depends>
+      <module>EventManager</module>
+    </depends>
+    <depends>
       <module>navigation</module>
     </depends>
   </module>

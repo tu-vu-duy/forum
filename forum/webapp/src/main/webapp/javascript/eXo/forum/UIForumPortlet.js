@@ -11,8 +11,10 @@ function UIForumPortlet() {
 
 UIForumPortlet.prototype.init = function(id) {
 	eXo.forum.UIForumPortlet.id = id;
-	var portlet = document.getElementById(id);
-	if (portlet) {
+	var jportlet = gj("#"+id);
+	
+	if (jportlet.exists()) {
+		
 		var KSUtils = eXo.ks.KSUtils;
 		var oncontextmenus = KSUtils.findDescendantsByClass(portlet, "oncontextmenu");
 		for ( var i = 0; i < oncontextmenus.length; i++) {
@@ -861,7 +863,7 @@ UIForumPortlet.prototype.setTagContainerWidth = function(container){
 UIForumPortlet.prototype.executeLink = function(evt) {
   var onclickAction = String(this.getAttribute("rel")) ;
 	eval(onclickAction) ;
-  eXo.ks.EventManager.cancelEvent(evt);
+	eXo.forum.ForumUtils.cancelEvent(evt);
 	return false;
 } ;
 
@@ -981,7 +983,7 @@ UIForumPortlet.prototype.submitOnKey = function(event){
 			var link = String(searchLinkElm.href) ;
 			link = link.replace("javascript:", "");
 			eval(link);
-      eXo.ks.EventManager.cancelEvent(event);
+			eXo.forum.ForumUtils.cancelEvent(event);
 			return false;
 		}
 	}
