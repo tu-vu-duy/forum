@@ -2,8 +2,11 @@ if(!eXo.answer){
   eXo.answer = {} ;
 }
 
-if(!gj) {
-  gj = window.jQuery;
+function gj(elm) {
+	if(String(elm).indexOf('#') < 0 && !jQuery(elm).exits() && jQuery('#'+elm).exits()) {
+		return jQuery('#'+elm);
+	}
+	return jQuery(elm);
 }
 
 function UIAnswersPortlet() {
