@@ -882,7 +882,7 @@
 
 	UIForumPortlet.prototype.initContextMenu = function(id){
 		var cont = document.getElementById(id);
-		var uiContextMenu = eXo.ks.UIContextMenu;
+		var uiContextMenu = eXo.forum.UIContextMenu;
 		if(!uiContextMenu.classNames) uiContextMenu.classNames = new Array("ActionLink");
 		else uiContextMenu.classNames.push("ActionLink");
 		uiContextMenu.setContainer(cont);
@@ -972,13 +972,13 @@ eXo.forum.CheckBox = {
 				for(var i = 1 ; i < len ; i ++) {
 					checkboxes[i].onclick = this.check ;
 					//if(checkboxes[i].getAttribute("checked") != "checked")checkboxes[i].checked = false;
-					eXo.ks.CheckBox.checkItem(checkboxes[i]);
+					eXo.forum.CheckBoxManager.checkItem(checkboxes[i]);
 				}
 			}
 		},
 		
 		check : function(){
-			eXo.ks.CheckBox.checkItem(this);
+			eXo.forum.CheckBoxManager.checkItem(this);
 			var row = eXo.core.DOMUtil.findAncestorByTagName(this,"tr");
 			if(this.checked) {
 				eXo.core.DOMUtil.addClass(row,"SelectedItem");

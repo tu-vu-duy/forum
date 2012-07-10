@@ -14,7 +14,7 @@
   def rcontext = _ctx.getRequestContext() ;
   JavascriptManager jsmanager = rcontext.getJavascriptManager();
   jsmanager.addJavascript("eXo.forum.UIForumPortlet.RightClickBookMark('UITopicContainer') ;") ;
-  jsmanager.addJavascript("eXo.forum.CheckBox.init('UITopicContent') ;") ;
+  jsmanager.addJavascript("eXo.forum.CheckBoxManager.init('UITopicContent') ;") ;
   jsmanager.addJavascript("eXo.forum.UIForumPortlet.createLink('"+uicomponent.id+"', '"+uicomponent.isUseAjax+"') ;") ;
   jsmanager.addJavascript("eXo.forum.UIForumPortlet.goLastPost('top');") ;
   jsmanager.addJavascript("eXo.forum.UIForumPortlet.submitSearch('SearchInForum');") ;

@@ -1,87 +1,70 @@
-window.eXo.ks = window.eXo.ks || {};
+;(function($, window, document) {
+  var UIContextMenu = {
+    container = [],
+    menus : [],
+    setup : function() {
+      var i = this.container.length;
+      while (i--) {
+        $(this.container[i]).on('contextmenu', this.show);
+      }
+    },
+    setContainer : function(obj) {
+      this.container.push(obj);
+    },
+    getMenu : function(evt) {
+      var element = this.getMenuElement(evt);
+      if (!element && !element.exists())
+        return;
+      var menuId = String(element.attr('id')).replace("Context", "");
+      var jcont = element.parents('.PORTLET-FRAGMENT');
+      var jmenu = jcont.find('#'+menuId);
+      if (!jmenu.exists())
+        return;
+      if (element[0].tagName != "TR")
+        $(element[0].parentNode).append(jmenu);
+      return jmenu;
+    },
+    getMenuElement : function(evt) {
+      var target = eXo.ks.EventManager.getEventTarget(evt);
+      for (i = 0; i < this.classNames.length; i++) {
+        var parent = $(target).parents('.'+this.classNames[i]);
+        if (parent.exists()) {
+          return parent;
+        }
+      }
+      return null;
+    },
+    setPosition : function(jobj, evt) {
+      var Browser = eXo.core.Browser;
+      var x = Browser.findMouseXInPage(evt) - 2;
+      var y = Browser.findMouseYInPage(evt) - 2;
+      jobj.css('position', 'absolute').show();
+      var obj = jobj[0];
+      if (obj.offsetParent)
+        x -= Browser.findPosX(obj.offsetParent);
+      if (Browser.isDesktop()) {
+        x = Browser.findMouseXInPage(evt) - Browser.findPosX(obj.offsetParent);
+        y -= Browser.findPosY(obj.offsetParent);
+        jobj.css('left', x + 'px');
+      } else {
+        jobj.css('left', x + 'px');
+      }
+      jobj.css('top', y + 'px');
+    },
+    show : function(evt) {
+      eXo.forum.ForumUtils.cancelEvent(evt);
+      eXo.forum.ForumUtils.hideElements();
+      var jmenu = this.getMenu(evt);
+      if (!jmenu){
+        return;
+      }
+      this.setPosition(jmenu, evt);
+      eXo.forum.ForumUtils.addhideElement(jmenu);
+      return false;
+    }
+  };
 
-eXo.ks.UIContextMenu = {
-	menus : [],
-	setup : function() {
-		if (!this.container)
-			return;
-		var i = this.container.length;
-		while (i--) {
-			eXo.ks.EventManager.addEvent(this.container[i], "contextmenu", this.show);
-		}
-	},
-	setContainer : function(obj) {
-		if (!this.container)
-			this.container = [];
-		this.container.push(obj);
-	},
-	getMenu : function(evt) {
-		var element = this.getMenuElement(evt);
-		if (!element)
-			return;
-		var menuId = String(element.id).replace("Context", "");
-		var cont = eXo.core.DOMUtil.findAncestorByClass(element, "PORTLET-FRAGMENT");
-		var menu = eXo.core.DOMUtil.findDescendantById(cont, menuId);
-		if (!menu)
-			return;
-		if (element.tagName != "TR")
-			element.parentNode.appendChild(menu);
-		return menu;
-	},
-	getMenuElement : function(evt) {
-		var target = eXo.ks.EventManager.getEventTarget(evt);
-		while (target) {
-			var className = target.className;
-			if (!className) {
-				target = target.parentNode;
-				continue;
-			}
-			className = className.replace(/^\s+/g, "").replace(/\s+$/g, "");
-			var classArray = className.split(/[ ]+/g);
-			for (i = 0; i < classArray.length; i++) {
-				if (this.classNames.contains(classArray[i])) {
-					return target;
-				}
-			}
-			target = target.parentNode;
-		}
-		return null;
-	},
-	hideElement : function() {
-		var ln = eXo.core.DOMUtil.hideElementList.length;
-		if (ln > 0) {
-			for ( var i = 0; i < ln; i++) {
-				eXo.core.DOMUtil.hideElementList[i].style.display = "none";
-			}
-			eXo.core.DOMUtil.hideElementList.clear();
-		}
-	},
-	setPosition : function(obj, evt) {
-		var Browser = eXo.core.Browser;
-		var x = Browser.findMouseXInPage(evt) - 2;
-		var y = Browser.findMouseYInPage(evt) - 2;
-		obj.style.position = "absolute";
-		obj.style.display = "block";
-		if (obj.offsetParent)
-			x -= Browser.findPosX(obj.offsetParent);
-		if (Browser.isDesktop()) {
-			x = Browser.findMouseXInPage(evt) - Browser.findPosX(obj.offsetParent);
-			y -= Browser.findPosY(obj.offsetParent);
-			obj.style.left = x + "px";
-		} else {
-			obj.style.left = x + "px";
-		}
-		obj.style.top = y + "px";
-	},
-	show : function(evt) {
-		eXo.forum.ForumUtils.cancelEvent(evt);
-		var ctx = eXo.ks.UIContextMenu;
-		var menu = ctx.getMenu(evt);
-		ctx.hideElement();
-		if (!menu)
-			return;
-		ctx.setPosition(menu, evt);
-		eXo.core.DOMUtil.listHideElements(menu);
-		return false;
-	}
-};
+  window.eXo = window.eXo || {};
+  window.eXo.forum = window.eXo.forum || {};
+  window.eXo.forum.UIContextMenu = UIContextMenu;
+})(gj, window, document);

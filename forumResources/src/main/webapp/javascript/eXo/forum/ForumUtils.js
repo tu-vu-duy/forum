@@ -73,8 +73,8 @@
 						});
 					}
 				}
-				masklayer.on('onselectstart', this.returnFalse);
-				masklayer.on('ondragstart', this.returnFalse);
+				masklayer.on('selectstart', this.returnFalse);
+				masklayer.on('dragstart', this.returnFalse);
 				masklayer.unselectable = "no";
 			}
 		},

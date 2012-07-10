@@ -461,7 +461,7 @@
 	  var cont = document.getElementById(id);
 	  if(cont) {
 	  	eXo.answer.UIAnswersPortlet.disableContextMenu(cont);
-	  	var uiContextMenu = eXo.ks.UIContextMenu;
+	  	var uiContextMenu = eXo.forum.UIContextMenu;
 	  	if (!uiContextMenu.classNames) uiContextMenu.classNames = new Array("FAQCategory", "QuestionContextMenu");
 	  	else {
 	  		uiContextMenu.classNames.push("FAQCategory");
@@ -588,7 +588,7 @@ eXo.answer.DragDrop = {
   },
   attach: function (evt) {
     evt = evt || window.event;
-    if (eXo.ks.EventManager.getMouseButton(evt) == 2) return;
+    if (eXo.forum.EventManager.getMouseButton(evt) == 2) return;
     var dnd = eXo.answer.DragDrop;
     var dragObject = this.cloneNode(true);
     dragObject.className = "FAQDnDCategory";
@@ -669,7 +669,7 @@ eXo.answer.DragDrop = {
     var targetClass = eXo.answer.DragDrop.targetClass;
     var i = targetClass.length;
     while (i--) {
-      var target = eXo.ks.EventManager.getEventTargetByClass(evt, targetClass[i]);
+      var target = eXo.forum.EventManager.getEventTargetByClass(evt, targetClass[i]);
       if (target) return target;
     }
   },
