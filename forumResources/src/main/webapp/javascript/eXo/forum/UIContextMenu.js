@@ -1,6 +1,6 @@
 ;(function($, window, document) {
   var UIContextMenu = {
-    container = [],
+    container : [],
     menus : [],
     setup : function() {
       var i = this.container.length;

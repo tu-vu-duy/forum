@@ -19,7 +19,7 @@
   		imgSrcNode.src = node;
   	}else{
   	  var attachmentContent = $(node).parents('.AttachmentContent') ;
-  	  var imgSrcNode = attachmentContent.find('img.AttachmentFile:first').[0] ;		
+  	  var imgSrcNode = attachmentContent.find('img.AttachmentFile:first')[0] ;		
   	}
   	if(!document.getElementById("UIPictutreContainer")){		
   	  var containerNode = document.createElement('div') ;

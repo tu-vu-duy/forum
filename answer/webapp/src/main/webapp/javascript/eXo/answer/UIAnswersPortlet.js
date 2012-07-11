@@ -20,6 +20,12 @@
     this.updateContainersHeight();
     this.controlWorkSpace();
     this.disableContextMenu();
+    eXo.core.Browser.addOnResizeCallback(id, eXo.answer.UIAnswersPortlet.resizeCallback)
+    eXo.core.Browser.init();
+  };
+
+  UIAnswersPortlet.prototype.resizeCallback = function() {
+    eXo.forum.ForumUtils.setMaskLayer(eXo.answer.UIAnswersPortlet.portletId);
   };
   
   UIAnswersPortlet.prototype.updateContainersHeight = function () {

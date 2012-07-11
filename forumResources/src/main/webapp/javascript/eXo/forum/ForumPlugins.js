@@ -1,10 +1,11 @@
+window.gj = window.gj || jQuery;
 // this plugin to check existing element.
 ;(function($, window, document, undefined) {
   // preventing against multiple instantiations
   $.fn.exists = function() {
     return ($(this).length > 0);
   }
-})($, window, document);
+})(gj, window, document);
 
 // this plugin to find element by id.
 ;(function($, window, document, undefined) {
@@ -24,4 +25,4 @@
 
   window.findId = window.findId || $.fn.findId;
   $.findId = window.findId;
-})($, window, document);
+})(gj, window, document);

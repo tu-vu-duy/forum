@@ -81,6 +81,9 @@
       <path>/javascript/eXo/forum/ForumSendNotification.js</path>
     </script>
     <depends>
+      <module>forumPortlet</module>
+    </depends>
+    <depends>
       <module>cometd</module>
     </depends>
   </module>
@@ -92,6 +95,9 @@
       <path>/javascript/eXo/forum/ForumTotalJob.js</path>
     </script>
     <depends>
+      <module>forumPortlet</module>
+    </depends>
+    <depends>
       <module>cometd</module>
     </depends>
   </module>
@@ -102,6 +108,9 @@
       <name>eXo.forum.webservice.SearchIpBan</name>
       <path>/javascript/eXo/forum/webservice/SearchIpBan.js</path>
     </script>
+    <depends>
+      <module>forumPortlet</module>
+    </depends>
     <depends>
       <module>base</module>
     </depends>

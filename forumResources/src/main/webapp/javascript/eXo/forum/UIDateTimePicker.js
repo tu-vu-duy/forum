@@ -4,16 +4,16 @@
     this.calendarId = calendarId;
     this.dateField = null;
     this.currentDate = null; // Datetime value base of selectedDate for
-                              // displaying calendar below
+    // displaying calendar below
     // if selectedDate is invalid, currentDate deals with system time;
     this.selectedDate = null; // Datetime value of input date&time field
     this.months = [ 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' ];
     this.weekdays = [ 'S', 'M', 'T', 'W', 'T', 'F', 'S' ];
     this.tooltip = [ 'Previous Year', 'Previous Month', 'Next Month', 'Next Year' ];
-    this.pathResource = "/forumResources/javascript/eXo/ks/lang/";
+    this.pathResource = "/forumResources/javascript/eXo/forum/lang/";
     this.lang = "";
     this.fistWeekDay = 0; // sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-                          // thursday: 4, friday: 5, saturday: 6
+    // thursday: 4, friday: 5, saturday: 6
   }
 
   UIDateTimePicker.prototype.getLang = function() {
@@ -21,7 +21,7 @@
       var day = this.dateField.getAttribute('fistweekday');
       if (day)
         this.fistWeekDay = day * 1 - 1; // attribute 'fistweekday' includes:
-                                        // sunday: 1, monday: 2,..., saturday: 7
+      // sunday: 1, monday: 2,..., saturday: 7
       var lang = this.dateField.getAttribute('lang');
       if (this.lang == lang)
         return;
@@ -105,12 +105,12 @@
       var event = evt || window.event;
       event.cancelBubble = true;
       jdrag.css('position', 'absolute');
-      if (Browser.isIE7()){
+      if (Browser.isIE7()) {
         jdrag.css('height', jcalendar.outerHeight(true) + 'px');
       }
       eXo.core.DragDrop.init(null, jdrag[0], component[0], event);
     });
-    if (Browser.isIE6()){
+    if (Browser.isIE6()) {
       $(clndr).find('iframe:first').css(height, jdrag.parent().outerHeight(true) + 'px');
     }
   };
@@ -133,18 +133,18 @@
     var dayIdx = this.fistWeekDay;
     var table = '<div id="BlockCaledar" class="BlockCalendar">';
     table += '<div class="UICalendar" onmousedown="event.cancelBubble = true">';
-    table += '	<table class="MonthYearBox">';
-    table += '		<tr>';
-    table += '			<td class="MonthButton"><a class="PreviousMonth" title="' + this.tooltip[1] + '" href="javascript:eXo.forum.UIDateTimePicker.changeMonth(-1);"></a></td>';
-    table += '			<td class="YearButton"><a class="PreviousYear" title="' + this.tooltip[0] + '" href="javascript:eXo.forum.UIDateTimePicker.changeYear(-1);"></a></td>';
-    table += '			<td><font color="#f89302">' + this.months[this.currentDate.getMonth()] + '</font> - ' + this.currentDate.getFullYear() + '</td>';
-    table += '			<td class="YearButton"><a class="NextYear" title="' + this.tooltip[3] + '" href="javascript:eXo.forum.UIDateTimePicker.changeYear(1);"></a></td>';
-    table += '			<td class="MonthButton"><a class="NextMonth" title="' + this.tooltip[2] + '" href="javascript:eXo.forum.UIDateTimePicker.changeMonth(1);"></a></td>';
-    table += '		</tr>';
-    table += '	</table>';
-    table += '	<div style="margin-top: 6px;padding: 0px 5px;">';
-    table += '		<table>';
-    table += '			<tr>';
+    table += '  <table class="MonthYearBox">';
+    table += '    <tr>';
+    table += '      <td class="MonthButton"><a class="PreviousMonth" title="' + this.tooltip[1] + '" href="javascript:eXo.forum.UIDateTimePicker.changeMonth(-1);"></a></td>';
+    table += '      <td class="YearButton"><a class="PreviousYear" title="' + this.tooltip[0] + '" href="javascript:eXo.forum.UIDateTimePicker.changeYear(-1);"></a></td>';
+    table += '      <td><font color="#f89302">' + this.months[this.currentDate.getMonth()] + '</font> - ' + this.currentDate.getFullYear() + '</td>';
+    table += '      <td class="YearButton"><a class="NextYear" title="' + this.tooltip[3] + '" href="javascript:eXo.forum.UIDateTimePicker.changeYear(1);"></a></td>';
+    table += '      <td class="MonthButton"><a class="NextMonth" title="' + this.tooltip[2] + '" href="javascript:eXo.forum.UIDateTimePicker.changeMonth(1);"></a></td>';
+    table += '    </tr>';
+    table += '  </table>';
+    table += '  <div style="margin-top: 6px;padding: 0px 5px;">';
+    table += '    <table>';
+    table += '      <tr>';
     for ( var i = 0; i < 7; i++) {
       if (dayIdx == 0) {
         table += '       <td><font color="red">' + this.weekdays[dayIdx] + '</font></td>';
@@ -153,11 +153,11 @@
       }
       dayIdx = ++dayIdx % 7;
     }
-    table += '			</tr>';
-    table += '		</table>';
-    table += '	</div>';
-    table += '	<div class="CalendarGrid">';
-    table += '	<table>';
+    table += '      </tr>';
+    table += '    </table>';
+    table += '  </div>';
+    table += '  <div class="CalendarGrid">';
+    table += '  <table>';
     for ( var week = 0; week < 6; week++) {
       table += "<tr>";
       for ( var dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
@@ -186,20 +186,20 @@
       }
       table += "</tr>";
     }
-    table += '		</table>';
-    table += '	</div>';
+    table += '    </table>';
+    table += '  </div>';
     if (this.isDisplayTime) {
-      table += '	<div class="CalendarTimeBox">';
-      table += '		<div class="CalendarTimeBoxR">';
-      table += '			<div class="CalendarTimeBoxM"><span><input class="InputTime" size="2" maxlength="2" value="'
+      table += '  <div class="CalendarTimeBox">';
+      table += '    <div class="CalendarTimeBoxR">';
+      table += '      <div class="CalendarTimeBoxM"><span><input class="InputTime" size="2" maxlength="2" value="'
           + ((this.currentDate.getHours()) > 9 ? this.currentDate.getHours() : "0" + this.currentDate.getHours())
           + '" onkeyup="eXo.forum.UIDateTimePicker.setHour(this)" >:<input size="2" class="InputTime" maxlength="2" value="'
           + ((this.currentDate.getMinutes()) > 9 ? this.currentDate.getMinutes() : "0" + this.currentDate.getMinutes())
           + '" onkeyup = "eXo.forum.UIDateTimePicker.setMinus(this)">:<input size="2" class="InputTime" maxlength="2" value="'
           + ((this.currentDate.getSeconds()) > 9 ? this.currentDate.getSeconds() : "0" + this.currentDate.getSeconds())
           + '" onkeyup = "eXo.forum.UIDateTimePicker.setSeconds(this)"></span></div>';
-      table += '		</div>';
-      table += '	</div>';
+      table += '    </div>';
+      table += '  </div>';
     }
     table += '</div>';
     table += '</div>';
