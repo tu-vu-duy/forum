@@ -101,28 +101,6 @@
   </module>
 
   <module>
-    <name>Keyboard</name>
-    <script>
-      <name>eXo.core.Keyboard</name>
-      <path>/javascript/eXo/core/Keyboard.js</path>
-    </script>
-    <depends>
-      <module>KSBrowser</module>
-    </depends>
-  </module>
-
-  <module>
-    <name>maskLayerControl</name>
-    <script>
-      <name>eXo.ks.MaskLayerControl</name>
-      <path>/javascript/eXo/ks/MaskLayerControl.js</path>
-    </script>
-    <depends>
-      <module>DOMUtil</module>
-    </depends>
-  </module>
-
-  <module>
     <name>forumResources</name>
     <depends>
       <module>maskLayerControl</module>
@@ -151,10 +129,21 @@
   </module>
 
   <module>
+    <name>MaskLayerControl</name>
+    <script>
+      <name>eXo.forum.MaskLayerControl</name>
+      <path>/javascript/eXo/forum/MaskLayerControl.js</path>
+    </script>
+    <depends>
+      <module>ForumUtils</module>
+    </depends>
+  </module>
+
+  <module>
     <name>sliderControl</name>
     <script>
-      <name>eXo.ks.UISliderControl</name>
-      <path>/javascript/eXo/ks/UISliderControl.js</path>
+      <name>eXo.webui.UISliderControl</name>
+      <path>/javascript/eXo/forum/UISliderControl.js</path>
     </script>
     <depends>
       <module>ForumUtils</module>
@@ -167,11 +156,11 @@
   <module>
     <name>dateTimePicker</name>
     <script>
-      <name>eXo.ks.UIDateTimePicker</name>
-      <path>/javascript/eXo/ks/UIDateTimePicker.js</path>
+      <name>eXo.forum.UIDateTimePicker</name>
+      <path>/javascript/eXo/forum/UIDateTimePicker.js</path>
     </script>
     <depends>
-      <module>DOMUtil</module>
+      <module>ForumUtils</module>
     </depends>
     <depends>
       <module>KSBrowser</module>

@@ -17,7 +17,7 @@
         return;
       var menuId = String(element.attr('id')).replace("Context", "");
       var jcont = element.parents('.PORTLET-FRAGMENT');
-      var jmenu = jcont.find('#'+menuId);
+      var jmenu = jcont.findId(menuId);
       if (!jmenu.exists())
         return;
       if (element[0].tagName != "TR")

@@ -21,7 +21,7 @@
     if ($(target).hasClass(className)) {
       return target;
     } else {
-      return $(target).parents('.' + className).eq(0)[0];
+      return $(target).parents('.' + className + ':first')[0];
     }
   };
   

@@ -1,26 +1,27 @@
 // this plugin to check existing element.
 ;(function($, window, document, undefined) {
-	// preventing against multiple instantiations
-	$.fn.exists = function() {
-		return ($(this).length > 0);
-	}
-})(gj, window, document);
+  // preventing against multiple instantiations
+  $.fn.exists = function() {
+    return ($(this).length > 0);
+  }
+})($, window, document);
 
 // this plugin to find element by id.
 ;(function($, window, document, undefined) {
   // preventing against multiple instantiations
   $.fn.findId = function(elm) {
-    var jelm = $(elm);
-    if (!jelm.exists() && String(elm).indexOf('#') != 0 && $('#' + elm).exists()) {
-      jelm = $('#' + elm);
+    
+    if (!$(elm).exists() && String(elm).indexOf('#') != 0 && $('#' + elm).exists()) {
+      elm = '#' + elm;
     }
-    if($(this).exists()) {
-      return $(this).find(jelm);
+    
+    if ($(this).exists() && !$.isWindow(this)) {
+      return $(this).find(elm);
     } else {
-      return jelm;
+      return $(elm);
     }
   }
 
   window.findId = window.findId || $.fn.findId;
   $.findId = window.findId;
-})(gj, window, document);
+})($, window, document);

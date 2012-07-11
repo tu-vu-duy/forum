@@ -5,7 +5,9 @@
   
   CheckBoxManager.prototype.init = function(cont) {
     if (typeof (cont) == "string"){
-      cont = $('#'+cont)
+      cont = findId(cont);
+    } else {
+      cont = $(cont);
     }
     var checkboxes = cont.find('input.checkbox');
     if (!checkboxes.exists())
@@ -15,7 +17,7 @@
   };
   
   CheckBoxManager.prototype.checkAll = function() {
-    eXo.forum.CheckBox.checkAllItem(this);
+    eXo.forum.CheckBoxManager.checkAllItem(this);
   };
   
   CheckBoxManager.prototype.getItems = function(obj) {
@@ -24,28 +26,28 @@
   };
   
   CheckBoxManager.prototype.check = function() {
-    eXo.forum.CheckBox.checkItem(this);
+    eXo.forum.CheckBoxManager.checkItem(this);
   };
   
   CheckBoxManager.prototype.checkAllItem = function(obj) {
-    var checked = obj.checked;
-    var items = eXo.forum.CheckBox.getItems(obj);
+    var checked = $(obj).val();
+    var items = eXo.forum.CheckBoxManager.getItems(obj);
     for ( var i = 1; i < items.length; i++) {
-      items[i].checked = checked;
+      items.eq(i).val(checked);
     }
   };
   
   CheckBoxManager.prototype.checkItem = function(obj) {
-    var checkboxes = eXo.forum.CheckBox.getItems(obj);
+    var checkboxes = eXo.forum.CheckBoxManager.getItems(obj);
     var len = checkboxes.length;
     var state = true;
-    if (!obj.checked) {
-      checkboxes[0].checked = false;
+    if (!$(obj).val()) {
+      checkboxes.eq(0).val(false);
     } else {
       for ( var i = 1; i < len; i++) {
-        state = state && checkboxes[i].checked;
+        state = state && checkboxes.eq(i).val();
       }
-      checkboxes[0].checked = state;
+      checkboxes.eq(0).val(state);
     }
   };
   window.eXo.forum = window.eXo.forum || {};

@@ -47,13 +47,16 @@
       <path>/javascript/eXo/forum/UIForumPortlet.js</path>
     </script>
     <depends>
+      <module>forumResources</module>
+    </depends>
+    <depends>
+      <module>MaskLayerControl</module>
+    </depends>
+    <depends>
       <module>UIContextMenu</module>
     </depends>
     <depends>
       <module>CheckBoxManager</module>
-    </depends>
-    <depends>
-      <module>forumResources</module>
     </depends>
     <depends>
       <module>ForumUtils</module>

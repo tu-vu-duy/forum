@@ -440,7 +440,7 @@
 	} ;
 
 	UIForumPortlet.prototype.showPicture = function(src) {
-	  eXo.ks.MaskLayerControl.showPicture(src);
+	  eXo.forum.MaskLayerControl.showPicture(src);
 	};
 
 	UIForumPortlet.prototype.getImageSize = function(imageNode){
