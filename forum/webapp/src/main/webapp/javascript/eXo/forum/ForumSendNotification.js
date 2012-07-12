@@ -57,11 +57,11 @@ ForumSendNotification.prototype.openCallback = function(obj){
 	obj.onclick = function(){
 		this.style.visibility = "hidden" ;
 	} ;
-}
+};
 
 ForumSendNotification.prototype.closeBox = function(obj){
 	obj.style.visibility = "hidden" ;
-}
+};
 
 ForumSendNotification.prototype.createMessage = function(message){
 	var msgBox = null ;
