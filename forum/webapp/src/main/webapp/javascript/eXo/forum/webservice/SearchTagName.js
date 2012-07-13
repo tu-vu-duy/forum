@@ -1,188 +1,185 @@
-
-;(function($, window, document) {
-
-  function SearchTagName() {
-    this.searchTagNameNode = null;
-    this.uiGridNode = null;
-    this.SEARCH_IP_BAN = 'Search tag name ajax action';
-    this.data = null;
-  }
-
-  SearchTagName.prototype.init = function(userName) {
-    var DOMUtil = eXo.core.DOMUtil;
-    this.parentNode = document.getElementById('searchTagName');
-    if(!this.parentNode) return;
-    $(this.parentNode).hide();
-    this.parentNode.style.visibility = "hidden";
-    var searchInputId =  this.parentNode.getAttribute("inputId");
-    this.searchTagNameNode = document.getElementById(searchInputId);
-    if (!this.searchTagNameNode) {
-      return;
-    }
-    this.searchTagNameNode.value = "";
-    this.searchTagNameNode.onkeydown = this.searchIpBanWrapper;
-    this.searchTagNameNode.onclick = this.submitInput;
-    var buttonSearch = document.getElementById('ButtonSearch');
-    if(buttonSearch){buttonSearch.onclick = this.submitInput;}
-  };
-
-  SearchTagName.prototype.submitInput = function(event) {
-    var str = String(eXo.forum.webservice.SearchTagName.searchTagNameNode.value)
-    if(eXo.forum.webservice.SearchTagName.parentNode.style.visibility === "hidden" && str.trim().length === 0) {
-      eXo.forum.webservice.SearchTagName.searchTagName('onclickForm');
-    }
-  };
-
-  SearchTagName.prototype.searchIpBanWrapper = function(event) {
-    var key = eXo.forum.ForumUtils.getKeynum(event);
-    if(key == 13){
-      var object = eXo.forum.webservice.SearchTagName;
-      var str = String(object.searchTagNameNode.value);
-      if(object.parentNode.style.visibility === "visible"){
-        object.searchTagNameNode.focus();
-        object.parentNode.style.visibility = "hidden";
-        object.searchTagName(' ');
-      } else if(str.trim().length > 0){
-        var linkSubmit = String(object.parentNode.getAttribute('linkSubmit'));
-        linkSubmit = linkSubmit.replace("javascript:", "");
-        eval(linkSubmit);
-      }
-      return;
-    }
-    if(key == 38 || key == 40){
-      var DOMUtil = eXo.core.DOMUtil;
-      var items = DOMUtil.findDescendantsByClass(this.parentNode, "div", "TagNameItem");
-      if(items && items.length > 0) {
-        var itemSl =  DOMUtil.findFirstDescendantByClass(this.parentNode, "div", "Selected");
-        if(itemSl) {
-          var t = items.length;
-          for (var i = 0; i < t; i++) {
-            if(items[i] === itemSl){
-              items[i].className = "TagNameItem";
-              if(i == 0 && key == 38) {
-                eXo.forum.webservice.SearchTagName.setValueInput(items[t-1]);
-              }else if(i == (t-1) && key == 40){
-                eXo.forum.webservice.SearchTagName.setValueInput(items[0]);
-              } else if(key == 38){
-                eXo.forum.webservice.SearchTagName.setValueInput(items[i-1]);
-              } else if(key == 40) {
-                eXo.forum.webservice.SearchTagName.setValueInput(items[i+1]);
-              }
-            }
+;(function ($, window, document) {
+  var SearchTagName = {
+    key : {ENTER:13, UP: 38, DOWN:40, SPACE:32, BACK:8}, 
+    jInputSearch: null,
+    data: null,
+    jparent: null,
+    jcontainer: null,
+    request: null,
+    data: {},
+    lastkey: '',
+    init: function () {
+      var jparent = $('#AddTagId');
+      if(jparent.exists()) {
+        SearchTagName.jparent = jparent;
+        SearchTagName.jcontainer = jparent.findId('#searchTagName');
+        SearchTagName.jcontainer.hide();
+        SearchTagName.jInputSearch = jparent.findId(SearchTagName.jcontainer.attr('inputId'));
+        SearchTagName.lastkey = '';
+        if(SearchTagName.jInputSearch.exists()) {
+          SearchTagName.jInputSearch.val('');
+          SearchTagName.jInputSearch.on('keydown', SearchTagName.searchIpBanWrapper);
+          SearchTagName.jInputSearch.on('click', SearchTagName.submitInput);
+          var buttonSearch = $('#ButtonSearch');
+          if(buttonSearch.exists()) {
+            buttonSearch.on('click', SearchTagName.submitInput);
           }
-        } else {
-          eXo.forum.webservice.SearchTagName.setValueInput(items[0]);
         }
       }
-    }else if(key > 40 || key == 8) {
-      var str = String(eXo.forum.webservice.SearchTagName.searchTagNameNode.value)
-      if(key == 8 && (str.trim().length === 0 ||str.trim().length === 1)){
-        eXo.forum.webservice.SearchTagName.searchTagName('onclickForm');
+    },
+    submitInput: function (event) {
+      var str = String(SearchTagName.jInputSearch.val());
+      if(SearchTagName.jcontainer.css('visibility') === 'hidden' && str.trim().length === 0) {
+        SearchTagName.searchTagName('onclickForm');
+      }
+    },
+    searchIpBanWrapper: function (event) {
+      var key = eXo.forum.ForumUtils.getKeynum(event);
+      var KEY = SearchTagName.key;
+      if(key == KEY.ENTER) {
+        var str = String(SearchTagName.jInputSearch.val()).trim();
+        if(SearchTagName.jcontainer.css('visibility') === 'visible') {
+          SearchTagName.jInputSearch[0].focus();
+          SearchTagName.jcontainer.hide();
+          SearchTagName.searchTagName(' ');
+        } else if(str.length > 0) {
+          eval(String(SearchTagName.jcontainer.attr('linkSubmit')).replace('javascript:', ''));
+        }
+        return;
+      }
+      if(key == KEY.UP || key == KEY.DOWN) {
+        var items = SearchTagName.jparent.find('div.TagNameItem');
+        if(items.exists()) {
+          var itemSl = SearchTagName.jparent.find('div.Selected:first');
+          if(itemSl.exists()) {
+            var t = items.length;
+            for(var i = 0; i < t; i++) {
+              if(items.eq(i)[0] === itemSl[0]) {
+                itemSl.removeClass('Selected');
+                if(i == 0 && key == KEY.UP) {
+                  SearchTagName.setValueInput(items.eq(t - 1));
+                } else if(i == (t - 1) && key == KEY.DOWN) {
+                  SearchTagName.setValueInput(items.eq(0));
+                } else if(key == KEY.UP) {
+                  SearchTagName.setValueInput(items.eq(i - 1));
+                } else if(key == KEY.DOWN) {
+                  SearchTagName.setValueInput(items.eq(i + 1));
+                }
+              }
+            }
+          } else {
+            SearchTagName.setValueInput(items.eq(0));
+          }
+        }
+      } else if(key > KEY.DOWN || key == KEY.BACK || key == KEY.SPACE) {
+        var str = String(SearchTagName.jInputSearch.val());
+        if((key == KEY.BACK || key == KEY.SPACE) && (str.trim().length == 0 || str.length == 1)) {
+          SearchTagName.searchTagName('onclickForm');
+        } else {
+          window.setTimeout(SearchTagName.searchIpBanTimeout, 100);
+        }
+      }
+    },
+    setValueInput: function (elm) {
+      elm.addClass('Selected');
+      var str = String(SearchTagName.jInputSearch.val());
+      str = str.substring(0, str.lastIndexOf(" "));
+      var value = String(elm.html());
+      value = value.substring(0, value.indexOf(" "));
+      if(str.length == 0) str = value;
+      else str = str + " " + value;
+      SearchTagName.jInputSearch.val(str);
+    },
+    searchIpBanTimeout: function () {
+      SearchTagName.searchTagName(SearchTagName.jInputSearch.val());
+    },
+    searchTagName: function (keyword) {
+      // Get data from service, url: /ks/forum/filterTagNameForum/{strTagName}/
+      keyword = String(keyword);
+      var strs = keyword.split(" ");
+      if(strs.length >= 1) keyword = strs[strs.length - 1];
+      keyword = keyword || '';
+      if(keyword === SearchTagName.lastkey) {
+        return;
+      }
+      if(keyword.trim().length > 0) {
+        var userAndTopicId = SearchTagName.jcontainer.attr("userAndTopicId");
+        var restPath = SearchTagName.jcontainer.attr("restPath");
+        if(userAndTopicId) {
+          var url = restPath + '/ks/forum/filterTagNameForum/' + userAndTopicId + '/' + keyword + '/';
+          SearchTagName.request = $.getJSON(url);
+          setTimeout(SearchTagName.processing, 200);
+          SearchTagName.lastkey = keyword;
+        }
       } else {
-        window.setTimeout(eXo.forum.webservice.SearchTagName.searchIpBanTimeout, 50);
+        SearchTagName.jcontainer.hide();
+        SearchTagName.lastkey = '';
+        SearchTagName.jcontainer.css('visibility', 'hidden');
       }
-    }
-  };
-
-  SearchTagName.prototype.setValueInput = function(elm) {
-    elm.className = "TagNameItem Selected";
-    var str = String(this.searchTagNameNode.value);
-    str = str.substring(0, str.lastIndexOf(" "));
-    var value = String(elm.innerHTML);
-    value = value.substring(0, value.indexOf(" "));
-    if(str.length == 0) str = value ;
-    else str = str + " " + value;
-    this.searchTagNameNode.value = str;
-  };
-
-  SearchTagName.prototype.searchIpBanTimeout = function() {
-    eXo.forum.webservice.SearchTagName.searchTagName(eXo.forum.webservice.SearchTagName.searchTagNameNode.value);
-  };
-
-  SearchTagName.prototype.searchTagName = function(keyword) {
-    // Get data from service, url: /ks/forum/filterTagNameForum/{strTagName}/
-    keyword = String(keyword);
-    var strs = keyword.split(" ");
-    if(strs.length >= 1)keyword = strs[strs.length-1];
-    keyword = keyword || 'onclickForm';
-    var userAndTopicId = this.parentNode.getAttribute("userAndTopicId");
-    var restPath = this.parentNode.getAttribute("restPath");
-    if(userAndTopicId){
-      var url = restPath + '/ks/forum/filterTagNameForum/' + userAndTopicId + '/' + keyword + '/';
-      this.request = $.getJSON(url);
-      setTimeout(eXo.forum.webservice.SearchTagName.processing, 200);
-    }
-  };
-
-  SearchTagName.prototype.processing = function() {
-   var SearchTagName = eXo.forum.webservice.SearchTagName;
-   if(SearchTagName.request.isResolved()) {
-      SearchTagName.data = eXo.core.JSON.parse(SearchTagName.request.responseText);
-      if(SearchTagName.data) {
-        SearchTagName.updateIpBanList();
-        $(SearchTagName.parentNode).show(300);
+    },
+    processing: function () {
+      var txt = String(SearchTagName.request.responseText);
+      if(txt != 'undefined' && txt.trim().length > 0){
+        SearchTagName.data = eXo.core.JSON.parse(txt);
+        if(SearchTagName.data.jsonList) {
+          SearchTagName.updateIpBanList();
+        }
       }
-    }
-  };
-
-  SearchTagName.prototype.updateIpBanList = function() {
-    var DOMUtil = eXo.core.DOMUtil;
-    // Remove all old items
-    var oldTagNameList = DOMUtil.findDescendantsByClass(this.parentNode, 'div', 'TagNameItem');
-    for(var i=0; i < oldTagNameList.length; i++) {
-      DOMUtil.removeElement(oldTagNameList[i]);		
-    }
-    // Fill up with new list
-    var t = 0;
-    var length_ = this.data.jsonList.length ;
-    for(var i=0; i < length_; i++) {
-      this.parentNode.appendChild(this.buildItemNode(this.data.jsonList[i].ip));
-      t = 1;
-    }
-    if(t==1) this.parentNode.style.visibility = "visible";
-    else this.parentNode.style.visibility = "hidden";
-  };
-
-  SearchTagName.prototype.buildItemNode = function(ip) {
-    var SearchTagName = eXo.forum.webservice.SearchTagName;
-    var itemNode = $('<div></div>').addClass('TagNameItem').html(ip);
-    this.searchTagNameNode;
-    itemNode.onclick = function() {
-      var str = String(eXo.forum.webservice.SearchTagName.searchTagNameNode.value);
-      str = str.substring(0, str.lastIndexOf(' '))
-      if(str.length == 0) str = ip ;
-      else str = str + " " + ip;
-      SearchTagName.searchTagNameNode.value = str;
-      SearchTagName.searchTagNameNode.focus();
-      SearchTagName.parentNode.style.visibility = "hidden";
-      SearchTagName.searchTagName(' ');
-    }
-    itemNode.onmouseover = SearchTagName.mouseEvent(this, true);
-    itemNode.onfocus = SearchTagName.mouseEvent(this, true);
-    itemNode.onmouseout = SearchTagName.mouseEvent(this, false);
-    itemNode.onblur = SearchTagName.mouseEvent(this, false);
-    return itemNode;
-  };
-
-
-  SearchTagName.prototype.mouseEvent = function(elm, isOv) {
-    if (isOv) {
-      if (elm.className === 'TagNameItem') {
-        elm.className = 'TagNameItem OverItem';
+    },
+    updateIpBanList: function () {
+      // Remove all old items
+      SearchTagName.jcontainer.find('.TagNameItem').remove();
+      // Fill up with new list
+      var t = 0;
+      var length_ = SearchTagName.data.jsonList.length;
+      for(var i = 0; i < length_; i++) {
+        SearchTagName.jcontainer.append(SearchTagName.buildItemNode(SearchTagName.data.jsonList[i].ip));
+        t = 1;
+      }
+      if(t == 1) {
+        SearchTagName.jcontainer.css('visibility', 'visible');
+        SearchTagName.jcontainer.show(300);
       } else {
-        elm.className = 'TagNameItem OverItem Slect';
+        SearchTagName.jcontainer.hide(300);
+        SearchTagName.jcontainer.css('visibility', 'hidden');
       }
-    } else {
-      if (elm.className === 'TagNameItem OverItem') {
-        elm.className = 'TagNameItem';
+    },
+    buildItemNode: function (ip) {
+      var itemNode = $('<div></div>').addClass('TagNameItem').html(ip);
+      itemNode.on('click', function (event) {
+        var vl = ip.substring(0, ip.indexOf(' '));
+        var str = String(SearchTagName.jInputSearch.val());
+        str = str.substring(0, str.lastIndexOf(' '))
+        if(str.length == 0) str = vl;
+        else str += ' ' + vl;
+        SearchTagName.jInputSearch.val(str);
+        SearchTagName.jInputSearch.focus();
+        SearchTagName.jcontainer.hide();
+        SearchTagName.searchTagName(' ');
+      });
+      itemNode.on('mouseover', SearchTagName.mouseOveEvent);
+      itemNode.on('focus', SearchTagName.mouseOveEvent);
+      itemNode.on('mouseout', SearchTagName.mouseOutEvent);
+      itemNode.on('blur', SearchTagName.mouseOutEvent);
+      return itemNode;
+    },
+    mouseOveEvent: function () {
+      if($(this).hasClass('Selected')) {
+        $(this).attr('class', 'TagNameItem OverItem Slect');
       } else {
-        elm.className = 'TagNameItem Selected';
+        $(this).attr('class', 'TagNameItem OverItem');
+      }
+    },
+    mouseOutEvent: function () {
+      if($(this).hasClass('Slect')) {
+        $(this).attr('class', 'TagNameItem Selected');
+      } else {
+        $(this).attr('class', 'TagNameItem');
       }
     }
   };
-  
+
   window.eXo.forum = window.eXo.forum || {};
   window.eXo.forum.webservice = window.eXo.forum.webservice || {};
-  window.eXo.forum.webservice.SearchTagName = new SearchTagName();
-
+  window.eXo.forum.webservice.SearchTagName = SearchTagName;
 })(gj, window, document);

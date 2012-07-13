@@ -3,16 +3,16 @@
     container : [],
     menus : [],
     setup : function() {
-      var i = this.container.length;
+      var i = UIContextMenu.container.length;
       while (i--) {
-        $(this.container[i]).on('contextmenu', this.show);
+        $(UIContextMenu.container[i]).on('contextmenu', UIContextMenu.show);
       }
     },
     setContainer : function(obj) {
-      this.container.push(obj);
+      UIContextMenu.container.push(obj);
     },
     getMenu : function(evt) {
-      var element = this.getMenuElement(evt);
+      var element = UIContextMenu.getMenuElement(evt);
       if (!element && !element.exists())
         return;
       var menuId = String(element.attr('id')).replace("Context", "");
@@ -25,9 +25,9 @@
       return jmenu;
     },
     getMenuElement : function(evt) {
-      var target = eXo.ks.EventManager.getEventTarget(evt);
-      for (i = 0; i < this.classNames.length; i++) {
-        var parent = $(target).parents('.'+this.classNames[i]);
+      var target = eXo.forum.EventManager.getEventTarget(evt);
+      for (i = 0; i < UIContextMenu.classNames.length; i++) {
+        var parent = $(target).parents('.' + UIContextMenu.classNames[i]);
         if (parent.exists()) {
           return parent;
         }
@@ -54,16 +54,16 @@
     show : function(evt) {
       eXo.forum.ForumUtils.cancelEvent(evt);
       eXo.forum.ForumUtils.hideElements();
-      var jmenu = this.getMenu(evt);
-      if (!jmenu){
+      var jmenu = UIContextMenu.getMenu(evt);
+      if (!jmenu) {
         return;
       }
-      this.setPosition(jmenu, evt);
+      UIContextMenu.setPosition(jmenu, evt);
       eXo.forum.ForumUtils.addhideElement(jmenu);
       return false;
     }
   };
-
+  
   window.eXo = window.eXo || {};
   window.eXo.forum = window.eXo.forum || {};
   window.eXo.forum.UIContextMenu = UIContextMenu;

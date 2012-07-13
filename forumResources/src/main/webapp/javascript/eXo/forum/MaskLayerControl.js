@@ -53,7 +53,7 @@
   } ;
   
   MaskLayerControl.prototype.hidePicture = function() {
-    eXo.ks.Browser.onScrollCallback.remove('MaskLayerControl') ;
+    eXo.core.Browser.onScrollCallback.remove('MaskLayerControl') ;
     var maskContent = eXo.core.UIMaskLayer.object ;
     var maskNode = document.getElementById("MaskLayer") || document.getElementById("subMaskLayer") ;
     if (maskContent) maskContent.parentNode.removeChild(maskContent) ;
