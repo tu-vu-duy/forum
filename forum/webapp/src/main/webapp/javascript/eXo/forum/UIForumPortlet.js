@@ -22,51 +22,51 @@
     },
     
     selectItem : function(obj) {
-      var DOMUtil = eXo.core.DOMUtil;
-      var tr = DOMUtil.findAncestorByTagName(obj, "tr");
-      var table = DOMUtil.findAncestorByTagName(obj, "table");
-      var tbody = DOMUtil.findAncestorByTagName(obj, "tbody");
-      var checkbox = DOMUtil.findFirstDescendantByClass(table, "input", "checkbox");
-      var checkboxes = DOMUtil.findDescendantsByClass(tbody, "input", "checkbox");
+      
+      var tr = obj.parent('tr');
+      var table = obj.parent('table');
+      var tbody = table.find('tbody');
+      var checkbox = table.find('input.checkbox:first');
+      var checkboxes = tbody.find('input.checkbox');
       var chklen = checkboxes.length;
       var j = 0;
-      if (obj.checked) {
-        if (!tr.getAttribute("tmpClass")) {
-          tr.setAttribute("tmpClass", tr.className);
-          tr.className = "SelectedItem";
+      if (obj.val() == true) {
+        if (!tr.attr("tmpClass")) {
+          tr.attr("tmpClass", tr.attr('class'));
+          tr.attr('class', 'SelectedItem');
         }
         for ( var i = 0; i < chklen; i++) {
-          if (checkboxes[i].checked)
+          if (checkboxes[i].val())
             j++;
           else
             break;
         }
         if (j == chklen)
-          checkbox.checked = true;
+          checkbox.val(true);
       } else {
-        if (tr.getAttribute("tmpClass")) {
-          tr.className = tr.getAttribute("tmpClass");
-          tr.removeAttribute("tmpClass");
+        if (tr.attr('tmpClass')) {
+          tr.attr('class', tr.attr('tmpClass'));
+          tr.removeAttr('tmpClass');
         }
-        checkbox.checked = false;
+        checkbox.val(false);
       }
-      var modMenu = document.getElementById("ModerationMenu");
-      if (modMenu) {
-        var firstItem = modMenu.getElementsByTagName("a")[0];
+      var modMenu = $('#ModerationMenu');
+      if (modMenu.exists()) {
+        var firstItem = modMenu.find('a:first');
         if (j >= 2) {
-          if (!firstItem.getAttribute("oldClass")) {
-            firstItem.setAttribute("oldHref", firstItem.href);
-            firstItem.href = "javascript:void(0);";
-            var parentIt = DOMUtil.findAncestorByClass(firstItem, "MenuItem");
-            firstItem.setAttribute("oldClass", parentIt.className);
-            parentIt.className = "DisableMenuItem";
+          if (!firstItem.attr('oldClass')) {
+            firstItem.attr('oldHref', firstItem.attr('href'));
+            firstItem.attr('href','javascript:void(0);');
+            var parentIt = firstItem.parent('.MenuItem');
+            firstItem.attr('oldClass', parentIt.attr('class'));
+            parentIt.attr('class', 'DisableMenuItem');
           }
         } else {
-          if (firstItem.getAttribute("oldClass")) {
-            firstItem.href = firstItem.getAttribute("oldHref");
-            var parentIt = DOMUtil.findAncestorByClass(firstItem, "DisableMenuItem");
-            parentIt.className = firstItem.getAttribute("oldClass");
-            firstItem.setAttribute("oldClass", "");
+          if (firstItem.attr("oldClass")) {
+            firstItem.attr('href', firstItem.attr('oldHref'));
+            var parentIt = firstItem.parent('.DisableMenuItem');
+            parentIt.attr('class', firstItem.attr('oldClass'));
+            firstItem.removeAttr('oldClass');
           }
         }
       }
@@ -101,13 +101,13 @@
     },
     
     setChecked : function(isChecked) {
-      var divChecked = document.getElementById('divChecked');
+      var divChecked = $('#divChecked');
       var check = 0;
-      check = eval(divChecked.getAttribute("checked"));
+      check = eval(divChecked.attr("checked"));
       if (isChecked)
-        divChecked.setAttribute("checked", (check + 1));
+        divChecked.attr("checked", (check + 1));
       else
-        divChecked.setAttribute("checked", (check - 1));
+        divChecked.attr("checked", (check - 1));
     },
     
     OneChecked : function(formName) {
@@ -124,9 +124,9 @@
     },
     
     numberIsChecked : function(formName, checkAllName, multiAns, onlyAns, notChecked) {
-      var divChecked = document.getElementById('divChecked');
+      var divChecked = $('#divChecked');
       var total = 0;
-      total = eval(divChecked.getAttribute("checked"));
+      total = eval(divChecked.attr("checked"));
       if (total > 1) {
         var text = String(multiAns);
         return confirm(text.replace('{0}', total));
@@ -139,24 +139,23 @@
     },
     
     checkAll : function(obj) {
-      var DOMUtil = eXo.core.DOMUtil;
-      var thead = DOMUtil.findAncestorByTagName(obj, "thead");
-      var tbody = DOMUtil.findNextElementByTagName(thead, "tbody");
-      var checkboxes = DOMUtil.findDescendantsByClass(tbody, "input", "checkbox");
+      var thead = obj.parent('thead');
+      var tbody = thead.parent('table').find('tbody');
+      var checkboxes = tbody.find('input.checkbox');
       var len = checkboxes.length;
-      if (obj.checked) {
+      if (obj.val()) {
         for ( var i = 0; i < len; i++) {
-          if (!checkboxes[i].checked)
+          if (!checkboxes.eq(i).val())
             UIForumPortlet.setChecked(true);
-          checkboxes[i].checked = true;
-          this.selectItem(checkboxes[i]);
+          checkboxes.eq(i).val(true);
+          UIForumPortlet.selectItem(checkboxes.eq(i));
         }
       } else {
         for ( var i = 0; i < len; i++) {
-          if (checkboxes[i].checked)
+          if (checkboxes.eq(i).val())
             UIForumPortlet.setChecked(false);
-          checkboxes[i].checked = false;
-          this.selectItem(checkboxes[i]);
+          checkboxes.eq(i).val(false);
+          UIForumPortlet.selectItem(checkboxes.eq(i));
         }
       }
     },
