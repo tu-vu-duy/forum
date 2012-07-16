@@ -6,7 +6,7 @@ var DragDrop = {
     targetClass : [],
     init : function(compid) {
       var comp = findId(compid);
-      comp.find('div.FAQCategory').on('mousedown', this.attach);
+      //comp.find('div.FAQCategory').on('mousedown', this.attach);
       comp.on('selectstart', eXo.forum.ForumUtils.returnFalse);
       comp.on('dragstart', eXo.forum.ForumUtils.returnFalse);
     },
