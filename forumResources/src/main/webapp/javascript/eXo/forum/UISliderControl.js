@@ -59,9 +59,10 @@
   };
   
   UISliderControl.prototype.reset = function(input) {
-    input.value = 0;
-    input.previousSibling.innerHTML = 0;
-    $(input).parents('.UISliderControl').find('div.SliderPointer').css('width', '14px');
+    $(input).val('0');
+    var parent = $(input).parents('.UISliderControl');
+    parent.find('label[for=' + $(input).attr('id') + ']').html('0');
+    parent.find('div.SliderPointer').css('width', '14px');
   };
   
   window.eXo.webui = window.eXo.webui || {};

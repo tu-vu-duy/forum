@@ -1,5 +1,4 @@
-;
-(function($, window, document) {
+;(function($, window, document) {
   
   var UIForumPortlet = {
     obj : null,
@@ -163,141 +162,137 @@
     // DungJs
     checkAction : function(obj, evt) {
       UIForumPortlet.showPopup(obj, evt);
-      var uiCategory = document.getElementById("UICategory");
-      var DOMUtil = eXo.core.DOMUtil;
-      var checkboxes = DOMUtil.findDescendantsByClass(uiCategory, "input", "checkbox");
-      var uiRightClickPopupMenu = eXo.core.DOMUtil.findFirstDescendantByClass(obj, "ul", "UIRightClickPopupMenu");
-      if (uiRightClickPopupMenu == null) {
-        uiRightClickPopupMenu = eXo.core.DOMUtil.findFirstDescendantByClass(obj, "div", "UIRightClickPopupMenu");
-      }
+      var uiCategory = $('UICategory');
+      var checkboxes = uiCategory.find('input.checkbox');
+      var uiRightClickPopupMenu = $(obj).find('.UIRightClickPopupMenu:first');
       var clen = checkboxes.length;
-      var menuItems = uiRightClickPopupMenu.getElementsByTagName("a");
+      var menuItems = uiRightClickPopupMenu.find('a');
       var mlen = menuItems.length;
       var checked = false;
       for ( var i = 1; i < clen; i++) {
-        if (checkboxes[i].checked && checkboxes[i].name.indexOf("forum") == 0) {
+        if (checkboxes.eq(i).val() && checkboxes.eq(i).attr('name').indexOf("forum") == 0) {
           checked = true;
           break;
         }
       }
       var j = 0;
       for ( var i = 0; i < mlen; i++) {
-        if (String(menuItems[i].className).indexOf("AddForumIcon") > 0) {
+        if (String(menuItems.eq(i).attr('class').indexOf("AddForumIcon") > 0) {
           j = i + 1;
           break;
         }
       }
       for ( var n = j; n < mlen; n++) {
+        var menuItem = menuItems.eq(n);
         if (!checked) {
-          if (!menuItems[n].getAttribute("tmpHref")) {
-            menuItems[n].setAttribute("tmpHref", menuItems[n].href);
-            menuItems[n].href = "javascript:void(0);";
-            menuItems[n].setAttribute("tmpClass", menuItems[n].parentNode.className);
-            menuItems[n].parentNode.className = "DisableMenuItem";
+          if (!menuItem.attr("tmpHref")) {
+            menuItem.attr("tmpHref", menuItem.attr('href'));
+            menuItem.attr('href','javascript:void(0);');
+            menuItem.attr('tmpClass', $(menuItem[0].parentNode).attr('class'));
+            $(menuItem[0].parentNode).attr('class', 'DisableMenuItem');
           }
         } else {
-          if (menuItems[n].getAttribute("tmpHref")) {
-            menuItems[n].href = menuItems[n].getAttribute("tmpHref");
-            menuItems[n].parentNode.className = menuItems[n].getAttribute("tmpClass");
-            menuItems[n].removeAttribute("tmpHref");
-            menuItems[n].removeAttribute("tmpClass");
+          if (menuItem.attr("tmpHref")) {
+            menuItem.attr('href', menuItem.attr('tmpHref'));
+            $(menuItem[0].parentNode).attr('class', menuItem.attr('tmpClass'));
+            menuItem.removeAttr("tmpHref");
+            menuItem.removeAttr("tmpClass");
           }
         }
       }
     },
     
     visibleAction : function(id) {
-      var parent = document.getElementById(id);
-      var DOMUtil = eXo.core.DOMUtil;
-      var addCategory = DOMUtil.findFirstDescendantByClass(parent, "div", "AddCategory");
-      if (!addCategory)
-        return;
-      var addForum = DOMUtil.findFirstDescendantByClass(parent, "div", "AddForum");
-      var isIE = document.all ? true : false;
-      if (document.getElementById("UICategories")) {
-        addCategory.className = "Icon AddCategory";
-        addForum.className = "Icon AddForum";
-      } else if (document.getElementById("UICategory")) {
-        addCategory.className = "Icon AddCategory DisableAction";
-        addForum.className = "Icon AddForum";
-        if (isIE)
-          addCategory.firstChild.href = "javascript:void(0);";
-        else
-          addCategory.childNodes[1].href = "javascript:void(0);";
-      } else {
-        addCategory.className = "Icon AddCategory DisableAction";
-        addForum.className = "Icon AddForum DisableAction";
-        if (isIE) {
-          addCategory.firstChild.href = "javascript:void(0);";
-          addForum.firstChild.href = "javascript:void(0);";
+      var parent = findId(id);
+      var addCategory = parent.find('div.AddCategory:first');
+      if (addCategory.exists()) {
+        var addForum = parent.find('div.AddForum:first');
+        var isIE = document.all ? true : false;
+        if ($("#UICategories").exists()) {
+          addCategory.attr('class', "Icon AddCategory");
+          addForum.attr('class', "Icon AddForum");
+        } else if ($("#UICategory").exists()) {
+          addCategory.attr('class', "Icon AddCategory DisableAction");
+          addForum.attr('class', "Icon AddForum");
+          if (isIE)
+            addCategory.find(':first-child').attr('href', "javascript:void(0);");
+          else
+            addCategory.children().eq(1).attr('href', "javascript:void(0);");
         } else {
-          addCategory.childNodes[1].href = "javascript:void(0);";
-          addForum.childNodes[1].href = "javascript:void(0);";
+          addCategory.attr('class', "Icon AddCategory DisableAction");
+          addForum.attr('class', "Icon AddForum DisableAction");
+          if (isIE) {
+            addCategory.find(':first-child').attr('href', "javascript:void(0);");
+            addForum.find(':first-child').attr('href', "javascript:void(0);");
+          } else {
+            addCategory.children().eq(1).attr('href', "javascript:void(0);");
+            addForum.children().eq(1).attr('href', "javascript:void(0);");
+          }
         }
       }
     },
     
     checkActionTopic : function(obj, evt) {
       UIForumPortlet.showPopup(obj, evt);
-      var DOMUtil = eXo.core.DOMUtil;
-      var parentMenu = document.getElementById("ModerationMenu");
-      var menuItems = parentMenu.getElementsByTagName("a");
-      var parentContent = document.getElementById("UITopicContent");
-      var checkBoxs = DOMUtil.findDescendantsByClass(parentContent, "input", "checkbox");
+      var parentMenu = $("#ModerationMenu");
+      var menuItems = parentMenu.find('a');
+      var parentContent = $("#UITopicContent");
+      var checkBoxs = parentContent.find('input.checkbox');
       var clen = checkBoxs.length;
       var mlen = menuItems.length;
-      var divChecked = document.getElementById('divChecked');
+      var divChecked = $('#divChecked');
       var j = 0;
-      j = eval(divChecked.getAttribute("checked"));
+      j = eval(divChecked.attr("checked"));
       for ( var i = 1; i < clen; i++) {
-        if (checkBoxs[i].checked) {
+        if (checkBoxs.eq(i).val()) {
           j = 1;
           break;
         }
       }
       if (j === 0) {
         for ( var k = 0; k < mlen; k++) {
-          if (menuItems[k].className === "ItemIcon SetUnWaiting")
+          var menuItem = menuItems.eq(k);
+          if (menuItem.hasClass('ItemIcon SetUnWaiting')) 
             break;
-          if (!menuItems[k].getAttribute("tmpClass")) {
-            menuItems[k].setAttribute("tmpHref", menuItems[k].href);
-            menuItems[k].href = "javascript:void(0);";
-            var parentIt = DOMUtil.findAncestorByClass(menuItems[k], "MenuItem");
-            menuItems[k].setAttribute("tmpClass", parentIt.className);
-            parentIt.className = "DisableMenuItem";
-            parentIt.onclick = eXo.forum.ForumUtils.cancelEvent;
+          if (!menuItem.attr("tmpClass")) {
+            menuItem.attr("tmpHref", menuItem.attr('href'));
+            menuItem.attr('href', "javascript:void(0);");
+            var parentIt = menuItem.parents(".MenuItem");
+            menuItem.attr("tmpClass", parentIt.attr('class'));
+            parentIt.attr('class', "DisableMenuItem");
+            parentIt.on('click', eXo.forum.ForumUtils.cancelEvent);
           }
         }
       } else {
         for ( var n = 0; n < mlen; n++) {
-          if (menuItems[n].getAttribute("tmpClass")) {
-            var parent = DOMUtil.findAncestorByClass(menuItems[n], "DisableMenuItem");
-            if (parent)
-              parent.className = menuItems[n].getAttribute("tmpClass");
-            menuItems[n].href = menuItems[n].getAttribute("tmpHref");
-            menuItems[n].removeAttribute("tmpClass");
-            menuItems[n].removeAttribute("tmpHref");
+          var menuItem = menuItems.eq(n);
+          if (menuItem.attr("tmpClass")) {
+            var parent = menuItem.find(".DisableMenuItem");
+            if (parent.exists())
+              parent.attr('class', menuItem.attr("tmpClass"));
+            menuItem.attr('href', menuItem.attr("tmpHref"));
+            menuItem.removeAttr("tmpClass");
+            menuItem.removeAttr("tmpHref");
           }
         }
       }
     },
     
     expandCollapse : function(obj) {
-      var forumToolbar = eXo.core.DOMUtil.findAncestorByClass(obj, "ForumToolbar");
-      var contentContainer = eXo.core.DOMUtil.findNextElementByTagName(forumToolbar, "div");
-      if (!contentContainer) {
-        contentContainer = eXo.core.DOMUtil.findNextElementByTagName(forumToolbar, "ul");
-      }
-      if (contentContainer.style.display != "none") {
-        contentContainer.style.display = "none";
-        obj.className = "ExpandButton";
-        obj.setAttribute("title", obj.getAttribute("expand"));
-        forumToolbar.style.borderBottom = "solid 1px #b7b7b7";
+      var jobject = $(obj)
+      var forumToolbar = jobject.parents(".ForumToolbar");
+      var contentContainer = forumToolbar.next();
+
+      if (contentContainer.css('display') != "none") {
+        contentContainer.hide();
+        jobject.addClass('ExpandButton').removeClass('CollapseButton');
+        jobject.attr("title", jobject.attr("expand"));
+        forumToolbar.css('border-bottom', 'solid 1px #b7b7b7');
       } else {
-        contentContainer.style.display = "block";
-        obj.className = "CollapseButton";
-        obj.setAttribute("title", obj.getAttribute("collapse"));
-        forumToolbar.style.borderBottom = "none";
+        contentContainer.show(100);
+        jobject.addClass('CollapseButton').removeClass('ExpandButton');
+        jobject.attr("title", jobject.attr("collapse"));
+        forumToolbar.css('border-bottom', 'none');
       }
     },
     
@@ -305,98 +300,97 @@
     showTreeNode : function(obj, isShow) {
       if (isShow === "false")
         return;
-      var DOMUtil = eXo.core.DOMUtil;
-      var parentNode = DOMUtil.findAncestorByClass(obj, "ParentNode");
-      var nodes = DOMUtil.findChildrenByClass(parentNode, "div", "Node");
-      var selectedNode = DOMUtil.findAncestorByClass(obj, "Node");
+      var jobject = $(obj);
+      var parentNode = jobject.parents(".ParentNode");
+      var nodes = parentNode.find('div.Node');
+      var selectedNode = jobject.parents(".Node");
       var nodeSize = nodes.length;
       var childrenContainer = null;
       for ( var i = 0; i < nodeSize; i++) {
-        childrenContainer = DOMUtil.findFirstDescendantByClass(nodes[i], "div", "ChildNodeContainer");
-        if (nodes[i] === selectedNode) {
-          childrenContainer.style.display = "block";
-          nodes[i].className = "Node SmallGrayPlus";
+        var node = nodes.eq(i);
+        childrenContainer = node.find("div.ChildNodeContainer:first");
+        if (node[0] === selectedNode[0]) {
+          childrenContainer.show();
+          node.addClass("Node SmallGrayPlus").removeClass('SmallGrayMinus');
         } else {
-          childrenContainer.style.display = "none";
-          if (nodes[i].className === "Node SmallGrayPlus false")
+          childrenContainer.hide();
+          if (node.hasClass("Node SmallGrayPlus false"))
             continue;
-          nodes[i].className = "Node SmallGrayMinus";
+          node.addClass("Node SmallGrayMinus");
         }
       }
     },
     
     checkedNode : function(elm) {
-      var input = elm.getElementsByTagName("input")[0];
-      var DOMUtil = eXo.core.DOMUtil;
-      var parentNode = DOMUtil.findAncestorByClass(input, "Node");
-      var containerChild = DOMUtil.findFirstDescendantByClass(parentNode, "div", "ChildNodeContainer");
-      if (containerChild) {
-        var checkboxes = containerChild.getElementsByTagName("input");
+      var jelm = $(elm);
+      var jinput = jelm.find('input:first');
+
+      var parentNode = jinput.parents('.Node');
+      var containerChild = parentNode.find('div.ChildNodeContainer:first');
+      if (containerChild.exists()) {
+        var checkboxes = containerChild.find('input');
         for ( var i = 0; i < checkboxes.length; ++i) {
-          if (input.checked)
-            checkboxes[i].checked = true;
+          if (jinput.val())
+            checkboxes.eq(i).val(true);
           else
-            checkboxes[i].checked = false;
+            checkboxes.eq(i).val(false);
         }
       }
     },
     
     checkedChildNode : function(elm) {
-      var input = elm.getElementsByTagName("input")[0];
-      if (input) {
-        if (input.checked) {
-          var DOMUtil = eXo.core.DOMUtil;
-          var parentCheckBoxNode = elm.parentNode.parentNode.parentNode;
-          var parentCheckBox = DOMUtil.findFirstDescendantByClass(parentCheckBoxNode, "div", "ParentCheckBox");
-          var parentInput = parentCheckBox.getElementsByTagName("input")[0];
-          if (!parentInput.checked)
-            parentInput.checked = true;
+      var input = $(elm).find('input:first');
+      if (input.exists()) {
+        if (input.val()) {
+          var parentCheckBoxNode = elm.parent().parent().parent();
+          var parentCheckBox = parentCheckBoxNode.find('div.ParentCheckBox:first');
+          parentCheckBox.find('input:first').val(true);
         }
       }
     },
     
     initVote : function(voteId, rate) {
-      var vote = document.getElementById(voteId);
-      var DOMUtil = eXo.core.DOMUtil;
-      vote.rate = rate = parseInt(rate);
-      var optsContainer = DOMUtil.findFirstDescendantByClass(vote, "div", "OptionsContainer");
-      var options = DOMUtil.getChildrenByTagName(optsContainer, "div");
+      var vote = findId(voteId);
+      vote.attr('rate', rate);
+      rate = parseInt(rate);
+      var optsContainer = vote.find('div.OptionsContainer:first');
+      var options = optsContainer.find("div:first-child");
       for ( var i = 0; i < options.length - 1; i++) {
-        options[i].onmouseover = UIForumPortlet.overVote;
-        options[i].onblur = UIForumPortlet.overVote;
+        options.eq(i).on('mouseover', UIForumPortlet.overVote);
+        options.eq(i).on('blur', UIForumPortlet.overVote);
         if (i < rate)
-          options[i].className = "RatedVote";
+          options.eq(i).attr('class', 'RatedVote');
       }
-      vote.onmouseover = UIForumPortlet.parentOverVote;
-      vote.onblur = UIForumPortlet.parentOverVote;
-      optsContainer.onmouseover = eXo.forum.ForumUtils.cancelEvent;
-      optsContainer.onblur = eXo.forum.ForumUtils.cancelEvent;
+      vote.on('mouseover', UIForumPortlet.parentOverVote);
+      vote.on('blur', UIForumPortlet.parentOverVote);
+      optsContainer.on('mouseover', eXo.forum.ForumUtils.cancelEvent);
+      optsContainer.on('blur', eXo.forum.ForumUtils.cancelEvent);
     },
     
     parentOverVote : function(event) {
-      var optsCon = eXo.core.DOMUtil.findFirstDescendantByClass(this, "div", "OptionsContainer");
-      var opts = eXo.core.DOMUtil.getChildrenByTagName(optsCon, "div");
+      var optsCon = $(this).find('div.OptionsContainer:first');
+      var opts = optsCon.find("div:first-child");
       for ( var j = 0; j < opts.length - 1; j++) {
-        if (j < this.rate)
-          opts[j].className = "RatedVote";
+        if (j < $(this).attr('rate'))
+          opts.eq(j).addClass('RatedVote').removeClass('NormalVote');
         else
-          opts[j].className = "NormalVote";
+          opts.eq(j).addClass('NormalVote').removeClass('RatedVote');
       }
     },
     
     overVote : function(event) {
-      var optsCont = eXo.core.DOMUtil.findAncestorByClass(this, "OptionsContainer");
-      var opts = eXo.core.DOMUtil.getChildrenByTagName(optsCont, "div");
+      var optsCon = $(this).find('div.OptionsContainer:first');
+      var opts = optsCon.find("div:first-child");
       var i = opts.length - 1;
       for (--i; i >= 0; i--) {
-        if (opts[i] == this)
+        if (opts.eq(i)[0] == $(this)[0])
           break;
-        opts[i].className = "NormalVote";
+        opts.eq(i).attr('class', 'NormalVote');
       }
-      if (opts[i].className == "OverVote")
+      if (opts.eq(i).attr('class') == "OverVote")
         return;
       for (; i >= 0; i--) {
-        opts[i].className = "OverVote";
+        opts.eq(i).attr('class', 'OverVote');
       }
     },
     
@@ -414,15 +408,15 @@
     },
     
     goLastPost : function(idLastPost) {
-      var isDesktop = document.getElementById('UIPageDesktop');
-      if (isDesktop === null) {
+      var isDesktop = $('#UIPageDesktop');
+      if (!isDesktop.exists()) {
         if (idLastPost === "top") {
-          var body = document.getElementsByTagName('body')[0];
+          var body = $('body')[0];
           if (body.scrollTop > 250) {
             script: scroll(0, 0);
-            var viewPage = document.getElementById('KSMaskLayer');
-            if (viewPage)
-              viewPage.scrollIntoView(true);
+            var viewPage = $('#KSMaskLayer');
+            if (viewPage.exists())
+              viewPage[0].scrollIntoView(true);
           }
         } else {
           var obj = document.getElementById(idLastPost);
@@ -433,27 +427,25 @@
     },
     
     setEnableInput : function() {
-      var parend = document.getElementById("ForumUserBan");
-      var DOMUtil = eXo.core.DOMUtil;
-      if (parend) {
-        var obj = eXo.core.DOMUtil.findFirstDescendantByClass(parend, "input", "checkbox");
-        if (obj) {
-          document.getElementById("BanCounter").disabled = "disabled";
-          document.getElementById("BanReasonSummary").readonly = "readonly";
-          document.getElementById("CreatedDateBan").disabled = "disabled";
-          var selectbox = DOMUtil.findFirstDescendantByClass(parend, "select", "selectbox");
-          if (!obj.checked) {
-            selectbox.disabled = "disabled";
-            var banReason = document.getElementById("BanReason");
-            banReason.disabled = "disabled";
+      var parend = $("#ForumUserBan");
+      if (parend.exists()) {
+        var obj = parend.find("input.checkbox:first");
+        if (obj.exists()) {
+          $("#BanCounter").attr('disabled','disabled');
+          $("#BanReasonSummary").attr('readonly','readonly');
+          $("#CreatedDateBan").attr('disabled','disabled');
+          var selectbox = parend.find("select.selectbox:first");
+          if (!obj.val()) {
+            selectbox.attr('disabled','disabled');
+            $('#BanReason').attr('disabled','disabled');
           }
           $(obj).on('click', function() {
-            if (!obj.checked) {
-              selectbox.disabled = "disabled";
-              banReason.disabled = "disabled";
+            if (!$(this).val()) {
+              selectbox.attr('disabled','disabled');
+              $('#BanReason').attr('disabled','disabled');
             } else {
-              selectbox.disabled = "";
-              banReason.disabled = "";
+              selectbox.removeAttr('disabled');
+              $('#BanReason').removeAttr('disabled');
             }
           });
         }
@@ -461,13 +453,10 @@
     },
     
     hidePicture : function() {
-      eXo.ks.Browser.onScrollCallback.remove('MaskLayerControl');
-      var maskContent = eXo.core.UIMaskLayer.object;
-      var maskNode = document.getElementById("MaskLayer") || document.getElementById("subMaskLayer");
-      if (maskContent)
-        eXo.core.DOMUtil.removeElement(maskContent);
-      if (maskNode)
-        eXo.core.DOMUtil.removeElement(maskNode);
+      eXo.core.Browser.onScrollCallback.remove('MaskLayerControl');
+      $(eXo.core.UIMaskLayer.object).remove();
+      $("#MaskLayer").remove();
+      $("subMaskLayer").remove();
     },
     
     showPicture : function(src) {
@@ -475,91 +464,92 @@
     },
     
     getImageSize : function(imageNode) {
-      var tmp = imageNode.cloneNode(true);
-      tmp.style.visibility = "hidden";
-      document.body.appendChild(tmp);
+      var tmp = $(imageNode.cloneNode(true));
+      tmp.css('visibility', 'hidden');
+      $('body').append(tmp);
       var size = {
-        width : tmp.offsetWidth,
-        height : tmp.offsetHeight
+        width : tmp.outerWidth(true),
+        height : tmp.outerHeight(true)
       }
-      eXo.core.DOMUtil.removeElement(tmp);
+      $(tmp).remove();
       return size;
     },
     
     showFullScreen : function(imageNode, containerNode) {
-      var imageSize = this.getImageSize(imageNode);
-      var widthMax = eXo.ks.Browser.getBrowserWidth();
+      var imageSize = UIForumPortlet.getImageSize(imageNode);
+      var widthMax = $(document.documentElement).outerWidth(true);
       if ((imageSize.width + 40) > widthMax) {
-        containerNode.style.width = widthMax + "px";
-        imageNode.width = (widthMax - 40);
-        imageNode.style.height = "auto";
+        $(containerNode).css('width', widthMax + 'px');
+        imageNode.css('height', 'auto');
+        imageNode.width(widthMax - 40);
       }
     },
     
     setDisableTexarea : function() {
-      var objCmdElm = document.getElementById('moderationOptions');
-      var input = eXo.core.DOMUtil.findFirstDescendantByClass(objCmdElm, "input", "checkbox");
-      if (input) {
-        if (input.name === "AutoAddEmailNotify") {
+      var objCmdElm = $('#moderationOptions');
+      var input = objCmdElm.find('input.checkbox');
+      if (input.exists()) {
+        if (input.attr('name') === "AutoAddEmailNotify") {
           UIForumPortlet.onClickDisableTexarea();
-          input.onclick = UIForumPortlet.onClickDisableTexarea;
+          input.on('click', UIForumPortlet.onClickDisableTexarea);
         }
       }
     },
     
     onClickDisableTexarea : function() {
-      var objCmdElm = document.getElementById('moderationOptions');
-      var input = eXo.core.DOMUtil.findFirstDescendantByClass(objCmdElm, "input", "checkbox");
-      if (objCmdElm) {
-        var texares = objCmdElm.getElementsByTagName("textarea");
+      var objCmdElm = $('#moderationOptions');
+      var input = objCmdElm.find('input.checkbox');
+      if (objCmdElm.exists()) {
+        var texares = objCmdElm.find("textarea");
         for ( var i = 0; i < texares.length; ++i) {
-          if (texares[i].name === "NotifyWhenAddTopic" || texares[i].name === "NotifyWhenAddPost") {
-            if (!input.checked) {
-              texares[i].readOnly = false;
+          var textare = texares.eq(i);
+          if (textare.attr('name') === "NotifyWhenAddTopic" || textare.attr('name') === "NotifyWhenAddPost") {
+            if (!input.val()) {
+              texare.attr('readOnly', 'false');
             } else {
-              texares[i].readOnly = true;
+              texare.attr('readOnly', 'true');
             }
           }
         }
       }
     },
-    
+
     setDisableInfo : function() {
-      var strs = new Array("CanPost", "CanView");
+      var strs = new Array("#CanPost", "#CanView");
       for ( var i = 0; i < strs.length; i++) {
-        var elm = document.getElementById(strs[i]);
-        if (elm === null)
-          return;
-        UIForumPortlet.setShowInfo(elm);
-        elm.onkeyup = function() {
-          UIForumPortlet.setShowInfo(this);
+        var elm = $(strs[i]);
+        if (elm.exists()) {
+          UIForumPortlet.setShowInfo(elm);
+          elm.on('keyup', function() {
+            UIForumPortlet.setShowInfo(this);
+          });
         }
       }
     },
     
     setShowInfo : function(elm) {
-      var info = document.getElementById(elm.id + "Info");
-      if (elm.value === '') {
-        info.style.display = 'block';
+      var info = $($(elm).attr('id') + "Info");
+      if (elm.val() === '') {
+        info.show();
       } else {
-        info.style.display = 'none';
+        info.hide();
       }
     },
     
     controlWorkSpace : function() {
-      var slidebar = document.getElementById('ControlWorkspaceSlidebar');
-      if (slidebar) {
-        var slidebarButton = eXo.core.DOMUtil.findFirstDescendantByClass(slidebar, "div", "SlidebarButton");
-        if (slidebarButton) {
-          slidebarButton.onclick = UIForumPortlet.onClickSlidebarButton;
+      var slidebar = $('#ControlWorkspaceSlidebar');
+      if (slidebar.exists()) {
+        var slidebarButton = slidebar.find("div.SlidebarButton:first");
+        if (slidebarButton.exists()) {
+          slidebarButton.on('click', UIForumPortlet.onClickSlidebarButton);
         }
       }
       setTimeout(UIForumPortlet.reSizeImages, 1500);
     },
     onClickSlidebarButton : function() {
-      var workspaceContainer = document.getElementById('UIWorkspaceContainer');
-      if (workspaceContainer) {
-        if (workspaceContainer.style.display === 'none') {
+      var workspaceContainer = $('#UIWorkspaceContainer');
+      if (workspaceContainer.exists()) {
+        if (workspaceContainer.css('display') === 'none') {
           setTimeout(eXo.forum.UIForumPortlet.reSizeImages, 500);
         }
       }
@@ -575,42 +565,41 @@
     },
     
     reSizeImagesInMessageForm : function() {
-      if (eXo.ks.Browser.isIE6())
+      if (eXo.core.Browser.isIE6())
         setTimeout('eXo.forum.UIForumPortlet.setSizeImages(130, "UIViewPrivateMessageForm")', 800);
       else
         setTimeout('eXo.forum.UIForumPortlet.setSizeImages(10, "UIViewPrivateMessageForm")', 400);
     },
     
     setSizeImages : function(delta, classParant) {
-      var parent_ = document.getElementById(classParant);
-      var imageContentContainer = eXo.core.DOMUtil.findFirstDescendantByClass(parent_, "div", "ImageContentContainer");
-      if (imageContentContainer) {
-        var isDesktop = document.getElementById('UIPageDesktop');
-        if (!isDesktop) {
-          var max_width = imageContentContainer.offsetWidth - delta;
+      var parent_ = findId(classParant);
+      var imageContentContainer = parent_.find('div.ImageContentContainer:first');
+      if (imageContentContainer.exists()) {
+        if (!$('#UIPageDesktop').exists()) {
+          var max_width = imageContentContainer.outerWidth(true) - delta;
           var max = max_width;
           if (max_width > 600)
             max = 600;
-          var images_ = imageContentContainer.getElementsByTagName("img");
+          var images_ = imageContentContainer.find("img");
           for ( var i = 0; i < images_.length; i++) {
-            var className = String(images_[i].className);
-            if (className.indexOf("ImgAvatar") >= 0 || className.indexOf("AttachImage") >= 0) {
+            var image = images_[i];
+            if (image.hasClass("ImgAvatar") || image.hasClass("AttachImage")) {
               continue;
             }
             var img = new Image();
-            img.src = images_[i].src;
+            img.src = image.attr('src');
             if (img.width > max) {
-              images_[i].style.width = max + "px";
-              images_[i].style.height = "auto";
+              image.css('height', 'auto');
+              image.width(max);
             } else {
-              images_[i].style.width = "auto";
-              if (images_[i].width > max) {
-                images_[i].style.width = max + "px";
-                images_[i].style.height = "auto";
+              image.css('width', 'auto');
+              if (image.width() > max) {
+                image.css('height', 'auto');
+                image.width(max);
               }
             }
             if (img.width > 600) {
-              images_[i].onclick = UIForumPortlet.showImage;
+              image.on('click', UIForumPortlet.showImage);
             }
           }
         }
@@ -618,81 +607,71 @@
     },
     
     showImage : function() {
-      UIForumPortlet.showPicture(this.src);
+      UIForumPortlet.showPicture($(this).attr('src'));
     },
     
     resetFielForm : function(idElm) {
-      var elm = document.getElementById(idElm);
-      var inputs = elm.getElementsByTagName("input");
-      if (inputs) {
-        for ( var i = 0; i < inputs.length; i++) {
-          if (inputs[i].type === "checkbox")
-            inputs[i].checked = false;
-          else if (eXo.core.DOMUtil.hasClass(inputs[i], "UISliderInput"))
-            eXo.webui.UISliderControl.reset(inputs[i]);
-          else
-            inputs[i].value = "";
-        }
+      var elm = findId(idElm);
+      elm.find("input:checkbox").val('false');
+      elm.find("input:text").val('');
+      if(elm.find("input.UISliderInput").exists()) {
+        eXo.webui.UISliderControl.reset(elm.find("input.UISliderInput"));
       }
-      var textAres = elm.getElementsByTagName("textarea");
-      if (textAres) {
-        for ( var i = 0; i < textAres.length; i++) {
-          textAres[i].value = "";
-        }
-      }
+      elm.find("textarea").val('');
     },
     
     RightClickBookMark : function(elmId) {
-      var ancestor = document.getElementById(elmId);
-      var DOMUtil = eXo.core.DOMUtil;
-      var popupContents = DOMUtil.findDescendantsByClass(ancestor, "ul", "ClickPopupContent");
-      if (popupContents == null)
+      var ancestor = findId(elmId);
+
+      var popupContents = ancestor.find('ul.ClickPopupContent');
+      if (!popupContents.exists())
         return;
-      var popupContainer = document.getElementById('RightClickContainer');
-      if (popupContainer == null)
+      var popupContainer = $('#RightClickContainer');
+      if (!popupContainer.exists())
         return;
-      var itemmenuBookMark = DOMUtil.findFirstDescendantByClass(popupContainer, "a", "AddLinkToBookIcon");
-      var itemmenuWatching = DOMUtil.findFirstDescendantByClass(popupContainer, "a", "AddWatchingIcon");
-      var itemmenuRSS = DOMUtil.findFirstDescendantByClass(popupContainer, "a", "ForumRSSFeed");
-      if (itemmenuWatching == null || itemmenuBookMark == null)
+      var itemmenuBookMark = popupContainer.find('a.AddLinkToBookIcon:first');
+      var itemmenuWatching = popupContainer.find('a.AddWatchingIcon:first');
+      var itemmenuRSS = popupContainer.find('a.ForumRSSFeed:first');
+      if (!itemmenuWatching.exists() || !itemmenuBookMark.exists())
         return;
-      var labelWatchings = String(itemmenuWatching.innerHTML).split(";");
+      var labelWatchings = String(itemmenuWatching.html()).split(";");
       for ( var i = 0; i < popupContents.length; i++) {
-        var action = popupContents[i].getAttribute('title');
+        var popupContent = popupContents.eq(i);
+        var action = popupContent.attr('title');
         if (action.indexOf(";") < 0) {
-          itemmenuBookMark.href = action;
-          itemmenuWatching.parentNode.style.display = "none";
+          itemmenuBookMark.attr('href', action);
+          itemmenuWatching.parent().hide();
         } else {
           var actions = action.split(";");
-          itemmenuBookMark.href = actions[0];
+          itemmenuBookMark.attr('href', actions[0]);
           if (actions[1].toLowerCase().indexOf("unwatch") >= 0) {
             if (actions[1].indexOf("unwatch,") >= 0) {
               actions[1] = actions[1].replace('unwatch,', '');
             }
-            itemmenuWatching.innerHTML = labelWatchings[1];
+            itemmenuWatching.html(labelWatchings[1]);
           } else {
-            itemmenuWatching.innerHTML = labelWatchings[0];
+            itemmenuWatching.html(labelWatchings[0]);
           }
-          itemmenuWatching.href = actions[1];
-          if (itemmenuRSS) {
+          itemmenuWatching.attr('href', actions[1]);
+          if (itemmenuRSS.exists()) {
             if (actions.length == 3) {
               var link = actions[2].substring(0, actions[2].indexOf(','));
               var action = actions[2].substring(actions[2].indexOf(',') + 1);
-              itemmenuRSS.href = "javascript:window.open('" + link + "'); " + action + ";";// link,action
-              itemmenuRSS.parentNode.style.display = "block";
+              itemmenuRSS.attr('href', 'javascript:window.open("' + link + '"); ' + action + ';');// link,action
+              itemmenuRSS.parent().show();
             } else {
-              itemmenuRSS.parentNode.style.display = "none";
+              itemmenuRSS.parent().hide();
             }
           }
-          itemmenuWatching.parentNode.style.display = "block";
+          itemmenuWatching.parent().show();
         }
-        popupContents[i].removeAttribute('title');
-        popupContents[i].innerHTML = popupContainer.innerHTML;
+        popupContent.removeAttr('title');
+        popupContent.html(popupContainer.html());
       }
     },
     
     ReloadImage : function() {
-      if (eXo.ks.Browser.isIE6()) {
+      if (eXo.core.Browser.isIE6()) {
         var aImage = document.getElementsByTagName("img");
         var length = aImage.length;
         for ( var i = 0; i < length; ++i) {
@@ -704,29 +683,28 @@
     },
     
     shareLink : function(obj) {
-      var shareLinkContainer = document.getElementById("popupShareLink");
-      if (shareLinkContainer.style.display != "none")
-        shareLinkContainer.style.display = "none";
+      var shareLinkContainer = $("#popupShareLink");
+      if (shareLinkContainer.css('display') != "none")
+        shareLinkContainer.hide();
       else
-        shareLinkContainer.style.display = "block";
+        shareLinkContainer.show();
     },
     
     closeShareLink : function(obj) {
-      var popup = eXo.core.DOMUtil.findAncestorByClass(obj, "UIPopupWindow");
-      popup.style.display = "none";
+      $(obj).parents('.UIPopupWindow').hide();
     },
     
     loadScroll : function(e) {
       var uiNav = eXo.forum.UIForumPortlet;
-      var container = document.getElementById("UIForumActionBar");
-      if (container) {
-        uiNav.scrollMgr = new ScrollManager("UIForumActionBar");
+      var container = $("#UIForumActionBar");
+      if (container.exists()) {
+        uiNav.scrollMgr = new ScrollManager("");
         uiNav.scrollMgr.initFunction = uiNav.initScroll;
-        uiNav.scrollMgr.mainContainer = eXo.core.DOMUtil.findFirstDescendantByClass(container, "td", "ControlButtonContainer");
-        uiNav.scrollMgr.arrowsContainer = eXo.core.DOMUtil.findFirstDescendantByClass(container, "div", "ScrollButtons");
+        uiNav.scrollMgr.mainContainer = container.find('td.ControlButtonContainer:first')[0];
+        uiNav.scrollMgr.arrowsContainer = container.find('div.ScrollButtons:first')[0];
         uiNav.scrollMgr.loadElements("ControlButton", true);
         
-        var button = eXo.core.DOMUtil.findDescendantsByTagName(uiNav.scrollMgr.arrowsContainer, "div");
+        var button = $(uiNav.scrollMgr.arrowsContainer).find('div');
         if (button.length >= 2) {
           uiNav.scrollMgr.initArrowButton(button[0], "left", "ScrollLeftButton", "HighlightScrollLeftButton", "DisableScrollLeftButton");
           uiNav.scrollMgr.initArrowButton(button[1], "right", "ScrollRightButton", "HighlightScrollRightButton", "DisableScrollRightButton");
@@ -734,15 +712,15 @@
         
         uiNav.scrollManagerLoaded = true;
         uiNav.initScroll();
-        var lastButton = document.getElementById('OpenBookMarkSp');
-        if (lastButton && lastButton.style.display == "none") {
-          document.getElementById('OpenBookMark').style.display = "none";
+        var lastButton = $('#OpenBookMarkSp');
+        if (lastButton.exists() && lastButton.css('display') == 'none') {
+          $('#OpenBookMark').hide();
         }
       }
     },
     
     initScroll : function() {
-      var uiNav = eXo.forum.UIForumPortlet;
+      var uiNav = UIForumPortlet;
       if (!uiNav.scrollManagerLoaded)
         uiNav.loadScroll();
       var elements = uiNav.scrollMgr.elements;
@@ -755,15 +733,15 @@
     
     loadTagScroll : function() {
       var uiNav = eXo.forum.UIForumPortlet;
-      var container = document.getElementById("TagContainer");
+      var container = $("#TagContainer");
       if (container) {
         uiNav.tagScrollMgr = new ScrollManager("TagContainer");
         uiNav.tagScrollMgr.initFunction = uiNav.initTagScroll;
-        uiNav.tagScrollMgr.mainContainer = container;
-        uiNav.tagScrollMgr.arrowsContainer = eXo.core.DOMUtil.findFirstDescendantByClass(container, "li", "ScrollButtons");
+        uiNav.tagScrollMgr.mainContainer = container[0];
+        uiNav.tagScrollMgr.arrowsContainer = container.find('li.ScrollButtons');
         uiNav.tagScrollMgr.loadItems("MenuItem", true);
         
-        var button = eXo.core.DOMUtil.findDescendantsByTagName(uiNav.tagScrollMgr.arrowsContainer, "div");
+        var button = uiNav.tagScrollMgr.arrowsContainer.find('div');
         if (button.length >= 2) {
           uiNav.tagScrollMgr.initArrowButton(button[0], "left", "ScrollLeftButton", "HighlightScrollLeftButton", "DisableScrollLeftButton");
           uiNav.tagScrollMgr.initArrowButton(button[1], "right", "ScrollRightButton", "HighlightScrollRightButton", "DisableScrollRightButton");
@@ -776,66 +754,63 @@
     },
     
     initTagScroll : function() {
-      var uiNav = eXo.forum.UIForumPortlet;
+      var uiNav = UIForumPortlet;
       var elements = uiNav.tagScrollMgr.elements;
-      var menu = eXo.core.DOMUtil.findFirstDescendantByClass(uiNav.tagScrollMgr.arrowsContainer, "ul", "UIRightPopupMenuContainer");
+      var menu = uiNav.tagScrollMgr.arrowsContainer('ul.UIRightPopupMenuContainer:first')[0];
       var tmp = null;
       uiNav.setTagContainerWidth(uiNav.tagScrollMgr.mainContainer);
       uiNav.tagScrollMgr.init();
       uiNav.tagScrollMgr.checkAvailableSpace();
       
       removeChildren(menu);
-      uiNav.tagScrollMgr.arrowsContainer.onmouseover = over;
-      uiNav.tagScrollMgr.arrowsContainer.onfocus = over;
-      uiNav.tagScrollMgr.arrowsContainer.onmouseout = out;
-      uiNav.tagScrollMgr.arrowsContainer.onblur = out;
+      var jarrowsContainer = $(uiNav.tagScrollMgr.arrowsContainer);
+      jarrowsContainer.on('mouseover', over);
+      jarrowsContainer.on('focus', over);
+      jarrowsContainer.on('mouseout', out);
+      jarrowsContainer.on('blur', out);
       for ( var i = 0; i < elements.length; i++) {
         if (elements[i].isVisible) {
-          elements[i].style.display = "block";
+          $(elements[i]).show();
         } else {
-          tmp = elements[i].cloneNode(true);
-          eXo.core.DOMUtil.replaceClass(tmp, "FloatLeft", "TagItem");
-          tmp.style.display = "block";
-          menu.appendChild(tmp);
-          elements[i].style.display = "none";
-          uiNav.tagScrollMgr.arrowsContainer.style.display = "block";
+          tmp = $(elements[i].cloneNode(true));
+          tmp.removeClass('FloatLeft').addClass('TagItem').show();
+          $(menu).append(tmp);
+          $(elements[i]).hide();
+          jarrowsContainer.show();
         }
       }
       
       setPosition(menu);
       function removeChildren(cont) {
-        var firstChild = eXo.core.DOMUtil.findFirstChildByClass(cont, "div", "MenuTagContainer")
-        eXo.core.DOMUtil.removeElement(firstChild);
+        $(cont).find('div.MenuTagContainer:first').remove();
       }
       
       function setPosition(menu) {
-        var uiPopupCategory = eXo.core.DOMUtil.findAncestorByClass(menu, "UIPopupCategory");
-        uiPopupCategory.style.display = "block";
-        // var posX = 24*2 - uiPopupCategory.offsetWidth ;
-        uiPopupCategory.style.top = "24px";
-        uiPopupCategory.style.left = "-400px";// posX + "px";
-        uiPopupCategory.style.display = "none";
+        var uiPopupCategory = $(menu).parents('.UIPopupCategory');
+        uiPopupCategory.show();
+        uiPopupCategory.attr('style', 'top:24px; left:-400px;');
+        uiPopupCategory.hide();
       }
       
       function over() {
-        eXo.core.DOMUtil.addClass(this, "ScrollButtonsOver");
+        $(this).addClass('ScrollButtonsOver');
       }
       
       function out() {
-        eXo.core.DOMUtil.replaceClass(this, "ScrollButtonsOver", "");
+        $(this).removeClass('ScrollButtonsOver');
       }
     },
     
     setTagContainerWidth : function(container) {
-      var nodes = eXo.core.DOMUtil.getChildrenByTagName(container.parentNode, "div");
+      var nodes = $(container.parentNode).find('div');
       var width = 0;
       var i = nodes.length;
       while (i--) {
         if ((nodes[i].className == container.className) || !nodes[i].className)
           continue;
         if (nodes[i].className == "UIForumPageIterator") {
-          var right = eXo.core.DOMUtil.findFirstDescendantByClass(nodes[i], "div", "RightPageIteratorBlock");
-          var left = eXo.core.DOMUtil.findFirstDescendantByClass(nodes[i], "div", "LeftPageIteratorBlock");
+          var right = $(nodes[i]).find('div.RightPageIteratorBlock:first')[0];
+          var left = $(nodes[i]).find('div.LeftPageIteratorBlock:first')[0];
           width += getWidth(left, "div") + getWidth(right, "a");
           continue;
         }
@@ -847,7 +822,7 @@
       function getWidth(obj, tag) {
         if (!obj)
           return 0;
-        var children = eXo.core.DOMUtil.findDescendantsByTagName(obj, tag);
+        var children = $(obj).find(tag);
         var w = 0;
         var i = children.length;
         while (i--) {
@@ -858,7 +833,7 @@
     },
     
     executeLink : function(evt) {
-      var onclickAction = String(this.getAttribute("rel"));
+      var onclickAction = String($(this).attr("rel"));
       eval(onclickAction);
       eXo.forum.ForumUtils.cancelEvent(evt);
       return false;
@@ -877,12 +852,12 @@
     
     addLink : function(cpId, clazzAction) {
       var comp = document.getElementById(cpId);
-      var uiCategoryTitle = eXo.core.DOMUtil.findDescendantsByClass(comp, "a", clazzAction);
+      var uiCategoryTitle = $(comp).find('a.' + clazzAction);
       var i = uiCategoryTitle.length;
       if (!i || (i <= 0))
         return;
       while (i--) {
-        uiCategoryTitle[i].onclick = this.executeLink;
+        uiCategoryTitle.eq(i).on('click', UIForumPortlet.executeLink);
       }
     },
     
@@ -930,7 +905,7 @@
       if (parentElm) {
         if (isIn == "true") {
           popupHelp.style.display = "block";
-          var contentHelp = eXo.core.DOMUtil.findFirstDescendantByClass(popupHelp, "div", "ContentHelp");
+          var contentHelp = popupHelp.find('div.ContentHelp:first')[0];
           contentHelp.style.height = "auto";
           var l = String(contentHelp.innerHTML).length;
           if (l < 100) {
@@ -978,10 +953,9 @@
     submitOnKey : function(event) {
       var key = eXo.forum.ForumUtils.getKeynum(event);
       if (key == 13) {
-        var searchLinkElm = eXo.core.DOMUtil.findFirstDescendantByClass(this, "a", "SearchLink");
-        if (searchLinkElm) {
-          var link = String(searchLinkElm.href);
-          link = link.replace("javascript:", "");
+        var searchLinkElm = $(this).find('a.SearchLink');
+        if (searchLinkElm.exists()) {
+          var link = String(searchLinkElm.attr('href')).replace("javascript:", "");
           eval(link);
           eXo.forum.ForumUtils.cancelEvent(event);
           return false;
@@ -994,7 +968,7 @@
     if (clean)
       this.cleanElements();
     this.elements.clear();
-    var items = eXo.core.DOMUtil.findDescendantsByClass(this.mainContainer, "li", elementClass);
+    var items = $(this.mainContainer).find('li.' + elementClass);
     for ( var i = 0; i < items.length; i++) {
       this.elements.push(items[i]);
     }
