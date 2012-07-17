@@ -16,10 +16,10 @@
       if (eXo.forum.EventManager.getMouseButton(evt) == 2) return;
       var dnd = eXo.answer.DragDrop;
       var dragObject = this.cloneNode(true);
-      dragObject.className = "FAQDnDCategory";
-      dragObject.style.border = "solid 1px #333333";
-      document.body.appendChild(dragObject);
-      dragObject.style.width = this.offsetWidth + "px";
+      $(dragObject).attr('class', 'FAQDnDCategory')
+                   .css('border', 'solid 1px #333333');
+      $('body').append(dragObject);
+      $(dragObject).css('width', $(this).offset().left + $(this).width());
       dnd.rootNode = this;
       dnd.mousePos = {
         x : evt.clientX,
@@ -28,51 +28,46 @@
       dnd.setup(dragObject, [ "FAQCategory", "FAQBack", "FAQTmpCategory" ]);
       dnd.dropCallback = function(dragObj, target) {
         $(dragObj).remove();
-        if (this.lastTarget)
-          this.lastTarget.style.border = "";
+        if (this.lastTarget) $(this.lastTarget).css('border', '');
         if (target && dnd.isMoved) {
           var action = this.getAction(this.dragObject, target);
           if (!action) {
             this.showElement();
             return;
           }
-          eval(action);
-          
-        } else
+          $.globalEval(action);
+        } else {
           this.showElement();
+      }
       }
       dnd.dragCallback = function(dragObj, target) {
         if (dnd.lastTarget) {
-          dnd.lastTarget.style.border = "";
-          if ($(dnd.lastTarget).hasClass('FAQHighlightCategory'))
-            $(dnd.lastTarget).removeClass('FAQHighlightCategory');
+          $(dnd.lastTarget).css('border', '');
+          if ($(dnd.lastTarget).hasClass('FAQHighlightCategory')) $(dnd.lastTarget).removeClass('FAQHighlightCategory');
         }
-        if (!target)
-          return;
-        dnd.lastTarget = target;
-        if ($(target).hasClass('FAQBack'))
-          target.onclick();
-        if ($(target).hasClass('FAQTmpCategory'))
-          $(dnd.lastTarget).addClass('FAQHighlightCategory');
-        target.style.border = "dotted 1px #cccccc";
-        if (!dnd.hided)
-          dnd.hideElement(dnd.rootNode);
         
+        if (!target) return;
+        dnd.lastTarget = target;
+        
+        if ($(target).hasClass('FAQBack')) $(target).click();
+        if ($(target).hasClass('FAQTmpCategory')) $(dnd.lastTarget).addClass('FAQHighlightCategory');
+        $(target).css('border', 'dotted 1px #cccccc');
+        if (!dnd.hided) dnd.hideElement(dnd.rootNode);
       }
     },
     
     setup : function(dragObject, targetClass) {
       this.dragObject = dragObject;
       this.targetClass = targetClass;
-      document.onmousemove = eXo.answer.DragDrop.onDrag;
-      document.onmouseup = eXo.answer.DragDrop.onDrop;
+      $(document).on('mousemove', eXo.answer.DragDrop.onDrag);
+      $(document).on('mouseup', eXo.answer.DragDrop.onDrop);
     },
     
     onDrag : function(evt) {
       var dnd = eXo.answer.DragDrop;
       var dragObject = dnd.dragObject;
-      dragObject.style.left = eXo.ks.Browser.findMouseXInPage(evt) + 2 + "px";
-      dragObject.style.top = eXo.ks.Browser.findMouseYInPage(evt) + 2 + "px";
+      $(dragObject).css('left', evt.pageX + 2);
+      $(dragObject).css('top', evt.pageY + 2);
       if (dnd.dragCallback) {
         var target = dnd.findTarget(evt);
         dnd.dragCallback(dragObject, target);
@@ -83,8 +78,7 @@
       evt = evt || window.event;
       var dnd = eXo.answer.DragDrop;
       dnd.isMoved = true;
-      if (dnd.mousePos.x == evt.clientX && dnd.mousePos.y == evt.clientY)
-        dnd.isMoved = false;
+      if (dnd.mousePos.x == evt.clientX && dnd.mousePos.y == evt.clientY) dnd.isMoved = false;
       if (dnd.dropCallback) {
         var target = dnd.findTarget(evt);
         dnd.dropCallback(dnd.dragObject, target);
@@ -94,39 +88,36 @@
       delete dnd.dragCallback;
       delete dnd.hided;
       delete dnd.rootNode;
-      document.onmousemove = null;
-      document.onmouseup = null;
+      $(document).off('mousemove');
+      $(document).off('mouseup');
     },
     
     findTarget : function(evt) {
       var targetClass = eXo.answer.DragDrop.targetClass;
-      var i = targetClass.length;
-      while (i--) {
-        var target = eXo.forum.EventManager.getEventTargetByClass(evt, targetClass[i]);
-        if (target)
-          return target;
+      if (targetClass) {
+        var i = targetClass.length;
+        while (i--) {
+          var target = eXo.forum.EventManager.getEventTargetByClass(evt, targetClass[i]);
+          if (target) return target;
+        }
       }
     },
     
     hideElement : function(obj) {
-      // var preElement = this.DOMUtil.findPreviousElementByTagName(obj, "div");
-      // preElement.style.display = "none";
-      obj.style.display = "none";
+      $(obj).prev('div').css('display', 'none');
+      $(obj).css('display', 'none');
       this.hided = true;
     },
     
     showElement : function() {
       var dnd = eXo.answer.DragDrop;
-      if (!dnd.rootNode)
-        return;
+      if (!dnd.rootNode) return;
       var preElement = $(dnd.rootNode).prev('div');
-      if (preElement.exists())
-        preElement.css('display', '');
-      dnd.rootNode.style.display = "";
+      if (preElement.exists()) preElement.css('display', '');
+      $(dnd.rootNode).css('display', '');
       if (dnd.lastTarget) {
-        dnd.lastTarget.style.border = "";
-        if ($(dnd.lastTarget).hasClass('FAQHighlightCategory'))
-          $(dnd.lastTarget).removeClass('FAQHighlightCategory');
+        $(dnd.lastTarget).css('border', '');
+        if ($(dnd.lastTarget).hasClass('FAQHighlightCategory')) $(dnd.lastTarget).removeClass('FAQHighlightCategory');
       }
     },
     
@@ -134,10 +125,10 @@
       var info = $(obj).find('input.InfoCategory:first');
       if ($(target).hasClass('FAQTmpCategory')) {
         var preElement = $(target).prev('div');
-        var top = " ";
+        var top = ' ';
         if (!preElement.exists()) {
           preElement = $(target).next('div');
-          top = "top";
+          top = 'top';
         }
         var preElementInfo = preElement.find('input.InfoCategory:first');
         if (info.attr('id') == preElementInfo.attr('id')) return false;
