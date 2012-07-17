@@ -1,19 +1,19 @@
 ;(function($, window, document) {
   
-var DragDrop = {
-    DOMUtil : eXo.core.DOMUtil,
+  var DragDrop = {
     dragObject : null,
     targetClass : [],
+    
     init : function(compid) {
       var comp = findId(compid);
-      //comp.find('div.FAQCategory').on('mousedown', this.attach);
+      comp.find('div.FAQCategory').on('mousedown', this.attach);
       comp.on('selectstart', eXo.forum.ForumUtils.returnFalse);
       comp.on('dragstart', eXo.forum.ForumUtils.returnFalse);
     },
+    
     attach : function(evt) {
       evt = evt || window.event;
-      if (eXo.forum.EventManager.getMouseButton(evt) == 2)
-        return;
+      if (eXo.forum.EventManager.getMouseButton(evt) == 2) return;
       var dnd = eXo.answer.DragDrop;
       var dragObject = this.cloneNode(true);
       dragObject.className = "FAQDnDCategory";
@@ -27,7 +27,7 @@ var DragDrop = {
       };
       dnd.setup(dragObject, [ "FAQCategory", "FAQBack", "FAQTmpCategory" ]);
       dnd.dropCallback = function(dragObj, target) {
-        this.DOMUtil.removeElement(dragObj);
+        $(dragObj).remove();
         if (this.lastTarget)
           this.lastTarget.style.border = "";
         if (target && dnd.isMoved) {
@@ -44,16 +44,16 @@ var DragDrop = {
       dnd.dragCallback = function(dragObj, target) {
         if (dnd.lastTarget) {
           dnd.lastTarget.style.border = "";
-          if (this.DOMUtil.hasClass(dnd.lastTarget, "FAQHighlightCategory"))
-            this.DOMUtil.replaceClass(dnd.lastTarget, "FAQHighlightCategory", "");
+          if ($(dnd.lastTarget).hasClass('FAQHighlightCategory'))
+            $(dnd.lastTarget).removeClass('FAQHighlightCategory');
         }
         if (!target)
           return;
         dnd.lastTarget = target;
-        if (this.DOMUtil.hasClass(target, "FAQBack"))
+        if ($(target).hasClass('FAQBack'))
           target.onclick();
-        if (this.DOMUtil.hasClass(target, "FAQTmpCategory"))
-          this.DOMUtil.addClass(dnd.lastTarget, "FAQHighlightCategory");
+        if ($(target).hasClass('FAQTmpCategory'))
+          $(dnd.lastTarget).addClass('FAQHighlightCategory');
         target.style.border = "dotted 1px #cccccc";
         if (!dnd.hided)
           dnd.hideElement(dnd.rootNode);
@@ -107,50 +107,51 @@ var DragDrop = {
           return target;
       }
     },
+    
     hideElement : function(obj) {
       // var preElement = this.DOMUtil.findPreviousElementByTagName(obj, "div");
       // preElement.style.display = "none";
       obj.style.display = "none";
       this.hided = true;
     },
+    
     showElement : function() {
       var dnd = eXo.answer.DragDrop;
       if (!dnd.rootNode)
         return;
-      var preElement = this.DOMUtil.findPreviousElementByTagName(dnd.rootNode, "div");
-      if (preElement)
-        preElement.style.display = "";
+      var preElement = $(dnd.rootNode).prev('div');
+      if (preElement.exists())
+        preElement.css('display', '');
       dnd.rootNode.style.display = "";
       if (dnd.lastTarget) {
         dnd.lastTarget.style.border = "";
-        if (this.DOMUtil.hasClass(dnd.lastTarget, "FAQHighlightCategory"))
-          this.DOMUtil.replaceClass(dnd.lastTarget, "FAQHighlightCategory", "");
+        if ($(dnd.lastTarget).hasClass('FAQHighlightCategory'))
+          $(dnd.lastTarget).removeClass('FAQHighlightCategory');
       }
     },
+    
     getAction : function(obj, target) {
-      var info = this.DOMUtil.findFirstDescendantByClass(obj, "input", "InfoCategory");
-      if (this.DOMUtil.hasClass(target, "FAQTmpCategory")) {
-        var preElement = this.DOMUtil.findPreviousElementByTagName(target, "div");
+      var info = $(obj).find('input.InfoCategory:first');
+      if ($(target).hasClass('FAQTmpCategory')) {
+        var preElement = $(target).prev('div');
         var top = " ";
-        if (!preElement) {
-          preElement = this.DOMUtil.findNextElementByTagName(target, "div");
+        if (!preElement.exists()) {
+          preElement = $(target).next('div');
           top = "top";
         }
-        var preElementInfo = this.DOMUtil.findFirstDescendantByClass(preElement, "input", "InfoCategory");
-        if (info.id == preElementInfo.id)
-          return false;
-        var actionLink = info.value;
-        actionLink = actionLink.replace("=objectId", ("=" + info.id + "," + preElementInfo.id + "," + top));
-      } else if (this.DOMUtil.hasClass(target, "FAQCategory")) {
-        var actionLink = info.value;
-        var targetInfo = this.DOMUtil.findFirstDescendantByClass(target, "input", "InfoCategory");
-        actionLink = actionLink.replace("=objectId", "=" + info.id + "," + targetInfo.id);
+        var preElementInfo = preElement.find('input.InfoCategory:first');
+        if (info.attr('id') == preElementInfo.attr('id')) return false;
+        var actionLink = info.attr('value');
+        actionLink = actionLink.replace("=objectId", ("=" + info.attr('id') + "," + preElementInfo.attr('id') + "," + top));
+      } else if ($(target).hasClass('FAQCategory')) {
+        var actionLink = info.attr('value');
+        var targetInfo = $(target).find('input.InfoCategory:first');
+        actionLink = actionLink.replace("=objectId", "=" + info.attr('id') + "," + targetInfo.attr('id'));
         actionLink = actionLink.replace("ChangeIndex", "MoveCategoryInto");
       }
       return actionLink;
     }
   };
-
 
   // Expose
   window.eXo = eXo || {};
