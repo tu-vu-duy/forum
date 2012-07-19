@@ -21,33 +21,33 @@
     },
     
     selectItem : function(obj) {
-      
-      var tr = obj.parent('tr');
-      var table = obj.parent('table');
+      var jobj = $(obj);
+      var tr = jobj.parents('tr');
+      var table = tr.parents('table');
       var tbody = table.find('tbody');
-      var checkbox = table.find('input.checkbox:first');
-      var checkboxes = tbody.find('input.checkbox');
+      var checkbox = table.find('input:checkbox:first');
+      var checkboxes = tbody.find('input:checkbox');
       var chklen = checkboxes.length;
       var j = 0;
-      if (obj.val() == true) {
+      if (jobj[0].checked) {
         if (!tr.attr("tmpClass")) {
           tr.attr("tmpClass", tr.attr('class'));
           tr.attr('class', 'SelectedItem');
         }
         for ( var i = 0; i < chklen; i++) {
-          if (checkboxes[i].val())
+          if (checkboxes[i].checked)
             j++;
           else
             break;
         }
         if (j == chklen)
-          checkbox.val(true);
+          checkbox[0].checked = (true);
       } else {
         if (tr.attr('tmpClass')) {
           tr.attr('class', tr.attr('tmpClass'));
           tr.removeAttr('tmpClass');
         }
-        checkbox.val(false);
+        checkbox[0].checked = (false);
       }
       var modMenu = $('#ModerationMenu');
       if (modMenu.exists()) {
@@ -55,15 +55,15 @@
         if (j >= 2) {
           if (!firstItem.attr('oldClass')) {
             firstItem.attr('oldHref', firstItem.attr('href'));
-            firstItem.attr('href','javascript:void(0);');
-            var parentIt = firstItem.parent('.MenuItem');
+            firstItem.attr('href', 'javascript:void(0);');
+            var parentIt = firstItem.parents('.MenuItem');
             firstItem.attr('oldClass', parentIt.attr('class'));
             parentIt.attr('class', 'DisableMenuItem');
           }
         } else {
           if (firstItem.attr("oldClass")) {
             firstItem.attr('href', firstItem.attr('oldHref'));
-            var parentIt = firstItem.parent('.DisableMenuItem');
+            var parentIt = firstItem.parents('.DisableMenuItem');
             parentIt.attr('class', firstItem.attr('oldClass'));
             firstItem.removeAttr('oldClass');
           }
@@ -101,12 +101,14 @@
     
     setChecked : function(isChecked) {
       var divChecked = $('#divChecked');
-      var check = 0;
-      check = eval(divChecked.attr("checked"));
-      if (isChecked)
-        divChecked.attr("checked", (check + 1));
-      else
-        divChecked.attr("checked", (check - 1));
+      if (divChecked.exists()) {
+        var check = 0;
+        check = divChecked.attr("checked") * 1;
+        if (isChecked)
+          divChecked.attr("checked", (check + 1));
+        else
+          divChecked.attr("checked", (check - 1));
+      }
     },
     
     OneChecked : function(formName) {
@@ -125,7 +127,7 @@
     numberIsChecked : function(formName, checkAllName, multiAns, onlyAns, notChecked) {
       var divChecked = $('#divChecked');
       var total = 0;
-      total = eval(divChecked.attr("checked"));
+      total = divChecked.attr("checked") * 1;
       if (total > 1) {
         var text = String(multiAns);
         return confirm(text.replace('{0}', total));
@@ -138,28 +140,28 @@
     },
     
     checkAll : function(obj) {
-      var thead = obj.parent('thead');
-      var tbody = thead.parent('table').find('tbody');
-      var checkboxes = tbody.find('input.checkbox');
+      var table = $(obj).parents('table');
+      var tbody = table.find('tbody');
+      var checkboxes = tbody.find('input:checkbox');
       var len = checkboxes.length;
-      if (obj.val()) {
+      if (obj.checked) {
         for ( var i = 0; i < len; i++) {
-          if (!checkboxes.eq(i).val())
+          if (!checkboxes[i].checked) {
             UIForumPortlet.setChecked(true);
-          checkboxes.eq(i).val(true);
+          }
+          checkboxes[i].checked = (true);
           UIForumPortlet.selectItem(checkboxes.eq(i));
         }
       } else {
         for ( var i = 0; i < len; i++) {
-          if (checkboxes.eq(i).val())
+          if (checkboxes[i].checked)
             UIForumPortlet.setChecked(false);
-          checkboxes.eq(i).val(false);
+          checkboxes[i].checked = (false);
           UIForumPortlet.selectItem(checkboxes.eq(i));
         }
       }
     },
     
-    // DungJs
     checkAction : function(obj, evt) {
       UIForumPortlet.showPopup(obj, evt);
       var uiCategory = $('UICategory');
@@ -170,14 +172,14 @@
       var mlen = menuItems.length;
       var checked = false;
       for ( var i = 1; i < clen; i++) {
-        if (checkboxes.eq(i).val() && checkboxes.eq(i).attr('name').indexOf("forum") == 0) {
+        if (checkboxes[i].checked && checkboxes.eq(i).attr('name').indexOf("forum") == 0) {
           checked = true;
           break;
         }
       }
       var j = 0;
       for ( var i = 0; i < mlen; i++) {
-        if (String(menuItems.eq(i).attr('class').indexOf("AddForumIcon") > 0) {
+        if (String(menuItems.eq(i).attr('class')).indexOf("AddForumIcon") > 0) {
           j = i + 1;
           break;
         }
@@ -187,7 +189,7 @@
         if (!checked) {
           if (!menuItem.attr("tmpHref")) {
             menuItem.attr("tmpHref", menuItem.attr('href'));
-            menuItem.attr('href','javascript:void(0);');
+            menuItem.attr('href', 'javascript:void(0);');
             menuItem.attr('tmpClass', $(menuItem[0].parentNode).attr('class'));
             $(menuItem[0].parentNode).attr('class', 'DisableMenuItem');
           }
@@ -240,11 +242,9 @@
       var checkBoxs = parentContent.find('input.checkbox');
       var clen = checkBoxs.length;
       var mlen = menuItems.length;
-      var divChecked = $('#divChecked');
-      var j = 0;
-      j = eval(divChecked.attr("checked"));
+      var j = $('#divChecked').attr("checked") * 1;
       for ( var i = 1; i < clen; i++) {
-        if (checkBoxs.eq(i).val()) {
+        if (checkBoxs[i].checked) {
           j = 1;
           break;
         }
@@ -252,7 +252,7 @@
       if (j === 0) {
         for ( var k = 0; k < mlen; k++) {
           var menuItem = menuItems.eq(k);
-          if (menuItem.hasClass('ItemIcon SetUnWaiting')) 
+          if (menuItem.hasClass('ItemIcon SetUnWaiting'))
             break;
           if (!menuItem.attr("tmpClass")) {
             menuItem.attr("tmpHref", menuItem.attr('href'));
@@ -282,7 +282,7 @@
       var jobject = $(obj)
       var forumToolbar = jobject.parents(".ForumToolbar");
       var contentContainer = forumToolbar.next();
-
+      
       if (contentContainer.css('display') != "none") {
         contentContainer.hide();
         jobject.addClass('ExpandButton').removeClass('CollapseButton');
@@ -296,7 +296,6 @@
       }
     },
     
-    // Edit by Duy Tu 14-11-07
     showTreeNode : function(obj, isShow) {
       if (isShow === "false")
         return;
@@ -324,16 +323,16 @@
     checkedNode : function(elm) {
       var jelm = $(elm);
       var jinput = jelm.find('input:first');
-
+      
       var parentNode = jinput.parents('.Node');
       var containerChild = parentNode.find('div.ChildNodeContainer:first');
       if (containerChild.exists()) {
         var checkboxes = containerChild.find('input');
         for ( var i = 0; i < checkboxes.length; ++i) {
-          if (jinput.val())
-            checkboxes.eq(i).val(true);
+          if (jinput[0].checked)
+            checkboxes[i].checked = (true);
           else
-            checkboxes.eq(i).val(false);
+            checkboxes[i].checked = (false);
         }
       }
     },
@@ -341,10 +340,10 @@
     checkedChildNode : function(elm) {
       var input = $(elm).find('input:first');
       if (input.exists()) {
-        if (input.val()) {
+        if (input[0].checked) {
           var parentCheckBoxNode = elm.parent().parent().parent();
           var parentCheckBox = parentCheckBoxNode.find('div.ParentCheckBox:first');
-          parentCheckBox.find('input:first').val(true);
+          parentCheckBox.find('input:first')[0].checked = (true);
         }
       }
     },
@@ -354,10 +353,10 @@
       vote.attr('rate', rate);
       rate = parseInt(rate);
       var optsContainer = vote.find('div.OptionsContainer:first');
-      var options = optsContainer.find("div:first-child");
-      for ( var i = 0; i < options.length - 1; i++) {
-        options.eq(i).on('mouseover', UIForumPortlet.overVote);
-        options.eq(i).on('blur', UIForumPortlet.overVote);
+      var options = optsContainer.children('div');
+      options.on('mouseover', UIForumPortlet.overVote);
+      options.on('blur', UIForumPortlet.overVote);
+      for ( var i = 0; i < options.length; i++) {
         if (i < rate)
           options.eq(i).attr('class', 'RatedVote');
       }
@@ -369,9 +368,10 @@
     
     parentOverVote : function(event) {
       var optsCon = $(this).find('div.OptionsContainer:first');
-      var opts = optsCon.find("div:first-child");
-      for ( var j = 0; j < opts.length - 1; j++) {
-        if (j < $(this).attr('rate'))
+      var opts = optsCon.children('div');
+      var rate = $(this).attr('rate');
+      for ( var j = 0; j < opts.length; j++) {
+        if (j < rate)
           opts.eq(j).addClass('RatedVote').removeClass('NormalVote');
         else
           opts.eq(j).addClass('NormalVote').removeClass('RatedVote');
@@ -379,11 +379,11 @@
     },
     
     overVote : function(event) {
-      var optsCon = $(this).find('div.OptionsContainer:first');
-      var opts = optsCon.find("div:first-child");
-      var i = opts.length - 1;
+      var optsCon = $(this).parents('div.OptionsContainer:first');
+      var opts = optsCon.children('div');
+      var i = opts.length;
       for (--i; i >= 0; i--) {
-        if (opts.eq(i)[0] == $(this)[0])
+        if (opts[i] == $(this)[0])
           break;
         opts.eq(i).attr('class', 'NormalVote');
       }
@@ -431,18 +431,18 @@
       if (parend.exists()) {
         var obj = parend.find("input.checkbox:first");
         if (obj.exists()) {
-          $("#BanCounter").attr('disabled','disabled');
-          $("#BanReasonSummary").attr('readonly','readonly');
-          $("#CreatedDateBan").attr('disabled','disabled');
+          $("#BanCounter").attr('disabled', 'disabled');
+          $("#BanReasonSummary").attr('readonly', 'readonly');
+          $("#CreatedDateBan").attr('disabled', 'disabled');
           var selectbox = parend.find("select.selectbox:first");
-          if (!obj.val()) {
-            selectbox.attr('disabled','disabled');
-            $('#BanReason').attr('disabled','disabled');
+          if (!obj[0].checked) {
+            selectbox.attr('disabled', 'disabled');
+            $('#BanReason').attr('disabled', 'disabled');
           }
           $(obj).on('click', function() {
-            if (!$(this).val()) {
-              selectbox.attr('disabled','disabled');
-              $('#BanReason').attr('disabled','disabled');
+            if (!$(this)[0].checked) {
+              selectbox.attr('disabled', 'disabled');
+              $('#BanReason').attr('disabled', 'disabled');
             } else {
               selectbox.removeAttr('disabled');
               $('#BanReason').removeAttr('disabled');
@@ -513,7 +513,7 @@
         }
       }
     },
-
+    
     setDisableInfo : function() {
       var strs = new Array("#CanPost", "#CanView");
       for ( var i = 0; i < strs.length; i++) {
@@ -582,7 +582,7 @@
             max = 600;
           var images_ = imageContentContainer.find("img");
           for ( var i = 0; i < images_.length; i++) {
-            var image = images_[i];
+            var image = images_.eq(i);
             if (image.hasClass("ImgAvatar") || image.hasClass("AttachImage")) {
               continue;
             }
@@ -614,7 +614,7 @@
       var elm = findId(idElm);
       elm.find("input:checkbox").val('false');
       elm.find("input:text").val('');
-      if(elm.find("input.UISliderInput").exists()) {
+      if (elm.find("input.UISliderInput").exists()) {
         eXo.webui.UISliderControl.reset(elm.find("input.UISliderInput"));
       }
       elm.find("textarea").val('');
@@ -622,7 +622,7 @@
     
     RightClickBookMark : function(elmId) {
       var ancestor = findId(elmId);
-
+      
       var popupContents = ancestor.find('ul.ClickPopupContent');
       if (!popupContents.exists())
         return;
@@ -698,7 +698,7 @@
       var uiNav = eXo.forum.UIForumPortlet;
       var container = $("#UIForumActionBar");
       if (container.exists()) {
-        uiNav.scrollMgr = new ScrollManager("");
+        uiNav.scrollMgr = new ScrollManager("UIForumActionBar");
         uiNav.scrollMgr.initFunction = uiNav.initScroll;
         uiNav.scrollMgr.mainContainer = container.find('td.ControlButtonContainer:first')[0];
         uiNav.scrollMgr.arrowsContainer = container.find('div.ScrollButtons:first')[0];
@@ -725,7 +725,7 @@
         uiNav.loadScroll();
       var elements = uiNav.scrollMgr.elements;
       uiNav.scrollMgr.init();
-      if (eXo.ks.Browser.isIE6())
+      if (eXo.core.Browser.isIE6())
         uiNav.scrollMgr.arrowsContainer.setAttribute("space", 35);
       uiNav.scrollMgr.checkAvailableSpace();
       uiNav.scrollMgr.renderElements();
@@ -738,10 +738,10 @@
         uiNav.tagScrollMgr = new ScrollManager("TagContainer");
         uiNav.tagScrollMgr.initFunction = uiNav.initTagScroll;
         uiNav.tagScrollMgr.mainContainer = container[0];
-        uiNav.tagScrollMgr.arrowsContainer = container.find('li.ScrollButtons');
+        uiNav.tagScrollMgr.arrowsContainer = container.find('li.ScrollButtons')[0];
         uiNav.tagScrollMgr.loadItems("MenuItem", true);
         
-        var button = uiNav.tagScrollMgr.arrowsContainer.find('div');
+        var button = $(uiNav.tagScrollMgr.arrowsContainer).find('div');
         if (button.length >= 2) {
           uiNav.tagScrollMgr.initArrowButton(button[0], "left", "ScrollLeftButton", "HighlightScrollLeftButton", "DisableScrollLeftButton");
           uiNav.tagScrollMgr.initArrowButton(button[1], "right", "ScrollRightButton", "HighlightScrollRightButton", "DisableScrollRightButton");
@@ -756,14 +756,15 @@
     initTagScroll : function() {
       var uiNav = UIForumPortlet;
       var elements = uiNav.tagScrollMgr.elements;
-      var menu = uiNav.tagScrollMgr.arrowsContainer('ul.UIRightPopupMenuContainer:first')[0];
+      var jarrowsContainer = $(uiNav.tagScrollMgr.arrowsContainer);
+      var menu = jarrowsContainer.find('ul.UIRightPopupMenuContainer:first')[0];
       var tmp = null;
       uiNav.setTagContainerWidth(uiNav.tagScrollMgr.mainContainer);
       uiNav.tagScrollMgr.init();
       uiNav.tagScrollMgr.checkAvailableSpace();
       
       removeChildren(menu);
-      var jarrowsContainer = $(uiNav.tagScrollMgr.arrowsContainer);
+      
       jarrowsContainer.on('mouseover', over);
       jarrowsContainer.on('focus', over);
       jarrowsContainer.on('mouseout', out);

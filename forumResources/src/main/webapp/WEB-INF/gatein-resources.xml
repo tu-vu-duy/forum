@@ -90,26 +90,12 @@
   </module>
 
   <module>
-    <name>KSBrowser</name>
-    <script>
-      <name>eXo.ks.Browser</name>
-      <path>/javascript/eXo/ks/Browser.js</path>
-    </script>
-    <depends>
-      <module>webui</module>
-    </depends>
-  </module>
-
-  <module>
     <name>forumResources</name>
     <depends>
       <module>maskLayerControl</module>
     </depends>
     <depends>
       <module>Keyboard</module>
-    </depends>
-    <depends>
-      <module>KSBrowser</module>
     </depends>
     <depends>
       <module>ForumUtils</module>

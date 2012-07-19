@@ -8,7 +8,7 @@
     this.from = "From";
     this.briefContent = "Brief content";
     this.GoDirectly = "Go directly to the TYPE: LINK Click here.";
-  };
+  }
   
   ForumSendNotification.prototype.initParam = function(notification, message, post, titeName, from, briefContent, GoDirectly) {
     this.notification = notification;
@@ -19,7 +19,7 @@
     this.briefContent = briefContent;
     this.GoDirectly = GoDirectly;
   };
-
+  
   ForumSendNotification.prototype.init = function(eXoUser, eXoToken, contextName) {
     if (String(eXoToken) != '') {
       if (!eXo.core.Cometd.isConnected()) {
@@ -42,26 +42,29 @@
 
   ForumSendNotification.prototype.alarm = function(eventObj) {
     var message = eXo.core.JSON.parse(eventObj.data); // message
-    var popup = $(this.createMessage(message)).find('div.UIPopupNotification');
-    eXo.webui.Box.config(popup.eq(0), popup.popup.eq(0).offsetHeight, 5, this.openCallback, this.closeBox);
+    var parent = $(this.createMessage(message));
+    parent.height('auto');
+    var popup = parent.find('div.UIPopupNotification');
+    popup.show();
+    eXo.webui.Box.config(popup[0], popup.outerHeight(), 5, this.openCallback, this.closeBox);
     window.focus();
     return;
   };
 
   ForumSendNotification.prototype.openCallback = function(obj) {
     $(obj).on('click', function() {
-      $(this).css('visibility', 'hidden');
+      $(this).hide();
     });
   };
 
   ForumSendNotification.prototype.closeBox = function(obj) {
-    $(obj).css('visibility', 'hidden');
+    $(obj).hide();
+    $(obj).parent().height('0px');
   };
 
   ForumSendNotification.prototype.createMessage = function(message) {
-    var msgBox = null;
-    if ($('#msgBox').exists()) {
-      msgBox = $('#msgBox');
+    var msgBox = $('#msgBox');
+    if (msgBox.exists()) {
       var directChildNode = msgBox.find('div.UIPopupNotification:first');
       if (directChildNode.css('visibility') == 'hidden') {
         msgBox.html(this.generateHTML(message));
@@ -71,12 +74,10 @@
         content.html(content.html() + '<div style="border-top:1px dashed black;">' + this.getContentHTML(message) + '</div>');
       }
     } else {
-      msgBox = $(document.createElement("div")).attr('id', msgBox)
-                                               .attr('class', 'UINotification')
-                                               .html(this.generateHTML(message));
+      msgBox = $('<div id="msgBox" class="UINotification"></div>').html(this.generateHTML(message));
       $('body').append(msgBox);
     }
-    return msgBox.eq(0);
+    return msgBox;
   };
 
   ForumSendNotification.prototype.getContentHTML = function(message) {
@@ -195,7 +196,7 @@
     var obj = document.getElementById(objID);
     var currentTop = this.calculateY();
     obj.style.top = (currentTop < posTop) ? posTop + "px" : currentTop + "px";
-    window.setTimeout('eXo.webui.Box.floatingBox("' + objID + '",' + posTop + ')', 50);
+    window.setTimeout('eXo.webui.Box.floatingBox("' + objID + '",' + posTop + ')', 100);
   };
   
   // Expose
