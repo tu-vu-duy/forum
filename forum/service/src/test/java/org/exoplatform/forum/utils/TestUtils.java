@@ -14,12 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see<http://www.gnu.org/licenses/>.
  */
-package org.exoplatform.forum.service.impl;
-
-import static org.exoplatform.commons.testing.AssertUtils.assertContains;
-import static org.exoplatform.commons.testing.AssertUtils.assertEmpty;
-import static org.exoplatform.commons.testing.AssertUtils.assertNotContains;
-import static org.exoplatform.commons.testing.mock.JCRMockUtils.stubValue;
+package org.exoplatform.forum.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +26,9 @@ import javax.jcr.Value;
 
 import junit.framework.TestCase;
 
+import org.exoplatform.forum.base.AssertUtils;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.services.jcr.impl.core.value.StringValue;
 
 /**
  * @author <a href="mailto:patrice.lamarque@exoplatform.com">Patrice Lamarque</a>
@@ -115,26 +112,26 @@ public class TestUtils extends TestCase {
   public void testMapToArray() {
     Map<String, String> map = new HashMap<String, String>();
     String[] actual = Utils.mapToArray(map);
-    assertContains(actual, " ");
+    AssertUtils.assertContains(actual, " ");
 
     map.put("foo", "foo");
     map.put("bar", "bar");
     map.put("zed", "zed");
     actual = Utils.mapToArray(map);
-    assertContains(actual, "foo,foo", "bar,bar", "zed,zed");
+    AssertUtils.assertContains(actual, "foo,foo", "bar,bar", "zed,zed");
   }
 
   public void testArrayToMap() {
     String[] s = new String[] { "foo,foo", "bar,bar", "zed,zed" };
     Map<String, String> actual = Utils.arrayToMap(s);
-    assertContains(actual.keySet(), "foo", "bar", "zed");
+    AssertUtils.assertContains(actual.keySet(), "foo", "bar", "zed");
     assertEquals("foo", actual.get("foo"));
     assertEquals("bar", actual.get("bar"));
     assertEquals("zed", actual.get("zed"));
 
     s = new String[] { "foo", "bar,bar", "zed,zed,zed" };
     actual = Utils.arrayToMap(s);
-    assertContains(actual.keySet(), "bar");
+    AssertUtils.assertContains(actual.keySet(), "bar");
     assertEquals(null, actual.get("foo"));
     assertEquals("bar", actual.get("bar"));
     assertEquals(null, actual.get("zed"));
@@ -189,27 +186,27 @@ public class TestUtils extends TestCase {
     list.add(" ");
     list.add("bar");
     actual = Utils.getStringsInList(list);
-    assertNotContains(Arrays.asList(actual), " ");
-    assertContains(actual, "foo", "bar");
+    AssertUtils.assertNotContains(Arrays.asList(actual), " ");
+    AssertUtils.assertContains(actual, "foo", "bar");
   }
 
   public void testExtractSameItems() throws Exception {
     List<String> pList = Arrays.asList("foo", "bar", "zed");
     List<String> cList = Arrays.asList("foo", " ", "bar");
     List<String> actual = Utils.extractSameItems(pList, cList);
-    assertContains(actual, "foo", "bar");
+    AssertUtils.assertContains(actual, "foo", "bar");
 
     // verify behaviour if first list is empty
     pList = new ArrayList<String>();
     cList = Arrays.asList("foo", " ", "bar");
     actual = Utils.extractSameItems(pList, cList);
-    assertEmpty(actual);
+    AssertUtils.assertEmpty(actual);
 
     // verify behaviour if no common elements
     pList = Arrays.asList("foo", "bar", "zed");
     cList = Arrays.asList("foo*", "bar*", "zed*");
     actual = Utils.extractSameItems(pList, cList);
-    assertEmpty(actual);
+    AssertUtils.assertEmpty(actual);
 
   }
 
@@ -220,28 +217,33 @@ public class TestUtils extends TestCase {
 
     values = new Value[] { stubValue("foo") };
     actual = Utils.valuesToArray(values);
-    assertContains(actual, "foo");
+    AssertUtils.assertContains(actual, "foo");
     assertEquals(1, actual.length);
 
     values = new Value[] { stubValue("foo"), stubValue("bar"), stubValue("zed") };
     actual = Utils.valuesToArray(values);
-    assertContains(actual, "foo", "bar", "zed");
+    AssertUtils.assertContains(actual, "foo", "bar", "zed");
     assertEquals(3, actual.length);
+  }
+
+  private Value stubValue(String string) throws Exception {
+    Value value = new StringValue(string);
+    return value;
   }
 
   public void testValuesToList() throws Exception {
     Value[] values = new Value[0];
     List<String> actual = Utils.valuesToList(values);
-    assertEmpty(actual);
+    AssertUtils.assertEmpty(actual);
 
     values = new Value[] { stubValue("foo") };
     actual = Utils.valuesToList(values);
-    assertContains(actual, "foo");
+    AssertUtils.assertContains(actual, "foo");
     assertEquals(1, actual.size());
 
     values = new Value[] { stubValue("foo"), stubValue("bar"), stubValue("zed") };
     actual = Utils.valuesToList(values);
-    assertContains(actual, "foo", "bar", "zed");
+    AssertUtils.assertContains(actual, "foo", "bar", "zed");
     assertEquals(3, actual.size());
   }
 
@@ -262,7 +264,7 @@ public class TestUtils extends TestCase {
     actual = Utils.arrayCopy(source);
     assertEquals("copied arrays should have same size", source.length, actual.length);
     assertNotSame("a new array should have been created", source, actual);
-    assertContains(actual, "foo", "bar", "zed"); // should contain all elements
+    AssertUtils.assertContains(actual, "foo", "bar", "zed"); // should contain all elements
   }
 
   public void testGetQueryByProperty() throws Exception {

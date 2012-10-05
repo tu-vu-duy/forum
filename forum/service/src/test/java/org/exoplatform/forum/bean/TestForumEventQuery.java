@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see<http://www.gnu.org/licenses/>.
  ***************************************************************************/
-package org.exoplatform.forum.service;
+package org.exoplatform.forum.bean;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +25,8 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import org.exoplatform.commons.utils.ISO8601;
+import org.exoplatform.forum.service.ForumEventQuery;
+import org.exoplatform.forum.service.Utils;
 
 /**
  * Created by The eXo Platform SAS

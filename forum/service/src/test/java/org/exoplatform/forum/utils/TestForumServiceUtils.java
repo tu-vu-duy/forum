@@ -1,40 +1,38 @@
-package org.exoplatform.forum.service;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+package org.exoplatform.forum.utils;
 
 import java.util.List;
 
-import org.exoplatform.commons.testing.AbstractExoContainerTestCase;
-import org.exoplatform.commons.testing.AssertUtils;
-import org.exoplatform.commons.testing.mock.SimpleMockOrganizationService;
+import org.exoplatform.component.test.AbstractKernelTest;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
+import org.exoplatform.forum.base.AssertUtils;
+import org.exoplatform.forum.membership.SimpleMockOrganizationService;
+import org.exoplatform.forum.service.ForumServiceUtils;
 import org.exoplatform.services.organization.auth.OrganizationAuthenticatorImpl;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
-@ConfiguredBy( { @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/ForumServiceUtils-configuration.xml") })
-public class TestForumServiceUtils extends AbstractExoContainerTestCase {
+@ConfiguredBy( { 
+  @ConfigurationUnit(
+      scope = ContainerScope.PORTAL,
+      path = "forumconf/ForumServiceUtils-configuration.xml"
+  ) 
+})
+public class TestForumServiceUtils extends AbstractKernelTest {
 
   protected SimpleMockOrganizationService organizationService = null;
 
   protected IdentityRegistry              identityRegistry    = null;
 
-  @BeforeMethod
+  public TestForumServiceUtils() throws Exception {
+  }
+  
   protected void setUp() throws Exception {
-
-    // PortalContainer container = PortalContainer.getInstance();
-    organizationService = getComponent(SimpleMockOrganizationService.class);// (SimpleMockOrganizationService)container.getComponentInstanceOfType(OrganizationService.class);
-    identityRegistry = getComponent(IdentityRegistry.class);// //(IdentityRegistry)container.getComponentInstanceOfType(IdentityRegistry.class);
+    organizationService = (SimpleMockOrganizationService) getContainer().getComponentInstanceOfType(SimpleMockOrganizationService.class);
+    identityRegistry = (IdentityRegistry)getContainer().getComponentInstanceOfType(IdentityRegistry.class);
   }
 
-  @Test
   public void testHasPermission() throws Exception {
 
     String user = "user1";
@@ -66,27 +64,23 @@ public class TestForumServiceUtils extends AbstractExoContainerTestCase {
     identityRegistry.register(identity);
   }
 
-  @Test
   public void testGetPermissionNull() throws Exception {
     List<String> emptyList = ForumServiceUtils.getUserPermission(null);
     assertNotNull(emptyList);
     assertEquals(0, emptyList.size());
   }
 
-  @Test
   public void testGetPermissionByGroup() throws Exception {
-    // organizationService.addMemberships("user1", "*:/platform/users");
-    // organizationService.addMemberships("user2", "*:/platform/users");
-    // organizationService.addMemberships("user3", "*:/platform");
-    //    
-    // assertEquals(2, ForumServiceUtils.getUserPermission(new String [] {"/platform/users"}).size());
-    // AssertUtils.assertContains(ForumServiceUtils.getUserPermission(new String [] {"/platform/users"}), "user1", "user2");
-    // AssertUtils.assertNotContains(ForumServiceUtils.getUserPermission(new String [] {"/platform/users"}), "user3");
-    // AssertUtils.assertContains(ForumServiceUtils.getUserPermission(new String [] {"/platform/users", "/platform"}), "user1", "user2", "user3");
-
+     organizationService.addMemberships("user1", "*:/platform/users");
+     organizationService.addMemberships("user2", "*:/platform/users");
+     organizationService.addMemberships("user3", "*:/platform");
+        
+     assertEquals(ForumServiceUtils.getUserPermission(new String [] {"/platform/users"}).size(), 2);
+     AssertUtils.assertContains(ForumServiceUtils.getUserPermission(new String [] {"/platform/users"}), "user1", "user2");
+     AssertUtils.assertNotContains(ForumServiceUtils.getUserPermission(new String [] {"/platform/users"}), "user3");
+     AssertUtils.assertContains(ForumServiceUtils.getUserPermission(new String [] {"/platform/users", "/platform"}), "user1", "user2", "user3");
   }
 
-  @Test
   public void testGetPermissionByUser() throws Exception {
     organizationService.addMemberships("user1", "*:/platform/users");
     organizationService.addMemberships("user3", "*:/platform/users");
@@ -104,7 +98,6 @@ public class TestForumServiceUtils extends AbstractExoContainerTestCase {
     AssertUtils.assertContains(ForumServiceUtils.getUserPermission(new String[] { "user1", "user2" }), "user1", "user2");
   }
 
-  @Test
   public void testGetPermissionByMembership() throws Exception {
     organizationService.addMemberships("user1", "*:/platform/users");
   }

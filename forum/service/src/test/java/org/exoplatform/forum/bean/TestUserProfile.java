@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see<http://www.gnu.org/licenses/>.
  */
-package org.exoplatform.forum.service;
+package org.exoplatform.forum.bean;
 
-import static org.exoplatform.commons.testing.AssertUtils.assertContains;
+import static org.exoplatform.forum.base.AssertUtils.assertContains;
 import junit.framework.TestCase;
+
+import org.exoplatform.forum.service.UserProfile;
 
 /**
  * @author <a href="mailto:patrice.lamarque@exoplatform.com">Patrice Lamarque</a>
