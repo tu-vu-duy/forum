@@ -24,6 +24,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import org.exoplatform.component.test.ConfigurationUnit;
+import org.exoplatform.component.test.ConfiguredBy;
+import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.forum.common.jcr.KSDataLocation;
 import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.Forum;
@@ -47,7 +50,14 @@ import org.exoplatform.services.security.MembershipEntry;
  *          tuvd@exoplatform.com
  * Oct 2, 2012  
  */
-
+@ConfiguredBy({
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.portal-configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.test.jcr-configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.identity-configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.component.core.test.configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.jcr-configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.portal-configuration.xml")
+})
 public abstract class BaseForumServiceTestCase extends BaseTestCase {
   public static final String         USER_ROOT         = "root";
 
@@ -72,8 +82,8 @@ public abstract class BaseForumServiceTestCase extends BaseTestCase {
     //
     begin();
     if (forumService_ == null) {
-      forumService_ = (ForumService) getContainer().getComponentInstanceOfType(ForumService.class);
-      dataLocation = (KSDataLocation) getContainer().getComponentInstanceOfType(KSDataLocation.class);
+      forumService_ = (ForumService) getService(ForumService.class);
+      dataLocation = (KSDataLocation) getService(KSDataLocation.class);
     }
   }
 
@@ -85,6 +95,11 @@ public abstract class BaseForumServiceTestCase extends BaseTestCase {
     end();
   }
 
+  @SuppressWarnings("unchecked")
+  public <T> T getService(Class<T> clazz) {
+    return (T) getContainer().getComponentInstanceOfType(clazz);
+  }
+  
   public void initDefaultData() throws Exception {
     Category cat = createCategory(getId(Utils.CATEGORY));
     this.categoryId = cat.getId();
@@ -126,9 +141,9 @@ public abstract class BaseForumServiceTestCase extends BaseTestCase {
 
   public Post createdPost() {
     Post post = new Post();
-    post.setOwner("root");
+    post.setOwner(USER_ROOT);
     post.setCreatedDate(new Date());
-    post.setModifiedBy("root");
+    post.setModifiedBy(USER_ROOT);
     post.setModifiedDate(new Date());
     post.setName("SubJect");
     post.setMessage("content description");

@@ -2,11 +2,11 @@ package org.exoplatform.forum.utils;
 
 import java.util.List;
 
-import org.exoplatform.component.test.AbstractKernelTest;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.forum.base.AssertUtils;
+import org.exoplatform.forum.base.BaseTestCase;
 import org.exoplatform.forum.membership.SimpleMockOrganizationService;
 import org.exoplatform.forum.service.ForumServiceUtils;
 import org.exoplatform.services.organization.auth.OrganizationAuthenticatorImpl;
@@ -19,13 +19,19 @@ import org.exoplatform.services.security.IdentityRegistry;
       path = "forumconf/ForumServiceUtils-configuration.xml"
   ) 
 })
-public class TestForumServiceUtils extends AbstractKernelTest {
+public class TestForumServiceUtils extends BaseTestCase {
 
   protected SimpleMockOrganizationService organizationService = null;
 
   protected IdentityRegistry              identityRegistry    = null;
 
   public TestForumServiceUtils() throws Exception {
+  }
+  
+  @Override
+  public void beforeRunBare() throws Exception {
+    setGetAllConfig(false);
+    super.beforeRunBare();
   }
   
   protected void setUp() throws Exception {
