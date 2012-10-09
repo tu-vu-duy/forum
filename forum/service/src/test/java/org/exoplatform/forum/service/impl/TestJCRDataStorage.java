@@ -65,7 +65,12 @@ import org.exoplatform.forum.service.ForumAttachment;
 public class TestJCRDataStorage extends AbstractJCRTestCase {
 
   private JCRDataStorage storage;
-
+  @Override
+  public void beforeRunBare() throws Exception {
+    setGetAllConfig(false);
+    super.beforeRunBare();
+  }
+  
   protected void setUp() throws Exception {
     storage = new JCRDataStorage();
     KSDataLocation locator = new KSDataLocation("portal-test", getRepositoryService());

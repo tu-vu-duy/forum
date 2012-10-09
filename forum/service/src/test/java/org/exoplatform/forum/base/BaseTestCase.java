@@ -16,10 +16,21 @@
  */
 package org.exoplatform.forum.base;
 
-import org.exoplatform.component.test.AbstractKernelTest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
+import junit.framework.TestSuite;
+
+import org.exoplatform.component.test.AbstractGateInTest;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
+import org.exoplatform.component.test.KernelBootstrap;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.RequestLifeCycle;
 
 /**
  * Created by The eXo Platform SAS
@@ -28,26 +39,98 @@ import org.exoplatform.component.test.ContainerScope;
  * Oct 5, 2012  
  */
 
-@ConfiguredBy({
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.portal-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.test.jcr-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.identity-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.component.core.test.configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.jcr-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.portal-configuration.xml")
-})
+public abstract class BaseTestCase extends AbstractGateInTest {
 
-public abstract class BaseTestCase extends AbstractKernelTest {
+  /** . */
+  private static KernelBootstrap bootstrap;
+
+  private boolean isGetAllConfig = true;
+  
+  /** . */
+  private static final Map<Class<?>, AtomicLong> counters = new HashMap<Class<?>, AtomicLong>();
+
+  protected BaseTestCase()
+  {
+     super();
+  }
+
+  protected BaseTestCase(String name)
+  {
+     super(name);
+  }
+
+  public PortalContainer getContainer()
+  {
+     return bootstrap != null ? bootstrap.getContainer() : null;
+  }
+
+  protected void begin()
+  {
+     RequestLifeCycle.begin(getContainer());
+  }
+
+  protected void end()
+  {
+     RequestLifeCycle.end();
+  }
+
+  public boolean isGetAllConfig() {
+    return isGetAllConfig;
+  }
+
+  public void setGetAllConfig(boolean isGetAllConfig) {
+    this.isGetAllConfig = isGetAllConfig;
+  }
+
+  private void getAllClass(List<Class<?>>classes, Class<?> key) throws Exception {
+    classes.add(key);
+    if(key.getSuperclass() != null) {
+      getAllClass(classes, key.getSuperclass());
+    }
+  }
+  
   @Override
-  public void setUp() throws Exception {
-    //
-    begin();
+  public void beforeRunBare() throws Exception
+  {
+     Class<?> key = getClass();
+     //
+     if (!counters.containsKey(key))
+     {
+        counters.put(key, new AtomicLong(new TestSuite(getClass()).testCount()));
+
+        //
+        bootstrap = new KernelBootstrap(Thread.currentThread().getContextClassLoader());
+
+        // Configure ourselves
+        if(isGetAllConfig) {
+          List<Class<?>>classes = new ArrayList<Class<?>>();
+          getAllClass(classes, key);
+          for (Class<?> clazz : classes) {
+            bootstrap.addConfiguration(clazz);
+          }
+        } else {
+          bootstrap.addConfiguration(key);
+        }
+
+        //
+        bootstrap.boot();
+     }
+
   }
 
   @Override
-  public void tearDown() throws Exception {
+  protected void afterRunBare()
+  {
+     Class<?> key = getClass();
 
-    //
-    end();
+     //
+     if (counters.get(key).decrementAndGet() == 0)
+     {
+        bootstrap.dispose();
+
+        //
+        bootstrap = null;
+     }
+
   }
 }
