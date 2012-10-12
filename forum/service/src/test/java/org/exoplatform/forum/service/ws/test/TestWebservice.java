@@ -27,6 +27,8 @@ import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Tag;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.ws.AbstractResourceTest;
+import org.exoplatform.forum.service.ws.BanIP;
+import org.exoplatform.forum.service.ws.BeanToJsons;
 import org.exoplatform.forum.service.ws.ForumWebservice;
 import org.exoplatform.forum.service.ws.MessageBean;
 import org.exoplatform.services.rest.impl.ContainerResponse;
@@ -68,8 +70,6 @@ public class TestWebservice extends AbstractResourceTest {
   }
 
   public void testGetMessage() throws Exception {
-
-    //TODO: create forum data and login user
     loginUser(USER_ROOT);
     for (int i = 0; i < 10; i++) {
       Post post = createdPost();
@@ -88,7 +88,6 @@ public class TestWebservice extends AbstractResourceTest {
   }
   
   public void testGetPulicMessage() throws Exception {
-    //TODO: create forum data
     loginUser(USER_DEMO);
     for (int i = 0; i < 10; i++) {
       Post post = createdPost();
@@ -129,15 +128,29 @@ public class TestWebservice extends AbstractResourceTest {
       tag.setName("newfoo" + i);
       tags.add(tag);
     }
-    Topic topic = forumService_.getTopic(categoryId, forumId, topicId, USER_ROOT);
-    forumService_.addTag(tags, USER_ROOT, topic.getPath());
-    
-    String userAndTopicId = USER_ROOT + "," + topicId;
-    String eventURI = "/filterIpBanforum/"+userAndTopicId+"/foo";
+    Topic A = forumService_.getTopic(categoryId, forumId, topicId, USER_ROOT);
+    forumService_.addTag(tags, USER_ROOT, A.getPath());
+    // when user click on add Tag, list all tags 
+    String userAndTopicId = USER_ROOT + "," + (new Topic()).getId();
+    String eventURI = "/filterTagNameForum/"+userAndTopicId+"/onclickForm";
     
     ContainerResponse response = performTestCase(eventURI);
     assertNotNull(response);
     assertEquals(response.getStatus(), 200);
+    BeanToJsons<BanIP> results =  (BeanToJsons<BanIP>) response.getEntity();
+    System.out.println("results " + results.getJsonList().size());
+    // When other user filter tags on topic A
+    
+    userAndTopicId = USER_DEMO + "," + topicId;
+    eventURI = "/filterTagNameForum/"+userAndTopicId+"/foo";
+    
+    response = performTestCase(eventURI);
+    assertNotNull(response);
+    assertEquals(response.getStatus(), 200);
+    results =  (BeanToJsons<BanIP>) response.getEntity();;
+    System.out.println("results2 " + results.getJsonList().size());
+    
+    
   }
 
   public void testViewrss() throws Exception {
