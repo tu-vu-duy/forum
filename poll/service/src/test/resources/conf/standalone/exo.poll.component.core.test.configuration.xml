@@ -31,6 +31,7 @@
    </component>
   
   <component>
+    <key>org.exoplatform.services.jcr.ext.app.SessionProviderService</key>
     <type>org.exoplatform.services.jcr.ext.app.ThreadLocalSessionProviderService</type>
   </component>
   
@@ -38,7 +39,7 @@
     <key>org.exoplatform.poll.service.PollService</key>
     <type>org.exoplatform.poll.service.impl.PollServiceImpl</type>
   </component>
-  
+
   <component>
     <key>org.exoplatform.poll.service.DataStorage</key>
     <type>org.exoplatform.poll.service.impl.JCRDataStorage</type>
