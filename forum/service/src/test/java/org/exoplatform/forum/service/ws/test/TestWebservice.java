@@ -16,12 +16,14 @@
  */
 package org.exoplatform.forum.service.ws.test;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.RuntimeDelegate;
 
+import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.MessageBuilder;
 import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Tag;
@@ -105,20 +107,75 @@ public class TestWebservice extends AbstractResourceTest {
     assertEquals(bean.getData().size(), 5);
   }
   
+  /**
+   * @throws Exception
+   */
   public void testFilterIps() throws Exception {
-    //TODO: save ban IPs of forum data
-    String eventURI = "/filter/192.168.1.10";
+    forumService_.addBanIP("192.168.1.10");
+    forumService_.addBanIP("192.168.1.11");
+    
+    //Test with all
+    String eventURI = "/filter/all";
     ContainerResponse response = performTestCase(eventURI);
     assertNotNull(response);
     assertEquals(response.getStatus(), 200);
+    
+    BeanToJsons<BanIP> bean = (BeanToJsons<BanIP>) response.getEntity();
+    assertEquals(2,bean.getJsonList().size());
+    assertEquals("192.168.1.11",bean.getJsonList().get(1).getIp());
+    
+    //Test with an ip exact
+    eventURI="/filter/192.168.1.11";
+    response = performTestCase(eventURI);
+    assertNotNull(response);
+    assertEquals(response.getStatus(), 200);
+    bean = (BeanToJsons<BanIP>) response.getEntity();
+    assertEquals(1,bean.getJsonList().size());
+    assertEquals("192.168.1.11",bean.getJsonList().get(0).getIp());
+    
+    //Test with an ip that don't exist in the banip's list
+    eventURI="/filter/192.168.1.12";
+    response = performTestCase(eventURI);
+    assertNotNull(response);
+    assertEquals(response.getStatus(), 200);
+    bean = (BeanToJsons<BanIP>) response.getEntity();
+    assertEquals(0,bean.getJsonList().size());
   }
   
+  /**
+   * @throws Exception
+   */
   public void testFilterIpBanForum() throws Exception {
-    //TODO: create forum object, save ban IP of forum
-    String eventURI = "/filterIpBanforum/"+forumId+"/192.168.1.10";
+    forumService_.addBanIPForum("192.168.0.1", categoryId+"/"+forumId);
+    forumService_.addBanIPForum("192.168.0.2", categoryId+"/"+forumId);
+    forumService_.addBanIPForum("192.168.0.3", categoryId+"/"+forumId);
+    
+    //Test with an ip that don't exist in the banip's list
+    String eventURI = "/filterIpBanforum/"+categoryId+"."+forumId+"/192.168.0.10";
     ContainerResponse response = performTestCase(eventURI);
     assertNotNull(response);
     assertEquals(response.getStatus(), 200);
+    BeanToJsons<BanIP> bean = (BeanToJsons<BanIP>) response.getEntity();
+    assertEquals(0,bean.getJsonList().size());
+    
+    //Test with an ip exact
+    eventURI="/filterIpBanforum/"+categoryId+"."+forumId+"/192.168.0.1";
+    response = performTestCase(eventURI);
+    assertNotNull(response);
+    assertEquals(response.getStatus(), 200);
+    bean = (BeanToJsons<BanIP>) response.getEntity();
+    assertEquals(1,bean.getJsonList().size());
+    assertEquals("192.168.0.1",bean.getJsonList().get(0).getIp());
+    
+    //Test with all
+    eventURI="/filterIpBanforum/"+categoryId+"."+forumId+"/all";
+    response = performTestCase(eventURI);
+    assertNotNull(response);
+    assertEquals(response.getStatus(), 200);
+    bean = (BeanToJsons<BanIP>) response.getEntity();
+    assertEquals(3,bean.getJsonList().size());
+    assertEquals("192.168.0.3",bean.getJsonList().get(2).getIp());
+    
   }
   
   public void testFilterTagNameForum() throws Exception {
@@ -139,38 +196,36 @@ public class TestWebservice extends AbstractResourceTest {
     assertNotNull(response);
     assertEquals(response.getStatus(), 200);
     BeanToJsons<BanIP> results =  (BeanToJsons<BanIP>) response.getEntity();
-    // When other user filter tags on topic A
+    assertNotNull(results);
     
+    // When other user filter tags on topic A
     userAndTopicId = USER_ROOT + "," + (new Topic()).getId();
     eventURI = "/filterTagNameForum/"+userAndTopicId+"/foo";
     
     response = performTestCase(eventURI);
     assertNotNull(response);
     assertEquals(response.getStatus(), 200);
-    results =  (BeanToJsons<BanIP>) response.getEntity();;
-    
-    
+    results =  (BeanToJsons<BanIP>) response.getEntity();
+    assertNotNull(results);
   }
 
   public void testViewrss() throws Exception {
-    //TODO: create topic 
     String eventURI = "/rss/" + topicId;
     ContainerResponse response = performTestCase(eventURI);
     assertNotNull(response);
     assertEquals(response.getStatus(), 200);
+    InputStream ip = (InputStream) response.getEntity();
+    assertNotNull(ip);
   }
   
   public void testCheckPublicRss() throws Exception {
-    
     forumService_.addWatch(-1, forumId, null, USER_JOHN);
     // save watch rss by john and test
     String eventURI = "/rss/user/john";
     ContainerResponse response = performTestCase(eventURI);
     assertNotNull(response);
     assertEquals(response.getStatus(), 200);
-    
-//    HashMap<String, Object> entity = (HashMap<String, Object>) response.getEntity();
-    //System.out.println("entity " + response.getEntity().toString());
+    InputStream ip = (InputStream) response.getEntity();
+    assertNotNull(ip);
   }
-
 }
