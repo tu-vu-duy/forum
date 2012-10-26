@@ -111,11 +111,7 @@ public class PollWebserviceTest extends AbstractResourceTest {
     assertEquals("0.0", p.getVote()[2]);
 
     // Test the number of vote, here is 1
-    assertEquals(1, Integer.parseInt(p.getVotes()));
-
-    // Test the userVote, one element {"root:1"}
-    assertEquals(1, p.getUserVote().length);
-    assertEquals("root:1", p.getUserVote()[0]);
+    assertEquals(1, Integer.parseInt(p.getInfoVote()[p.getInfoVote().length-1]));
 
     /***************************************************/
 
@@ -133,10 +129,6 @@ public class PollWebserviceTest extends AbstractResourceTest {
     assertEquals("100.0", pUpdate.getVote()[0]);
     assertEquals("0.0", pUpdate.getVote()[1]);
     assertEquals("0.0", pUpdate.getVote()[2]);
-
-    // Test the userVote, one element {"root:0"}
-    assertEquals(1, pUpdate.getUserVote().length);
-    assertEquals("root:0", pUpdate.getUserVote()[0]);
 
     /***************************************************/
 
@@ -156,12 +148,7 @@ public class PollWebserviceTest extends AbstractResourceTest {
     assertEquals("50.0", pNew.getVote()[2]);
 
     // Test the number of vote, here is 2
-    assertEquals(2, Integer.parseInt(pNew.getVotes()));
-
-    // Test the userVote, two elements {"root:0","demo:2"}
-    assertEquals(2, pNew.getUserVote().length);
-    assertEquals("root:0", pNew.getUserVote()[0]);
-    assertEquals("demo:2", pNew.getUserVote()[1]);
+    assertEquals(2, Integer.parseInt(pNew.getInfoVote()[pNew.getInfoVote().length-1]));
 
     /********************** Multi vote *****************************/
 
@@ -191,12 +178,8 @@ public class PollWebserviceTest extends AbstractResourceTest {
     assertEquals("50.0", pMulti.getVote()[2]);
     assertEquals("0.0", pMulti.getVote()[3]);
 
-    // Test the number of vote, here is 2
-    assertEquals(2, Integer.parseInt(pMulti.getVotes()));
-
-    // Test the userVote, one elements {"mary:2:1"}
-    assertEquals(1, pMulti.getUserVote().length);
-    assertEquals("mary:2:1", pMulti.getUserVote()[0]);
+    // Test the number of vote, here is 1 (one vote but 2 options)
+    assertEquals(1, Integer.parseInt(pMulti.getInfoVote()[pMulti.getInfoVote().length-1]));
 
     /***************************************************/
 
@@ -219,12 +202,8 @@ public class PollWebserviceTest extends AbstractResourceTest {
     assertEquals("50.0", pMultiUpdate.getVote()[2]);
     assertEquals("0.0", pMultiUpdate.getVote()[3]);
 
-    // Test the number of vote, here is 2
-    assertEquals(2, Integer.parseInt(pMultiUpdate.getVotes()));
-
-    // Test the userVote, one elements {"mary:2:1"}
-    assertEquals(1, pMultiUpdate.getUserVote().length);
-    assertEquals("mary:2:0", pMultiUpdate.getUserVote()[0]);
+    // Test the number of vote, here is 1
+    assertEquals(1, Integer.parseInt(pMultiUpdate.getInfoVote()[pMultiUpdate.getInfoVote().length-1]));
 
     /***************************************************/
 
@@ -248,11 +227,7 @@ public class PollWebserviceTest extends AbstractResourceTest {
     assertEquals("25.0", pMultiNew.getVote()[3]);
 
     // Test the number of vote, here is 2
-    assertEquals(4, Integer.parseInt(pMultiNew.getVotes()));
+    assertEquals(2, Integer.parseInt(pMultiNew.getInfoVote()[pMultiNew.getInfoVote().length-1]));
 
-    // Test the userVote, one elements {"mary:2:1","demo:3:1"}
-    assertEquals(2, pMultiNew.getUserVote().length);
-    assertEquals("mary:2:0", pMultiNew.getUserVote()[0]);
-    assertEquals("demo:3:1", pMultiNew.getUserVote()[1]);
   }
 }
