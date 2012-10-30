@@ -5595,11 +5595,11 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
             if (isAdd && !isAdmin) {
               // not is moderator
               list = Utils.valuesToList(nodeObj.getParent().getParent().getProperty(EXO_MODERATORS).getValues());
-              if (!Utils.hasPermission(listOfUser, list)) {
+              if (!Utils.hasPermission(list, listOfUser)) {
                 // can view by topic
                 list = Utils.valuesToList(nodeObj.getParent().getProperty(EXO_CAN_VIEW).getValues());
                 if (list != null && list.size() > 0 && !Utils.isEmpty(list.get(0))) {
-                  if (!Utils.hasPermission(listOfUser, list))
+                  if (!Utils.hasPermission(list, listOfUser))
                     isAdd = false;
                 }
                 if (isAdd) {

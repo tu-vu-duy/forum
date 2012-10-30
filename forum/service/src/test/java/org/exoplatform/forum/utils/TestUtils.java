@@ -406,34 +406,56 @@ public class TestUtils extends TestCase {
     assertEquals(expected, actual);
   }
   
-  public void testHasPermission() {
-    List<String> l1 = Arrays.asList(" ");
-    List<String> l2 = null;
+  public void testHasPermission() throws Exception {
+    List<String> listOfUsers = new ArrayList<String>();
 
-    boolean condition = Utils.hasPermission(l1, l2);
-    assertFalse(condition);
+    assertFalse(Utils.hasPermission(null, null));
+    assertFalse(Utils.hasPermission(null, listOfUsers));
+    assertFalse(Utils.hasPermission(listOfUsers, null));
+    assertFalse(Utils.hasPermission(listOfUsers, listOfUsers));
 
-    condition = Utils.hasPermission(l2, l1);
-    assertFalse(condition);
+    listOfUsers.add("demo");
+    listOfUsers.add("member:/platform/users");
+    listOfUsers.add("*:/platform/newgroup");
+    listOfUsers.add("/platform/test");
 
-    condition = Utils.hasPermission(l2, l2);
-    assertFalse(condition);
+    List<String> listPlugin = Arrays.asList(new String[] {});
+    assertFalse(Utils.hasPermission(listPlugin, listOfUsers));
 
-    l1 = Arrays.asList("g1", "g2");
-    l2 = Arrays.asList("g3");
-    condition = Utils.hasPermission(l1, l2);
-    assertFalse(condition);
+    listPlugin = Arrays.asList(new String[] { " " });
+    assertFalse(Utils.hasPermission(listPlugin, listOfUsers));
 
-    condition = Utils.hasPermission(l2, l1);
-    assertFalse(condition);
+    listPlugin = Arrays.asList(new String[] { "demo", "/abc/zzz" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
 
-    l1 = Arrays.asList("g1", "g2", "g3");
-    l2 = Arrays.asList("g1", "g4");
-    condition = Utils.hasPermission(l1, l2);
-    assertTrue(condition);
+    listPlugin = Arrays.asList(new String[] { "marry", "/abc/zzz" });
+    assertFalse(Utils.hasPermission(listPlugin, listOfUsers));
 
-    condition = Utils.hasPermission(l2, l1);
-    assertTrue(condition);
+    listPlugin = Arrays.asList(new String[] { "marry", "member:/platform/users" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
+
+    listPlugin = Arrays.asList(new String[] { "marry", "*:/platform/users" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
+
+    listPlugin = Arrays.asList(new String[] { "marry", "admin:/platform/users" });
+    assertFalse(Utils.hasPermission(listPlugin, listOfUsers));
+
+    listPlugin = Arrays.asList(new String[] { "marry", "/platform/newgroup" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
+
+    listPlugin = Arrays.asList(new String[] { "marry", "*:/platform/newgroup" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
+
+    listPlugin = Arrays.asList(new String[] { "marry", "member:/platform/newgroup" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
+
+    listPlugin = Arrays.asList(new String[] { "marry", "*:/platform/test" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
+
+    listPlugin = Arrays.asList(new String[] { "marry", "/platform/test" });
+    assertTrue(Utils.hasPermission(listPlugin, listOfUsers));
+
+    assertFalse(Utils.hasPermission(listPlugin, new ArrayList<String>()));
   }
   
   public void testGetCategoryId() {
