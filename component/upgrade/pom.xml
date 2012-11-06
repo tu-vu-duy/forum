@@ -16,6 +16,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.exoplatform.kernel</groupId>
+      <artifactId>exo.kernel.commons</artifactId>
+      <version>${org.exoplatform.kernel.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.exoplatform.jcr</groupId>
       <artifactId>exo.jcr.component.core</artifactId>
       <version>${org.exoplatform.jcr.version}</version>
@@ -31,6 +37,22 @@
       <groupId>org.exoplatform.commons</groupId>
       <artifactId>commons-component-upgrade</artifactId>
       <version>${org.exoplatform.commons.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.core</groupId>
+      <artifactId>exo.core.component.organization.api</artifactId>
+      <version>${org.exoplatform.core.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.forum</groupId>
+      <artifactId>forum-component-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.forum</groupId>
+      <artifactId>forum-application-common</artifactId>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

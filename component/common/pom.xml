@@ -35,6 +35,17 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>${commons-lang.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.kernel</groupId>
+      <artifactId>exo.kernel.component.cache</artifactId>
+      <version>${org.exoplatform.kernel.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -49,11 +60,6 @@
       <artifactId>jboss-common-core</artifactId>
       <version>${org.jboss.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>quartz</groupId>
-      <artifactId>quartz</artifactId>
-      <version>${quartz.version}</version>
     </dependency>
   </dependencies>
 </project>

@@ -34,19 +34,11 @@
       <version>${org.exoplatform.kernel.version}</version>
       <scope>provided</scope>
     </dependency>
-    
-     <dependency>
-      <groupId>org.exoplatform.kernel</groupId>
-      <artifactId>exo.kernel.component.cache</artifactId>
-      <version>${org.exoplatform.kernel.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    
+
     <dependency>
-      <groupId>org.exoplatform.jcr</groupId>
-      <artifactId>exo.jcr.component.core</artifactId>
-      <version>${org.exoplatform.jcr.version}</version>
-      <scope>provided</scope>
+      <groupId>picocontainer</groupId>
+      <artifactId>picocontainer</artifactId>
+      <version>${picocontainer.version}</version>
     </dependency>
 
     <dependency>
@@ -62,28 +54,22 @@
     </dependency>
 
     <dependency>
+      <groupId>org.exoplatform.jcr</groupId>
+      <artifactId>exo.jcr.component.ext</artifactId>
+      <version>${org.exoplatform.jcr.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.exoplatform.wiki</groupId>
       <artifactId>wiki-renderer</artifactId>
       <version>${org.exoplatform.wiki.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.exoplatform.commons</groupId>
-      <artifactId>commons-component-common</artifactId>
-      <version>${org.exoplatform.commons.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.exoplatform.portal</groupId>
-      <artifactId>exo.portal.component.portal</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.exoplatform.core</groupId>
-      <artifactId>exo.core.component.organization.api</artifactId>
-      <scope>provided</scope>
+      <groupId>org.xwiki.rendering</groupId>
+      <artifactId>xwiki-rendering-api</artifactId>
+      <version>${org.xwiki.rendering.version}</version>
     </dependency>
 
   <!-- test -->
@@ -91,37 +77,37 @@
     <dependency>
       <groupId>org.chromattic</groupId>
       <artifactId>chromattic.apt</artifactId>
-      <version>${org.chromattic.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.chromattic</groupId>
       <artifactId>chromattic.api</artifactId>
-      <version>${org.chromattic.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.chromattic</groupId>
       <artifactId>chromattic.spi</artifactId>
-      <version>${org.chromattic.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.chromattic</groupId>
       <artifactId>chromattic.core</artifactId>
-      <version>${org.chromattic.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.chromattic</groupId>
       <artifactId>chromattic.ext</artifactId>
-      <version>${org.chromattic.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.chromattic</groupId>
       <artifactId>chromattic.common</artifactId>
-      <version>${org.chromattic.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.chromattic</groupId>
       <artifactId>chromattic.metamodel</artifactId>
-      <version>${org.chromattic.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -161,7 +147,19 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    
+
+    <dependency>
+      <groupId>org.exoplatform.portal</groupId>
+      <artifactId>exo.portal.component.portal</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.exoplatform.core</groupId>
+      <artifactId>exo.core.component.organization.api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.exoplatform.portal</groupId>
       <artifactId>exo.portal.component.portal</artifactId>
