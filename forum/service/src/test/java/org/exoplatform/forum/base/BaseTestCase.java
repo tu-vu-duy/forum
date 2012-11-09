@@ -39,7 +39,7 @@ import org.exoplatform.container.component.RequestLifeCycle;
 public abstract class BaseTestCase extends AbstractGateInTest {
 
   /** . */
-  private static KernelBootstrap bootstrap;
+  public static KernelBootstrap bootstrap;
 
   private boolean isGetAllConfig = true;
   

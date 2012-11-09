@@ -219,4 +219,35 @@
     </dependency>
     
   </dependencies>
+  
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <systemPropertyVariables>
+              <org.apache.commons.logging.Log>org.apache.commons.logging.impl.SimpleLog</org.apache.commons.logging.Log>
+              <org.apache.commons.logging.simplelog.defaultlog>info</org.apache.commons.logging.simplelog.defaultlog>
+              <org.apache.commons.logging.simplelog.log.org.exoplatform>debug</org.apache.commons.logging.simplelog.log.org.exoplatform>
+              <org.apache.commons.logging.simplelog.log.net.hibernate>warn</org.apache.commons.logging.simplelog.log.net.hibernate>
+              <java.naming.factory.initial>org.exoplatform.services.naming.SimpleContextFactory</java.naming.factory.initial>
+            </systemPropertyVariables>
+            <includes>
+              <include>**/UtilsTestCase.java</include>
+              <include>**/ForumEventQueryTestCase.java</include>
+              <include>**/UserProfileUtilsTestCase.java</include>
+
+              <include>**/BaseForumTestSuite.java</include>
+              <include>**/ForumWebserviceTestCase.java</include>
+              <include>**/JCRDataStorageTestCase.java</include>
+              <include>**/ForumServiceUtilsTestCase.java</include>
+            </includes>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+  
 </project>

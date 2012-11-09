@@ -58,6 +58,7 @@ import org.exoplatform.services.security.MembershipEntry;
   @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.jcr-configuration.xml"),
   @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.portal-configuration.xml")
 })
+
 public abstract class BaseForumServiceTestCase extends BaseTestCase {
   public static final String         USER_ROOT         = "root";
 
@@ -93,6 +94,22 @@ public abstract class BaseForumServiceTestCase extends BaseTestCase {
     removeAllData();
     //
     end();
+  }
+  
+  @Override
+  public void beforeRunBare() throws Exception {
+  }
+
+  public void beforeRunBareForum() throws Exception {
+    super.beforeRunBare();
+  }
+  
+  @Override
+  protected void afterRunBare() {
+  }
+
+  public void afterRunBareForum() {
+    super.afterRunBare();
   }
 
   @SuppressWarnings("unchecked")

@@ -92,7 +92,7 @@ public abstract class FAQServiceBaseTestCase extends BaseTestCase {
   protected FAQService    faqService_;
 
   protected FAQSetting    faqSetting_ = new FAQSetting();
-
+  
   public FAQServiceBaseTestCase() throws Exception {
   }
 
@@ -123,6 +123,22 @@ public abstract class FAQServiceBaseTestCase extends BaseTestCase {
   public void tearDown() throws Exception {
     removeData();
     end();
+  }
+  
+  @Override
+  public void beforeRunBare() throws Exception {
+  }
+
+  public void beforeRunBareBack() throws Exception {
+    super.beforeRunBare();
+  }
+  
+  @Override
+  protected void afterRunBare() {
+  }
+
+  public void afterRunBareBack() {
+    super.afterRunBare();
   }
   
   @SuppressWarnings("unchecked")

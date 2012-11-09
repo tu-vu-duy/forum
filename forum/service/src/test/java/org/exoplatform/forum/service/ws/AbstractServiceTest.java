@@ -72,6 +72,16 @@ public abstract class AbstractServiceTest extends BaseForumServiceTestCase {
     end();
   }
 
+  @Override
+  public void beforeRunBare() throws Exception {
+    super.beforeRunBareForum();
+  }
+
+  @Override
+  protected void afterRunBare() {
+    super.afterRunBareForum();
+  }
+
   /**
    * registry resource object
    *
@@ -143,7 +153,7 @@ public abstract class AbstractServiceTest extends BaseForumServiceTestCase {
    *
    * @param clazz the class of resource
    */
-  public void removeResource(Class clazz) {
+  public void removeResource(Class<?> clazz) {
     resourceBinder.removeResource(clazz);
   }
 

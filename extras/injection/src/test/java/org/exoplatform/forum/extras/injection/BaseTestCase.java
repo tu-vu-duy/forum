@@ -21,6 +21,8 @@ import org.exoplatform.component.test.AbstractKernelTest;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
+import org.exoplatform.component.test.KernelBootstrap;
+import org.exoplatform.container.PortalContainer;
 
 /**
  * @author <a href="mailto:thanhvc@exoplatform.com">Thanh Vu</a>
@@ -35,7 +37,7 @@ import org.exoplatform.component.test.ContainerScope;
   @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/standalone/exo.forum.test.portal-configuration.xml")
 })
 public abstract class BaseTestCase extends AbstractKernelTest {
- 
+  public static KernelBootstrap bootstrap;
   
   @Override
   public void setUp() throws Exception {
@@ -51,6 +53,30 @@ public abstract class BaseTestCase extends AbstractKernelTest {
     //
     end();
   }
+  @Override
+  public void beforeRunBare() throws Exception {
+  }
+
+  public void beforeRunBareBack() throws Exception {
+    super.beforeRunBare();
+  }
   
+  @Override
+  protected void afterRunBare() {
+  }
+
+  public void afterRunBareBack() {
+    super.afterRunBare();
+  }
+  
+  @Override
+  public PortalContainer getContainer() {
+    return bootstrap.getContainer();
+  }
+  
+  @SuppressWarnings("unchecked")
+  public <T> T getService(Class<T> clazz) {
+    return (T) getContainer().getComponentInstanceOfType(clazz);
+  }
   
 }
