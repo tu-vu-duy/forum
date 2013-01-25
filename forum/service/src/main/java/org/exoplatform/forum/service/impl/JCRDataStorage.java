@@ -2636,6 +2636,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         // Topic Move
         Node topicNode = (Node) forumHomeNode.getSession().getItem(newTopicPath);
         topicNode.setProperty(EXO_PATH, destForumNode.getName());
+        topicNode.setProperty(EXO_LINK, topic.getLink());
         long topicPostCount = topicNode.getProperty(EXO_POST_COUNT).getLong() + 1;
         // Forum add Topic (destForum)
         destForumNode.setProperty(EXO_TOPIC_COUNT, destForumReader.l(EXO_TOPIC_COUNT) + 1);
@@ -2653,7 +2654,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         // send email after move topic:
         messageBuilder.setObjName(topic.getTopicName());
         messageBuilder.setHeaderSubject(messageBuilder.getHeaderSubject() + topic.getTopicName());
-        messageBuilder.setLink(link.replaceFirst("pathId", topic.getId()));
+        messageBuilder.setLink(topic.getLink());
         Set<String> set = new HashSet<String>();
         // set email author this topic
         set.add(getEmailUser(sProvider, topic.getOwner()));

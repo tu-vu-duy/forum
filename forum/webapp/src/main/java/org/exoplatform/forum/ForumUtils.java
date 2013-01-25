@@ -39,10 +39,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumAdministration;
 import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.forum.service.MessageBuilder;
 import org.exoplatform.forum.service.Post;
+import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.TopicType;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.portal.application.PortalRequestContext;
@@ -148,7 +150,26 @@ public class ForumUtils {
     }
     return sb.toString();
   }
-
+  
+  public static String buildLinkMoveTopic(ForumService service, String forumPath, Topic topic) {
+    try {
+      boolean isInSpace = forumPath.indexOf(Utils.FORUM_SPACE_ID_PREFIX) > 0; 
+      String link = EMPTY_STR;
+      if(isInSpace) {
+        Forum forum = (Forum)service.getObjectNameByPath(forumPath);
+        String groupId = forum.getId().replace(Utils.FORUM_SPACE_ID_PREFIX, EMPTY_STR);
+        
+        
+        
+      } else {
+        link = createdForumLink(TOPIC, topic.getId(), false);
+      }
+      topic.setLink(link);
+      return link;
+    } catch (Exception e) {
+      return EMPTY_STR;
+    }
+  }
   public static boolean isValidEmailAddresses(String addressList){
     if (isEmpty(addressList))
       return true;
