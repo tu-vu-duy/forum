@@ -40,6 +40,9 @@
 
 package org.exoplatform.forum.extras.injection.utils;
 
+import java.util.List;
+import java.util.Random;
+
 /**
  * Simple lorem ipsum text generator.
  * <p>
@@ -59,11 +62,12 @@ public class LoremIpsum4J {
 
   private String[] loremIpsumWords;
   private char[] loremIpsumCharacters;
+  private int loremWordsSize = 0;
 
   public LoremIpsum4J() {
     this.loremIpsumWords = LOREM_IPSUM.split("\\s");
     this.loremIpsumCharacters = LOREM_IPSUM.toCharArray();
-
+    this.loremWordsSize = loremIpsumWords.length;
   }
 
   /**
@@ -101,7 +105,24 @@ public class LoremIpsum4J {
 
   }
   
-  
+  public String getCharacters(int line, List<String>bbcodeSupports) {
+    int l = bbcodeSupports.size();
+    StringBuilder lorem = new StringBuilder();
+    String bbcode = "";
+    for (int i = 0; i < line; i++) {
+      for (int j = 0; j < 20; j++) {
+        lorem.append(loremIpsumWords[new Random().nextInt(loremWordsSize)]).append(" ");
+        if((j+1) % 5 == 0) {// open
+          bbcode = bbcodeSupports.get(new Random().nextInt(l));
+          lorem.append("[").append(bbcode).append("]");
+        } else if((j+3) % 5 == 0 && j > 4) {
+          lorem.append("[/").append(bbcode).append("]").append(" ");
+        }
+      }
+    }
+    
+    return lorem.toString();
+  }
 
   /**
    * Returns words from the lorem ipsum text.

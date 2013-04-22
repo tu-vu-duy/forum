@@ -24,6 +24,11 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.forum.bbcode.api.BBCodeService;
+import org.exoplatform.forum.common.jcr.KSDataLocation;
+import org.exoplatform.forum.common.jcr.PropertyReader;
+import org.exoplatform.forum.extras.injection.utils.ExoNameGenerator;
+import org.exoplatform.forum.extras.injection.utils.LoremIpsum4J;
 import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumService;
@@ -31,10 +36,6 @@ import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.forum.service.impl.JCRDataStorage;
-import org.exoplatform.forum.common.jcr.KSDataLocation;
-import org.exoplatform.forum.common.jcr.PropertyReader;
-import org.exoplatform.forum.extras.injection.utils.ExoNameGenerator;
-import org.exoplatform.forum.extras.injection.utils.LoremIpsum4J;
 import org.exoplatform.services.bench.DataInjector;
 import org.exoplatform.services.jcr.util.IdGenerator;
 import org.exoplatform.services.log.ExoLogger;
@@ -114,6 +115,9 @@ public abstract class AbstractForumInjector extends DataInjector {
 
   /** . */
   protected final ForumService forumService;
+
+  /** . */
+  protected final BBCodeService bbcodeService;
   
   /** . */
   protected final KSDataLocation locator;
@@ -132,10 +136,11 @@ public abstract class AbstractForumInjector extends DataInjector {
 
   public AbstractForumInjector() {
 
-    PortalContainer c = PortalContainer.getInstance();
-    this.forumService = (ForumService) c.getComponentInstanceOfType(ForumService.class);
-    this.organizationService = (OrganizationService) c.getComponentInstanceOfType(OrganizationService.class);
-    this.locator = (KSDataLocation) c.getComponentInstanceOfType(KSDataLocation.class);
+    this.forumService = getService(ForumService.class);
+    this.organizationService = getService(OrganizationService.class);
+    this.locator = getService(KSDataLocation.class);
+    
+    this.bbcodeService = getService(BBCodeService.class);
 
     //
     this.userHandler = organizationService.getUserHandler();
@@ -145,6 +150,14 @@ public abstract class AbstractForumInjector extends DataInjector {
 
   }
 
+  private PortalContainer getContainer() {
+    return PortalContainer.getInstance();
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> T getService(Class<T> clazz) {
+    return (T) getContainer().getComponentInstanceOfType(clazz);
+  }
   public void init(String userPrefix, String categoryPrefix, String forumPrefix, String topicPrefix, String postPrefix, int byteSize) {
 
     //

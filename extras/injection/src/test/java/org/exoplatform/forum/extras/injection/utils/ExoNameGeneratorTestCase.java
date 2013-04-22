@@ -17,6 +17,9 @@
 
 package org.exoplatform.forum.extras.injection.utils;
 
+import java.util.Arrays;
+import java.util.List;
+
 import junit.framework.TestCase;
 
 /**
@@ -32,5 +35,9 @@ public class ExoNameGeneratorTestCase extends TestCase {
     assertTrue(exoNameGenerator.compose(3).length() > 3);
     assertTrue(exoNameGenerator.compose(2).length() > 2);
     assertTrue(exoNameGenerator.compose(1).length() >= 1);
+    
+    LoremIpsum4J  ipsum = new LoremIpsum4J();
+    List<String>bbcodeSupports = Arrays.asList("b", "i", "u", "url");
+    System.out.println(ipsum.getCharacters(3, bbcodeSupports));
   }
 }

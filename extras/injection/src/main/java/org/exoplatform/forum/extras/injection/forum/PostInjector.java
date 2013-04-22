@@ -16,8 +16,10 @@
  */
 package org.exoplatform.forum.extras.injection.forum;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.Forum;
@@ -52,6 +54,23 @@ public class PostInjector extends AbstractForumInjector {
 
   /** . */
   private static final String TOPIC_PREFIX = "topicPrefix";
+
+  private List<String> supportBBcodes = new ArrayList<String>();
+
+  public PostInjector() {
+    super();
+    try {
+      supportBBcodes.clear();
+      List<String> supportBBcodes = bbcodeService.getActive();
+      for (String bbcode : supportBBcodes) {
+        if (bbcode.indexOf("=") < 0 && !bbcode.equals("url")) {
+          this.supportBBcodes.add(bbcode);
+        }
+      }
+    } catch (Exception e) {
+      supportBBcodes = new ArrayList<String>();
+    }
+  }
 
   @Override
   public void inject(HashMap<String, String> params) throws Exception {
@@ -88,7 +107,6 @@ public class PostInjector extends AbstractForumInjector {
       String owner = userBase + i;
 
       for (int j = 0; j < number; ++j) {
-        lorem = new LoremIpsum4J();
 
         String postName = postName();
 
@@ -98,9 +116,9 @@ public class PostInjector extends AbstractForumInjector {
         post.setModifiedBy(owner);
         post.setModifiedDate(new Date());
         post.setName(postName);
-        post.setMessage(lorem.getParagraphs());
+        post.setMessage(getParagraphs());
         post.setRemoteAddr("127.0.0.1");
-        post.setIcon("classNameIcon");
+        post.setIcon("uiIconForumTopic");
         post.setIsApproved(true);
         post.setIsActiveByTopic(true);
         post.setIsHidden(false);
@@ -122,6 +140,15 @@ public class PostInjector extends AbstractForumInjector {
 
     }
 
+  }
+  
+  private String getParagraphs() {
+    lorem = new LoremIpsum4J();
+    String p = lorem.getParagraphs();
+    if(supportBBcodes.isEmpty() == false) {
+      p = lorem.getCharacters(4, supportBBcodes);
+    }
+    return p;
   }
 
  
