@@ -61,6 +61,7 @@ public class LoremIpsum4J {
                                              + "est Lorem ipsum dolor sit amet.";
 
   private String[] loremIpsumWords;
+  private String[] domains;
   private char[] loremIpsumCharacters;
   private int loremWordsSize = 0;
 
@@ -68,6 +69,8 @@ public class LoremIpsum4J {
     this.loremIpsumWords = LOREM_IPSUM.split("\\s");
     this.loremIpsumCharacters = LOREM_IPSUM.toCharArray();
     this.loremWordsSize = loremIpsumWords.length;
+    
+    this.domains = "http://dantri.com.vn http://google.com.vn http://exoplatform.org http://exoplatform.com http://gmail.com http://vnexpress.vn http://vietnamnet.net http://yahoo.com.vn ".split("\\s");
   }
 
   /**
@@ -109,15 +112,20 @@ public class LoremIpsum4J {
     int l = bbcodeSupports.size();
     StringBuilder lorem = new StringBuilder();
     String bbcode = "";
+    boolean isEnd = true;
     for (int i = 0; i < line; i++) {
-      for (int j = 0; j < 20; j++) {
+      for (int j = 1; j < 25; j++) {
         lorem.append(loremIpsumWords[new Random().nextInt(loremWordsSize)]).append(" ");
-        if((j+1) % 5 == 0) {// open
+        if(j % 7 == 0 && isEnd) {// open
           bbcode = bbcodeSupports.get(new Random().nextInt(l));
           lorem.append("[").append(bbcode).append("]");
-        } else if((j+3) % 5 == 0 && j > 4) {
+          isEnd = false;
+        } else if((j+4) % 7 == 0 && isEnd == false) {// end
           lorem.append("[/").append(bbcode).append("]").append(" ");
-        }
+          isEnd = true;
+        } else if(j % 6 == 0 && new Random().nextBoolean() == true) {
+          lorem.append(" [url]").append(domains[new Random().nextInt(domains.length)]).append("[/url] ");
+        } 
       }
     }
     

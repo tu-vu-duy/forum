@@ -62,8 +62,9 @@ public class PostInjector extends AbstractForumInjector {
     try {
       supportBBcodes.clear();
       List<String> supportBBcodes = bbcodeService.getActive();
+      String bbcodeIgnore = "wiki url email img";
       for (String bbcode : supportBBcodes) {
-        if (bbcode.indexOf("=") < 0 && !bbcode.equals("url")) {
+        if (bbcode.indexOf("=") < 0 && bbcodeIgnore.indexOf(bbcode.toLowerCase()) < 0) {
           this.supportBBcodes.add(bbcode);
         }
       }
