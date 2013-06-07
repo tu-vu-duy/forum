@@ -97,6 +97,10 @@
     <type>org.exoplatform.forum.extras.injection.poll.VoteInjector</type>
   </component>
 
+  <component>
+    <type>org.exoplatform.forum.extras.injection.user.UserInjector</type>
+  </component>
+
   <external-component-plugins>
     <target-component>org.exoplatform.services.bench.DataInjectorService</target-component>
 
@@ -186,6 +190,12 @@
       <name>pollVote</name>
       <set-method>addInjector</set-method>
       <type>org.exoplatform.forum.extras.injection.poll.VoteInjector</type>
+    </component-plugin>
+
+    <component-plugin>
+      <name>userInject</name>
+      <set-method>addInjector</set-method>
+      <type>org.exoplatform.forum.extras.injection.user.UserInjector</type>
     </component-plugin>
 
   </external-component-plugins>
