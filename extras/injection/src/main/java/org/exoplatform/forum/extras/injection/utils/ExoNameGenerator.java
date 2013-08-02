@@ -19,12 +19,17 @@ package org.exoplatform.forum.extras.injection.utils;
 
 public class ExoNameGenerator {
 
-  static final String[] prefix = {"a","al","an","au","ba","be","bi","br","da","di","do","du","e","eu","fa"};
-  static final String[] middle = {"au","be","bi","bo","bu","da","fri","gu","gus","nul"};
-  static final String[] surfix =   {"cio","cus","es","ius","lius","lus","nus","tin;","tor","tus"};
+  static final String[] prefix = {"a","al","an","au","ba","be","bi","br","da","di","do","du","e","eu","fa","jo", "ng", "kh"};
+  static final String[] middle = {"au","be","bi","bo","bu","da","fri","gu","gus","nul","hn", "uy", "a"};
+  static final String[] surfix =   {"cio","cus","es","ius","lius","lus","nus","tin","tor","tus", "en", "ng"};
 
+  static final String[] prefix_ = {"n","a","b","c","h","m","d", "n", "l", "ng", "kh", "k", "s", "t", "nh", "qu", "tr", "v"};
+  static final String[] surfix_ =   {"a","ao","am","an","anh","ang", "y", "iem","im","in","ing","ien","inh","on","om", "ong", "oc", 
+                                       "oi", "u", "uyen", "uong", "uoc", "e", "em", "en"};
 
-  private String upper(String string) {
+  static final String[] middle_ = {"nguyen","vu","do","le","lai","ho","ly","tran","pham","kieu","ha", "mai", "luu", "dao"};
+  
+  public String upper(String string) {
     return string.substring(0, 1).toUpperCase().concat(string.substring(1));
   }
 
@@ -51,6 +56,57 @@ public class ExoNameGenerator {
     if( syls > 1 ){
       name.append(surfix[(int) (Math.random() * surfix.length)]);
     }
+    return upper(name.toString());
+  }
+
+  public String compose(int syls, String first) {
+    if (syls < 1) {
+      return upper(first);
+    }
+    StringBuffer name = new StringBuffer(first);
+    name.append((first.length() > 0) ? "_" : "").append(compose(syls).toLowerCase());
+    return upper(name.toString());
+  }
+  
+  public String compose(int syls, String first, String type) {
+    if (type == null || type.length() == 0) {
+      return compose(syls, first);
+    }
+    if (syls < 1) {
+      return upper(first);
+    }
+    StringBuffer name = new StringBuffer();
+    if (type != null && type.length() > 0) {
+      // case first name
+      
+      if(first.length() > 0) {
+        if(type.equals("all")) {
+          name.append(compose(3));
+        } else if(type.equals("v")) {
+          name.append(getVWord());
+        } else {
+          name.append(first);
+        }
+      } else {
+        if(type.equals("v")) {
+          name.append(upper(middle_[(int) (Math.random() * middle_.length)]));
+          name.append(" ").append(getVWord());
+        } else {
+          name.append(compose(syls));
+        }
+      }
+    }
+    return upper(name.toString());
+  }
+  
+  private String getVWord() {
+    StringBuffer name = new StringBuffer();
+    name.append(prefix_[(int) (Math.random() * prefix_.length)]);
+    String l = surfix_[(int) (Math.random() * surfix_.length)];
+    if (name.equals("ng") && (l.indexOf("i") == 0 || l.indexOf("e") == 0)) {
+      name.append("h");
+    }
+    name.append(l);
     return upper(name.toString());
   }
 }

@@ -53,6 +53,8 @@ public class UserInjector extends DataInjector {
   public void inject(HashMap<String, String> params) throws Exception {
 
     String users = params.get("users");
+    String type = params.get("type");
+    type = (type == null || type.equals("n")) ? "" : type;
     String[] userNames = users.split(",");
     //
     for (int i = 0; i < userNames.length; ++i) {
@@ -63,10 +65,10 @@ public class UserInjector extends DataInjector {
       if (userHandler.findUserByName(userName) == null) {
         User user = userHandler.createUserInstance(userName);
         user.setEmail(userName + DOMAIN);
-        user.setFirstName(exoNameGenerator.compose(3));
-        user.setLastName(exoNameGenerator.compose(4));
+        user.setFirstName(exoNameGenerator.compose(2, userName, type));
+        user.setLastName(exoNameGenerator.compose(2, "", type));
         user.setPassword(PASSWORD);
-
+        user.setDisplayName(user.getFirstName() + " " + user.getLastName());
         try {
 
           //

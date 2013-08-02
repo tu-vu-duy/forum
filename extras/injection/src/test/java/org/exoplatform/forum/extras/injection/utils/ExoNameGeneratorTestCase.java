@@ -35,6 +35,24 @@ public class ExoNameGeneratorTestCase extends TestCase {
     assertTrue(exoNameGenerator.compose(3).length() > 3);
     assertTrue(exoNameGenerator.compose(2).length() > 2);
     assertTrue(exoNameGenerator.compose(1).length() >= 1);
+    // first
+   // System.out.println(exoNameGenerator.compose(0, "demo"));
+    // case 2
+    System.out.println(exoNameGenerator.compose(2, "demo", "all"));
+    //case 3
+    System.out.println(exoNameGenerator.compose(2, "demo", ""));
+
+    System.out.println(exoNameGenerator.compose(2, "demo", "v") + "\n\n");
+
+    System.out.println(exoNameGenerator.compose(3, "", "all"));
+    System.out.println(exoNameGenerator.compose(3, "", "v"));
+    System.out.println(exoNameGenerator.compose(3, "", ""));
+    
+    System.out.println(exoNameGenerator.compose(0, "demo"));
+
+    System.out.println(exoNameGenerator.compose(1, "demo", "f"));
+
+    System.out.println(exoNameGenerator.compose(1, "demo", "all"));
     
     LoremIpsum4J  ipsum = new LoremIpsum4J();
     List<String>bbcodeSupports = Arrays.asList("b", "i", "u", "url");
