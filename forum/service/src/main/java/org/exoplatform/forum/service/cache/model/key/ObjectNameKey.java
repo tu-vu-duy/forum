@@ -4,7 +4,7 @@ import org.exoplatform.forum.common.cache.model.ScopeCacheKey;
 import org.exoplatform.forum.service.Utils;
 
 public class ObjectNameKey extends ScopeCacheKey {
-
+  private static final long serialVersionUID = 1L;
   private final String path;
   private final String id;
   private final String type;
@@ -14,7 +14,7 @@ public class ObjectNameKey extends ScopeCacheKey {
       path = path.substring(path.indexOf(Utils.CATEGORY));
     }
     this.path = path;
-    this.id = null;
+    this.id = path.substring(path.lastIndexOf("/") + 1);
     this.type = null;
   }
 
@@ -22,6 +22,32 @@ public class ObjectNameKey extends ScopeCacheKey {
     this.path = null;
     this.id = id;
     this.type = type;
+  }
+  
+  public PostKey getPostKey() {
+    if(path != null) {
+      return new PostKey(Utils.getCategoryId(path), Utils.getForumId(path),
+                          Utils.getTopicId(path), id);
+    }
+    return new PostKey(id);
+  }
+  
+  public TopicKey getTopicKey() {
+    if(path != null) {
+      return new TopicKey(path, false);
+    }
+    return new TopicKey(id);
+  }
+  
+  public CategoryKey getCategoryKey() {
+    return new CategoryKey(id);
+  }
+  
+  public ForumKey getForumKey() {
+    if(path != null){
+      return new ForumKey(Utils.getForumId(path), id);
+    }
+    return new ForumKey(id);
   }
 
   @Override

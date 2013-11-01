@@ -4,7 +4,7 @@ import org.exoplatform.forum.common.cache.model.ScopeCacheKey;
 import org.exoplatform.forum.service.Post;
 
 public class PostKey extends ScopeCacheKey {
-
+  private static final long serialVersionUID = 1L;
   private final String category;
   private final String forum;
   private final String topic;
@@ -18,15 +18,17 @@ public class PostKey extends ScopeCacheKey {
   }
 
   public PostKey(Post post) {
-    int endPos = post.getPath().indexOf(post.getForumId()) - 1;
-    String catId = post.getPath().substring(0, endPos);
-    int startPos = catId.lastIndexOf("/") + 1;
-    catId = catId.substring(startPos);
-
-    this.category = catId;
+    this.category = post.getCategoryId();
     this.forum = post.getForumId();
     this.topic = post.getTopicId();
     this.post = post.getId();
+  }
+  
+  public PostKey(String postId) {
+    this.post = postId;
+    this.category = null;
+    this.forum = null;
+    this.topic = null;
   }
 
   public String getCategory() {
@@ -53,10 +55,10 @@ public class PostKey extends ScopeCacheKey {
 
     PostKey postKey = (PostKey) o;
 
-    if (category != null ? !category.equals(postKey.category) : postKey.category != null) return false;
-    if (forum != null ? !forum.equals(postKey.forum) : postKey.forum != null) return false;
-    if (post != null ? !post.equals(postKey.post) : postKey.post != null) return false;
-    if (topic != null ? !topic.equals(postKey.topic) : postKey.topic != null) return false;
+    if (post == null || postKey.post == null || !post.equals(postKey.post)) return false;
+    if (topic != null && topic.equals(postKey.topic) == false) return false;
+    if (forum != null && forum.equals(postKey.forum) == false) return false;
+    if (category != null && category.equals(postKey.category) == false) return false;
 
     return true;
   }
@@ -64,9 +66,6 @@ public class PostKey extends ScopeCacheKey {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + (category != null ? category.hashCode() : 0);
-    result = 31 * result + (forum != null ? forum.hashCode() : 0);
-    result = 31 * result + (topic != null ? topic.hashCode() : 0);
     result = 31 * result + (post != null ? post.hashCode() : 0);
     return result;
   }

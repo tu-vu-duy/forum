@@ -162,6 +162,17 @@ public class CachedDataStorage implements DataStorage, Startable {
       forumData.put(new ForumKey(forum), new ForumData(forum));
     } else {
       forumData.remove(new ForumKey(forum));
+      forumData.remove(new ForumKey(forum.getId()));
+      System.out.println("\n storage in caches: ");
+      for (ForumData data : forumData.getCachedObjects()) {
+        Forum forum_ = data.build();
+        if(forum_ != null) {
+          System.out.println(forum_.getId());
+        } else {
+          System.out.println("\n forum default ... ");
+        }
+      }
+      
     }
     statistic = null;
   }
@@ -1252,7 +1263,7 @@ public class CachedDataStorage implements DataStorage, Startable {
   public Object getObjectNameByPath(final String path) throws Exception {
 
     ObjectNameKey key = new ObjectNameKey(path);
-    CachedData data = objectNameData.get(key);
+    CachedData<?> data = objectNameData.get(key);
 
     if (data == null) {
       Object got = storage.getObjectNameByPath(path);
@@ -1277,30 +1288,41 @@ public class CachedDataStorage implements DataStorage, Startable {
   }
 
   public Object getObjectNameById(String id, String type) throws Exception {
-
     ObjectNameKey key = new ObjectNameKey(id, type);
-    CachedData data = objectNameData.get(key);
-
-    if (data == null) {
-      Object got = storage.getObjectNameById(id, type);
+    Object got = null;
+    try {
+      if (type.equals(Utils.TOPIC)) {
+        got = topicData.get(key.getTopicKey()).build();
+      } else if (type.equals(Utils.POST)) {
+        got = postData.get(key.getPostKey()).build();
+      } else if (type.equals(Utils.FORUM)) {
+        got = forumData.get(new ForumKey(id)).build();
+        System.out.println("getCacheSize " + forumData.getCacheSize());
+      } else if (type.equals(Utils.CATEGORY)) {
+        got = categoryData.get(key.getCategoryKey()).build();
+      } else if (type.equals(Utils.TAG)) {
+        got = objectNameData.get(key).build();
+      }
+    } catch (Exception e) {
+      got = null;
+    }
+    if(got != null) {System.out.println("Data had storaged in cache " + type + ": " + got.getClass().getName());}
+    if (got == null) {
+      System.out.println("Data not storage in cache " + type + ": " + id);
+      got = storage.getObjectNameById(id, type);
       if (got instanceof Post) {
-        objectNameData.put(key, new PostData((Post) got));
+        postData.put(new PostKey((Post) got), new PostData((Post) got));
       } else if (got instanceof Topic) {
-        objectNameData.put(key, new TopicData((Topic) got));
+        topicData.put(new TopicKey((Topic) got), new TopicData((Topic) got));
       } else if (got instanceof Forum) {
-        objectNameData.put(key, new ForumData((Forum) got));
+        forumData.put(new ForumKey((Forum) got), new ForumData((Forum) got));
       } else if (got instanceof Category) {
-        objectNameData.put(key, new CategoryData((Category) got));
+        categoryData.put(new CategoryKey((Category) got), new CategoryData((Category) got));
       } else if (got instanceof Tag) {
         objectNameData.put(key, new TagData((Tag) got));
-      } else {
-        objectNameData.put(key, TopicData.NULL);
       }
-      return got;
-    } else {
-      return data.build();
     }
-
+    return got;
   }
 
   // TODO : need range

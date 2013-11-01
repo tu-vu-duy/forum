@@ -4,12 +4,18 @@ import org.exoplatform.forum.common.cache.model.ScopeCacheKey;
 import org.exoplatform.forum.service.Forum;
 
 public class ForumKey extends ScopeCacheKey {
+  private static final long serialVersionUID = 1L;
 
   private final String categoryId;
   private final String forumId;
 
   public ForumKey(String categoryId, String forumId) {
     this.categoryId = categoryId;
+    this.forumId = forumId;
+  }
+
+  public ForumKey(String forumId) {
+    this.categoryId = null;
     this.forumId = forumId;
   }
 
@@ -34,8 +40,8 @@ public class ForumKey extends ScopeCacheKey {
 
     ForumKey forumKey = (ForumKey) o;
 
-    if (categoryId != null ? !categoryId.equals(forumKey.categoryId) : forumKey.categoryId != null) return false;
-    if (forumId != null ? !forumId.equals(forumKey.forumId) : forumKey.forumId != null) return false;
+    if (forumId == null || forumKey.forumId == null || !forumId.equals(forumKey.forumId) ) return false;
+    if (categoryId != null) return categoryId.equals(forumKey.categoryId);
 
     return true;
   }
@@ -43,9 +49,13 @@ public class ForumKey extends ScopeCacheKey {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + (categoryId != null ? categoryId.hashCode() : 0);
     result = 31 * result + (forumId != null ? forumId.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "ForumKey { forumId: " + forumId + ", categoryId: " + categoryId + "}";
   }
   
 }

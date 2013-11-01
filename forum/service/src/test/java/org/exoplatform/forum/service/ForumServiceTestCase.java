@@ -130,10 +130,29 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
   public void testGetObjectNameById() throws Exception {
     // set Data
     initDefaultData();
+    //
+    Post post = createdPost();
+    forumService_.savePost(categoryId, forumId, topicId, post, true, new MessageBuilder());
 
     // Test get object by id
+    assertNotNull(forumService_.getObjectNameById(categoryId, Utils.CATEGORY));
     assertNotNull(forumService_.getObjectNameById(forumId, Utils.FORUM));
-
+    assertNotNull(forumService_.getObjectNameById(topicId, Utils.TOPIC));
+    assertNotNull(forumService_.getObjectNameById(post.getId(), Utils.POST));
+//    
+//    for (int i = 0; i < 10; i++) {
+//      assertNotNull(forumService_.getObjectNameById(categoryId, Utils.CATEGORY));
+//    }
+//    for (int i = 0; i < 10; i++) {
+//      assertNotNull(forumService_.getObjectNameById(forumId, Utils.FORUM));
+//    }
+//    for (int i = 0; i < 10; i++) {
+//      assertNotNull(forumService_.getObjectNameById(topicId, Utils.TOPIC));
+//    }
+//    for (int i = 0; i < 10; i++) {
+//      assertNotNull(forumService_.getObjectNameById(post.getId(), Utils.POST));
+//    }
+    
     // Test get object by id in case the object has been updated
     // by saveForum
     Forum originalForum = convertToForum(forumService_.getObjectNameById(forumId, Utils.FORUM));
@@ -168,14 +187,33 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     Category cateNew = forumService_.getCategory(cate.getId());
     List<Forum> forums = new ArrayList<Forum>();
     forums.add(originalForum);
+
+    System.out.println("\n move forum");
     forumService_.moveForum(forums, cateNew.getPath());
-    updatedForum = convertToForum(forumService_.getObjectNameById(forumId, Utils.FORUM));
+    
+    assertNull(forumService_.getForum(categoryId, forumId));
+    
+    System.out.println("\n getObjectNameById 1");
+    
+    originalForum = (Forum)forumService_.getObjectNameById(forumId, Utils.FORUM);
+    
+    updatedForum = convertToForum(originalForum);
     assertNotNull(updatedForum);
+    
     assertEquals(cateNew.getPath() + "/" + forumId, updatedForum.getPath());
 
+    assertEquals(originalForum.getPath(), updatedForum.getPath());
+    
+    System.out.println("\n removeForum ");
     // by removeForum
     forumService_.removeForum(cateNew.getId(), forumId);
-    updatedForum = convertToForum(forumService_.getObjectNameById(forumId, Utils.FORUM));
+
+    System.out.println("\n getObjectNameById 2");
+    originalForum = (Forum)forumService_.getObjectNameById(forumId, Utils.FORUM);
+    
+    assertNull(forumService_.getForum(categoryId, forumId));
+    
+    updatedForum = convertToForum(originalForum);
     assertNull(updatedForum);
 
   }
