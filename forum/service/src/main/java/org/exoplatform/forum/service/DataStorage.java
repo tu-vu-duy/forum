@@ -61,6 +61,10 @@ public interface DataStorage {
 
   void addInitialDefaultDataPlugin(ComponentPlugin plugin) throws Exception;
 
+  /**
+   * 
+   * @deprecated not used, will remove on 4.1.x
+   */
   void addCalculateModeratorEventListener() throws Exception;
 
   void addDeletedUserCalculateListener() throws Exception;

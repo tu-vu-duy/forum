@@ -163,12 +163,12 @@ public class ForumServiceImpl implements ForumService, Startable {
     }
 
     // init Calculate Moderators listeners
-    try {
-      log.info("initializing Calculate Moderators listeners...");
-      storage.addCalculateModeratorEventListener();
-    } catch (Exception e) {
-      log.error("Error while initializing Moderators listeners: " + e.getMessage());
-    }
+//    try {
+//      log.info("initializing Calculate Moderators listeners...");
+//      storage.addCalculateModeratorEventListener();
+//    } catch (Exception e) {
+//      log.error("Error while initializing Moderators listeners: " + e.getMessage());
+//    }
 
     // initialize auto prune schedules
     try {

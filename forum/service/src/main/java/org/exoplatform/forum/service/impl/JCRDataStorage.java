@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
@@ -64,10 +65,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.utils.ActivityTypeUtils;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.ISO8601;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.TransformHTML;
@@ -79,8 +80,9 @@ import org.exoplatform.forum.common.jcr.KSDataLocation;
 import org.exoplatform.forum.common.jcr.KSDataLocation.Locations;
 import org.exoplatform.forum.common.jcr.PropertyReader;
 import org.exoplatform.forum.common.jcr.SessionManager;
+import org.exoplatform.forum.common.lifecycle.LifeCycleCompletionService;
 import org.exoplatform.forum.service.BufferAttachment;
-import org.exoplatform.forum.service.CalculateModeratorEventListener;
+import org.exoplatform.forum.service.CalculateModerator;
 import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.DataStorage;
 import org.exoplatform.forum.service.DeletedUserCalculateEventListener;
@@ -204,6 +206,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   
   private DataStorage cachedStorage;
   
+  private LifeCycleCompletionService completionService;
+  
   public JCRDataStorage() {
   }
 
@@ -211,12 +215,20 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     setDataLocator(dataLocator);
   }
   
-  public DataStorage getCachedDataStorage()  {
+  private DataStorage getCachedDataStorage()  {
     if (cachedStorage == null) {
-      cachedStorage = (DataStorage) PortalContainer.getInstance().getComponentInstanceOfType(DataStorage.class);
+      cachedStorage = CommonsUtils.getService(DataStorage.class);
     }
     
     return cachedStorage;
+  }
+
+  private LifeCycleCompletionService getLifeCycleCompletionService()  {
+    if (completionService == null) {
+      completionService = CommonsUtils.getService(LifeCycleCompletionService.class);
+    }
+    
+    return completionService;
   }
 
 
@@ -266,42 +278,34 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     }
   }
 
+  /**
+   * 
+   * @deprecated not used, will remove on 4.1.x
+   */
   public void addCalculateModeratorEventListener() throws Exception {
-    SessionProvider sProvider = SessionProvider.createSystemProvider();
-    Node categoryHome = getCategoryHome(sProvider);
-    try {
-      NodeIterator iter = categoryHome.getNodes();
-      NodeIterator iter1;
-      while (iter.hasNext()) {
-        Node catNode = iter.nextNode();
-        if (catNode.isNodeType(EXO_FORUM_CATEGORY)) {
-          addModeratorCalculateListener(catNode);
-          iter1 = catNode.getNodes();
-          while (iter1.hasNext()) {
-            Node forumNode = iter1.nextNode();
-            if (forumNode.isNodeType(EXO_FORUM)) {
-              addModeratorCalculateListener(forumNode);
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      log.error("Failed to add calculate moderator event listener", e);
-    } finally {
-      sProvider.close();
-    }
-  }
-
-  protected void addModeratorCalculateListener(Node node) throws Exception {
-    try {
-      String path = node.getPath();
-      ObservationManager observation = node.getSession().getWorkspace().getObservationManager();
-      CalculateModeratorEventListener moderatorListener = new CalculateModeratorEventListener();
-      moderatorListener.setPath(path);
-      observation.addEventListener(moderatorListener, Event.PROPERTY_ADDED | Event.PROPERTY_CHANGED | Event.PROPERTY_REMOVED, path, false, null, null, false);
-    } catch (Exception e) {
-      log.error(String.format("Failed to add listener for node %s", node.getName()), e);
-    }
+//    SessionProvider sProvider = SessionProvider.createSystemProvider();
+//    Node categoryHome = getCategoryHome(sProvider);
+//    try {
+//      NodeIterator iter = categoryHome.getNodes();
+//      NodeIterator iter1;
+//      while (iter.hasNext()) {
+//        Node catNode = iter.nextNode();
+//        if (catNode.isNodeType(EXO_FORUM_CATEGORY)) {
+//          addModeratorCalculateListener(catNode);
+//          iter1 = catNode.getNodes();
+//          while (iter1.hasNext()) {
+//            Node forumNode = iter1.nextNode();
+//            if (forumNode.isNodeType(EXO_FORUM)) {
+//              addModeratorCalculateListener(forumNode);
+//            }
+//          }
+//        }
+//      }
+//    } catch (Exception e) {
+//      log.error("Failed to add calculate moderator event listener", e);
+//    } finally {
+//      sProvider.close();
+//    }
   }
 
   public void addDeletedUserCalculateListener() {
@@ -940,12 +944,12 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
           catNode.setProperty(EXO_INCLUDED_SPACE, isIncludedSpace);
         }
         categoryHome.getSession().save();
-        addModeratorCalculateListener(catNode);
       } else {
         catNode = categoryHome.getNode(category.getId());
         String[] oldcategoryMod = new PropertyReader(catNode).strings(EXO_MODERATORS, new String[] {""});
         catNode.setProperty(EXO_TEMP_MODERATORS, oldcategoryMod);
       }
+      catNode.setProperty(EXO_MODERATORS, category.getModerators());
       catNode.setProperty(EXO_NAME, category.getCategoryName());
       catNode.setProperty(EXO_CATEGORY_ORDER, category.getCategoryOrder());
       catNode.setProperty(EXO_DESCRIPTION, category.getDescription());
@@ -959,14 +963,9 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       catNode.setProperty(EXO_VIEWER, convertArray(category.getViewer()));
       category.setPath(catNode.getPath());
       catNode.save();
-      try {
-        if ((isNew && category.getModerators().length > 0) || !isNew) {
-          catNode.setProperty(EXO_MODERATORS, category.getModerators());
-          catNode.save();
-        }
-      } catch (Exception e) {
-        log.debug("Failed to save category moderators ", e);
-      }
+
+      //
+      getLifeCycleCompletionService().addTask(new CalculateModerator().setNew(isNew).setPath(category.getPath()));
     } catch (Exception e) {
       log.error("Failed to save category", e);
       throw e;
@@ -1015,8 +1014,12 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         } catch (Exception e) {
           log.debug("Failed to save moderater of categoryId: " + cateId, e);
         }
+        //
       }
       cateHome.save();
+      for (String path : moderatorCate) {
+        getLifeCycleCompletionService().addTask(new CalculateModerator().setNew(false).setPath(cateHome.getPath() + "/" + path));
+      }
     } catch (Exception e) {
       log.error("Failed to save moderator of category", e);
     }
@@ -1024,8 +1027,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
   public void calculateModerator(String nodePath, boolean isNew) throws Exception {
     try {
-      JCRSessionManager manager = new JCRSessionManager(workspace);
-      Session session = manager.createSession();
+      Session session = sessionManager.openSession();
       try {
         Node node = (Node) session.getItem(nodePath);
         PropertyReader reader = new PropertyReader(node);
@@ -1052,7 +1054,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         node.setProperty(EXO_TEMP_MODERATORS, new String[] {});
         node.save();
       } finally {
-        session.logout();
+        sessionManager.closeSession();
       }
     } catch (Exception e) {
       if (log.isDebugEnabled()) {
@@ -1588,7 +1590,6 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         // Save Node
         catNode.getSession().save();
         // edit profile for moderator in this forum
-        addModeratorCalculateListener(forumNode);
       } else {
         forumNode = catNode.getNode(forum.getId());
         oldMod = Utils.valuesToArray(forumNode.getProperty(EXO_MODERATORS).getValues());
@@ -1676,6 +1677,9 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         pruneSetting.setProperty(EXO_ID, id.toString());
         pruneSetting.save();
       }
+
+      //
+      getLifeCycleCompletionService().addTask(new CalculateModerator().setNew(isNew).setPath(forum.getPath()));
     } catch (Exception e) {
       log.error("Failed to save forum " + forum.getForumName(), e);
     }
@@ -5070,17 +5074,38 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   }
 
   public void saveLastPostIdRead(String userId, String[] lastReadPostOfForum, String[] lastReadPostOfTopic) throws Exception {
-    SessionProvider sProvider = CommonUtils.createSystemProvider();
-    try {
-      Node profileNode = getUserProfileNode(sProvider, userId);
-      profileNode.setProperty(EXO_LAST_READ_POST_OF_FORUM, lastReadPostOfForum);
-      profileNode.setProperty(EXO_LAST_READ_POST_OF_TOPIC, lastReadPostOfTopic);
-      profileNode.getSession().save();
-    } catch (Exception e) {
-      log.error("Failed to save last post id read.", e);
-    }
+    //
+    getLifeCycleCompletionService().addTask(new SaveLastPostIdRead(userId, lastReadPostOfForum, lastReadPostOfTopic));
   }
 
+  class SaveLastPostIdRead implements Callable<Boolean> {
+    private String userId;
+    private String[] lastReadPostOfForum, lastReadPostOfTopic;
+
+    public SaveLastPostIdRead(String userId, String[] lastReadPostOfForum, String[] lastReadPostOfTopic) {
+      this.userId = userId;
+      this.lastReadPostOfTopic = lastReadPostOfTopic;
+      this.lastReadPostOfForum = lastReadPostOfForum;
+    }
+
+    @Override
+    public Boolean call() throws Exception {
+      Session session = sessionManager.openSession();
+      try {
+        StringBuffer path = new StringBuffer(dataLocator.getUserProfilesLocation()).append("/").append(userId);
+        Node profileNode = session.getRootNode().getNode(path.toString());
+        profileNode.setProperty(EXO_LAST_READ_POST_OF_FORUM, lastReadPostOfForum);
+        profileNode.setProperty(EXO_LAST_READ_POST_OF_TOPIC, lastReadPostOfTopic);
+        session.save();
+      } catch (Exception e) {
+        log.error("Failed to save last post id read.", e);
+      } finally {
+        sessionManager.closeSession();
+      }
+      return true;
+    }
+  }
+  
   public List<String> getUserModerator(String userName, boolean isModeCate) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     Node userProfileNode = getUserProfileHome(sProvider);
@@ -7658,8 +7683,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
   public void updateStatisticCounts(long topicCount, long postCount) throws Exception {
     try {
-      JCRSessionManager manager = new JCRSessionManager(workspace);
-      Session session = manager.createSession();
+      Session session = sessionManager.openSession();
       try {
         Node forumStatisticNode = session.getRootNode().getNode(dataLocator.getForumStatisticsLocation());
         PropertyReader reader = new PropertyReader(forumStatisticNode);
@@ -7677,7 +7701,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         }
         forumStatisticNode.save();
       } finally {
-        session.logout();
+        sessionManager.closeSession();
       }
     } catch (Exception e) {
       if (log.isDebugEnabled()) {
@@ -8462,6 +8486,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       QueryResult result = query.execute();
       NodeIterator iter = result.getNodes();
       List<String> list;
+      List<String> reCalculateModerator = new ArrayList<String>();
       PropertyReader reader;
       boolean isSave;
       while (iter.hasNext()) {
@@ -8479,6 +8504,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
                   // calculate moderator for users
                   node.setProperty(EXO_TEMP_MODERATORS, reader.strings(EXO_MODERATORS, new String[]{CommonUtils.EMPTY_STR}));
                   node.save();
+                  reCalculateModerator.add(node.getPath());
                 }
                 node.setProperty(strs[i], list.toArray(new String[list.size()]));
                 isSave = true;
@@ -8490,9 +8516,13 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
           }
         }
       }
+      for (String path : reCalculateModerator) {
+        getLifeCycleCompletionService().addTask(new CalculateModerator().setNew(false).setPath(path));
+      }
     } catch (Exception e) {
       logDebug("Failed to calculate deleted Group.", e);
     }
+    
   }
   
   public static List<String> containsGroup(List<String> list, String groupId) {

@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import javax.jcr.NodeIterator;
 
@@ -99,7 +98,6 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   private DataStorage storage;
   private CacheService service;
-  private LifeCycleCompletionService completionService;
 
   //
   private ExoCache<CategoryKey, CategoryData> categoryData;
@@ -146,7 +144,6 @@ public class CachedDataStorage implements DataStorage, Startable {
     
     this.storage = storage;
     this.service = service;
-    this.completionService = CommonsUtils.getService(LifeCycleCompletionService.class);
   }
 
   private void clearCategoryCache(String id) throws Exception {
@@ -488,8 +485,12 @@ public class CachedDataStorage implements DataStorage, Startable {
     storage.addInitialDefaultDataPlugin(plugin);
   }
 
+  /**
+   * 
+   * @deprecated not used, will remove on 4.1.x
+   */
   public void addCalculateModeratorEventListener() throws Exception {
-    storage.addCalculateModeratorEventListener();
+    LOG.warn("Can not support addCalculateModeratorEventListener.");
   }
 
   public void addDeletedUserCalculateListener() throws Exception {
@@ -585,6 +586,7 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public void saveCategory(Category category, boolean isNew) throws Exception {
     storage.saveCategory(category, isNew);
+    //
     categoryData.put(new CategoryKey(category), new CategoryData(category));
     categoryList.select(new ScopeCacheSelector<CategoryListKey, ListCategoryData>());
     clearLinkListCache();
@@ -598,6 +600,8 @@ public class CachedDataStorage implements DataStorage, Startable {
     storage.saveModOfCategory(moderatorCate, userId, isAdd);
     try {
       categoryData.select(new CategoryIdSelector(moderatorCate, categoryData));
+      forumData.clearCache();
+      forumList.clearCache();
     } catch (Exception e) {
       LOG.debug("Can not clear list categories in cached.", e);
     } 
@@ -605,7 +609,14 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public void calculateModerator(String nodePath, boolean isNew) throws Exception {
     storage.calculateModerator(nodePath, isNew);
-    clearForumCache(Utils.getCategoryId(nodePath), Utils.getForumId(nodePath), false);
+    String categoryId = Utils.getCategoryId(nodePath);
+    String forumId = Utils.getForumId(nodePath);
+    if(forumId != null && forumId.equals(categoryId) == false) {
+      clearForumCache(categoryId, forumId, false);
+    } else {
+      clearCategoryCache(categoryId);
+      forumData.clearCache();
+    }
     clearForumListCache();
   }
 
@@ -693,6 +704,7 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public void saveForum(String categoryId, Forum forum, boolean isNew) throws Exception {
     storage.saveForum(categoryId, forum, isNew);
+    //
     clearForumCache(forum, true);
     clearForumListCache();
     clearLinkListCache();
@@ -1134,28 +1146,11 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public void saveLastPostIdRead(String userId, String[] lastReadPostOfForum, String[] lastReadPostOfTopic) throws Exception {
     //
-    completionService.addTask(new SaveLastPostIdRead(userId, lastReadPostOfForum, lastReadPostOfTopic));
+    storage.saveLastPostIdRead(userId, lastReadPostOfForum, lastReadPostOfTopic);
     //
     refreshUserProfile(new UserProfile().setUserId(userId));
   }
 
-  class SaveLastPostIdRead implements Callable<Boolean> {
-    private String userId;
-    private String[] lastReadPostOfForum, lastReadPostOfTopic;
-
-    public SaveLastPostIdRead(String userId, String[] lastReadPostOfForum, String[] lastReadPostOfTopic) {
-      this.userId = userId;
-      this.lastReadPostOfTopic = lastReadPostOfTopic;
-      this.lastReadPostOfForum = lastReadPostOfForum;
-    }
-
-    @Override
-    public Boolean call() throws Exception {
-      storage.saveLastPostIdRead(userId, lastReadPostOfForum, lastReadPostOfTopic);
-      return true;
-    }
-  }
-  
   public List<String> getUserModerator(String userName, boolean isModeCate) throws Exception {
     return storage.getUserModerator(userName, isModeCate);
   }
