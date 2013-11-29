@@ -307,7 +307,7 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     TopicFilter filter = new TopicFilter(categoryId, forumId);
     filter.isAdmin(isModerator)
           .userLogin(userProfile.getUserId())
-          .isApproved(forum.getIsModerateTopic());
+          .isRequireApproved(forum.getIsModerateTopic());
     if (isModerator == false) {
       filter.viewers(ForumUtils.arraysMerge(forum.getViewer(), getForumService().getPermissionTopicByCategory(categoryId, Utils.EXO_VIEWER)));
     }

@@ -52,18 +52,10 @@ public class TopicListKey extends ScopeCacheKey {
     return true;
   }
 
-  private int getHashCode(int current, Object key) {
-    return 31 * current + (key != null ? key.hashCode() : 0);
-  }
-
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = getHashCode(result, filter.categoryId());
-    result = getHashCode(result, filter.forumId());
-    result = getHashCode(result, filter.isApproved());
-    result = getHashCode(result, filter.isAdmin());
-    result = getHashCode(result, filter.orderBy());
+    result = 31 * result + (filter != null ? filter.hashCode() : 0);
     result = 31 * result + offset;
     result = 31 * result + limit;
     return result;

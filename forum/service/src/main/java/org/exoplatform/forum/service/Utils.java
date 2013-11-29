@@ -36,6 +36,7 @@ import org.exoplatform.forum.common.jcr.KSDataLocation;
 import org.exoplatform.forum.service.SortSettings.Direction;
 import org.exoplatform.forum.service.SortSettings.SortField;
 import org.exoplatform.forum.service.filter.model.CategoryFilter;
+import org.exoplatform.forum.service.impl.model.TopicFilter;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -646,6 +647,80 @@ public class Utils implements ForumNodeTypes {
     return pathQuery;
   }
   
+  
+  public static String buildTopicQuery(SortSettings sortSettings, TopicFilter filter, StringBuilder sqlBuilder, boolean hasOrder) throws Exception {
+
+    if (filter.isAdmin() == false) {
+      StringBuilder strQuery = new StringBuilder();
+      strQuery.append(getSQLQueryByProperty("AND", EXO_IS_WAITING, "false"))
+              .append(getSQLQueryByProperty("AND", EXO_IS_ACTIVE, "true"))
+              .append(getSQLQueryByProperty("AND", EXO_IS_CLOSED, "false"));
+
+      if (filter.isRequireApproved()) {
+        strQuery.append(getSQLQueryByProperty("AND", EXO_IS_APPROVED, "true"));
+      }
+
+      if (isEmpty(filter.viewers()) == true) {
+        // public from parent ==> user is owner or user in can view or can view is empty
+        strQuery.append(" AND (").append(EXO_OWNER).append("='").append(filter.userLogin()).append("' OR ")
+                .append(buildSQLByUserInfo(EXO_CAN_VIEW, UserHelper.getAllGroupAndMembershipOfUser(null)))
+                .append(" OR ").append(buildSQLHasProperty(EXO_CAN_VIEW)).append(")");
+      } else if (ForumServiceUtils.hasPermission(filter.viewers(), filter.userLogin()) == false) {
+        // has not permission from parent ==> user is owner or user in can view
+        strQuery.append(" AND (").append(EXO_OWNER).append("='").append(filter.userLogin()).append("' OR ")
+                .append(buildSQLByUserInfo(EXO_CAN_VIEW, UserHelper.getAllGroupAndMembershipOfUser(null)))
+                .append(")");
+      } else {
+        if (isEmpty(filter.isActive()) == false) {
+          strQuery.append(getSQLQueryByProperty("AND", EXO_IS_ACTIVE, filter.isActive()));
+        }
+        if (isEmpty(filter.isApproved()) == false) {
+          strQuery.append(getSQLQueryByProperty("AND", EXO_IS_APPROVED, filter.isApproved()));
+        }
+        if (isEmpty(filter.isClosed()) == false) {
+          strQuery.append(getSQLQueryByProperty("AND", EXO_IS_CLOSED, filter.isClosed()));
+        }
+        if (isEmpty(filter.isLock()) == false) {
+          strQuery.append(getSQLQueryByProperty("AND", EXO_IS_LOCK, filter.isLock()));
+        }
+        if (isEmpty(filter.isWaiting()) == false) {
+          strQuery.append(getSQLQueryByProperty("AND", EXO_IS_WAITING, filter.isWaiting()));
+        }
+      }
+
+      sqlBuilder.append(strQuery);
+    }
+
+    if (hasOrder == true) {
+      return buildOrderByTopic(sortSettings, filter, sqlBuilder);
+    }
+    return sqlBuilder.toString();
+  }
+
+  public static String buildOrderByTopic(SortSettings sortSettings, TopicFilter filter, StringBuilder sqlBuilder) {
+    SortField orderBy = sortSettings.getField();
+    Direction orderType = sortSettings.getDirection();
+    sqlBuilder.append(" ORDER BY ").append(EXO_IS_STICKY).append(DESC);
+    String strOrderBy = filter.orderBy();
+    if (strOrderBy == null || isEmpty(strOrderBy)) {
+      if (orderBy != null) {
+        sqlBuilder.append(", exo:").append(orderBy.toString()).append(" ").append(orderType);
+        if (!orderBy.equals(SortField.LASTPOST)) {
+          sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
+        }
+      } else {
+        sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
+      }
+    } else {
+      sqlBuilder.append(", exo:").append(strOrderBy);
+      if (strOrderBy.indexOf(SortField.LASTPOST.toString()) < 0) {
+        sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
+      }
+    }
+    return sqlBuilder.toString();
+  }
+  
+  
   /**
    * @param userId
    * @return
@@ -681,7 +756,7 @@ public class Utils implements ForumNodeTypes {
           if (queryForum.length() > 10) {
             queryForum.append(" or ");
           }
-          queryForum.append("(@").append(Utils.EXO_ID).append("='").append(Utils.FORUM_SPACE_ID_PREFIX).append(groupId).append("')");
+          queryForum.append("(@").append(EXO_ID).append("='").append(FORUM_SPACE_ID_PREFIX).append(groupId).append("')");
         }
         queryForum.append(")");
         return queryForum.toString();
@@ -698,7 +773,7 @@ public class Utils implements ForumNodeTypes {
         if (queryForum.length() > 10) {
           queryForum.append(" OR ");
         }
-        queryForum.append("(").append(Utils.EXO_ID).append("='").append(Utils.FORUM_SPACE_ID_PREFIX).append(groupId).append("')");
+        queryForum.append("(").append(EXO_ID).append("='").append(FORUM_SPACE_ID_PREFIX).append(groupId).append("')");
       }
       queryForum.append(")");
       return queryForum.toString();
@@ -798,8 +873,8 @@ public class Utils implements ForumNodeTypes {
    * @since 2.3.0
    */
   public static String getCategoryPath(String path) {
-    if (!Utils.isEmpty(path) && path.lastIndexOf(Utils.CATEGORY) != -1) {
-      return path.substring(0, path.lastIndexOf(Utils.CATEGORY) + getCategoryId(path).length());
+    if (!isEmpty(path) && path.lastIndexOf(CATEGORY) != -1) {
+      return path.substring(0, path.lastIndexOf(CATEGORY) + getCategoryId(path).length());
     }
     return null;
   }
@@ -821,8 +896,8 @@ public class Utils implements ForumNodeTypes {
    * @since 2.3.0
    */
   public static String getForumPath(String path) {
-    if (!Utils.isEmpty(path) && path.lastIndexOf(Utils.FORUM) != -1) {
-      return path.substring(0, path.lastIndexOf(Utils.FORUM) + getForumId(path).length());
+    if (!isEmpty(path) && path.lastIndexOf(FORUM) != -1) {
+      return path.substring(0, path.lastIndexOf(FORUM) + getForumId(path).length());
     }
     return null;
   }

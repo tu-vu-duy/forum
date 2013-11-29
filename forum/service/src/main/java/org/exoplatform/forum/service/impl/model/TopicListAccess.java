@@ -46,7 +46,10 @@ public class TopicListAccess extends AbstractListAccess<Topic> {
         got = storage.getTopics(filter, index, length);
         break;
       case BY_DATE:
-        got = storage.getTopicsByDate(filter.date(), filter.forumPath(), length, index);
+        got = storage.getTopicsByDate(filter.date(), filter.forumPath(), index, length);
+        break;
+      case BY_USER:
+        got = storage.getTopicsByUser(filter, index, length);
         break;
       default:
         break;

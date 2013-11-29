@@ -527,15 +527,6 @@ public class ForumServiceImpl implements ForumService, Startable {
     storage.modifyTopic(topics, type);
   }
 
-  /**
-   * 
-   * @deprecated use {@link #saveTopic(String, String, Topic, boolean, boolean, MessageBuilder)}
-   */
-  @Deprecated
-  public void saveTopic(String categoryId, String forumId, Topic topic, boolean isNew, boolean isMove, String defaultEmailContent) throws Exception {
-    saveTopic(categoryId, forumId, topic, isNew, isMove, new MessageBuilder());
-  }
-
   public void saveTopic(String categoryId, String forumId, Topic topic, boolean isNew, boolean isMove, MessageBuilder messageBuilder) throws Exception {
     //update case
     Topic edited = null;

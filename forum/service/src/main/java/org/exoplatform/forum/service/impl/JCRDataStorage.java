@@ -2062,61 +2062,11 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
   private String buildTopicQuery(TopicFilter filter, boolean hasOrder) throws Exception {
     SortSettings sortSettings = getTopicSortSettings();
-    SortField orderBy = sortSettings.getField();
-    Direction orderType = sortSettings.getDirection();
 
     String forumPath = new StringBuilder("/").append(dataLocator.getForumCategoriesLocation())
-                        .append("/").append(filter.categoryId()).append("/").append(filter.forumId()).toString();
+        .append("/").append(filter.categoryId()).append("/").append(filter.forumId()).toString();
 
-    StringBuilder sqlBuilder = jcrPathLikeAndNotLike(EXO_TOPIC, forumPath);
-
-    if (filter.isAdmin() == false) {
-      StringBuilder strQuery = new StringBuilder();
-      strQuery.append(Utils.getSQLQueryByProperty("AND", EXO_IS_WAITING, "false"))
-              .append(Utils.getSQLQueryByProperty("AND", EXO_IS_ACTIVE, "true"))
-              .append(Utils.getSQLQueryByProperty("AND", EXO_IS_CLOSED, "false"));
-
-      if (filter.isApproved()) {
-        strQuery.append(Utils.getSQLQueryByProperty("AND", EXO_IS_APPROVED, "true"));
-      }
-
-      if (Utils.isEmpty(filter.viewers()) == true) {
-        // public from parent ==> user is owner or user in can view or can view is empty
-        strQuery.append(" AND (").append(Utils.EXO_OWNER).append("='").append(filter.userLogin()).append("' OR ")
-                .append(Utils.buildSQLByUserInfo(EXO_CAN_VIEW, UserHelper.getAllGroupAndMembershipOfUser(null)))
-                .append(" OR ").append(Utils.buildSQLHasProperty(EXO_CAN_VIEW)).append(")");
-      } else if (ForumServiceUtils.hasPermission(filter.viewers(), filter.userLogin()) == false) {
-        // has not permission from parent ==> user is owner or user in can view
-        strQuery.append(" AND (").append(Utils.EXO_OWNER).append("='").append(filter.userLogin()).append("' OR ")
-                .append(Utils.buildSQLByUserInfo(EXO_CAN_VIEW, UserHelper.getAllGroupAndMembershipOfUser(null)))
-                .append(")");
-      } else {
-        // has permission from parent ==> empty
-      }
-
-      sqlBuilder.append(strQuery);
-    }
-
-    if (hasOrder == true) {
-      sqlBuilder.append(" ORDER BY ").append(EXO_IS_STICKY).append(DESC);
-      String strOrderBy = filter.orderBy();
-      if (strOrderBy == null || Utils.isEmpty(strOrderBy)) {
-        if (orderBy != null) {
-          sqlBuilder.append(", exo:").append(orderBy.toString()).append(" ").append(orderType);
-          if (!orderBy.equals(SortField.LASTPOST)) {
-            sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
-          }
-        } else {
-          sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
-        }
-      } else {
-        sqlBuilder.append(", exo:").append(strOrderBy);
-        if (strOrderBy.indexOf(SortField.LASTPOST.toString()) < 0) {
-          sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
-        }
-      }
-    }
-    return sqlBuilder.toString();
+    return Utils.buildTopicQuery(sortSettings, filter, jcrPathLikeAndNotLike(EXO_TOPIC, forumPath), hasOrder);
   }
 
   public int getTopicsCount(TopicFilter filter) throws Exception {

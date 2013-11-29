@@ -17,18 +17,18 @@
 package org.exoplatform.forum.webui.popup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
-import org.exoplatform.forum.service.ForumNodeTypes;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.model.TopicFilter;
+import org.exoplatform.forum.service.impl.model.TopicListAccess;
 import org.exoplatform.forum.webui.UIForumKeepStickPageIterator;
 import org.exoplatform.forum.webui.UIForumPortlet;
 import org.exoplatform.forum.webui.UITopicContainer;
-import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.UIPopupComponent;
@@ -54,6 +54,8 @@ public class UIPageListTopicUnApprove extends UIForumKeepStickPageIterator imple
   private int         typeApprove = Utils.APPROVE;
 
   private List<Topic> topics;
+  
+  private TopicListAccess topicListAccess;
 
   public UIPageListTopicUnApprove() throws Exception {
     this.setActions(new String[] { "ApproveTopic", "Cancel" });
@@ -76,16 +78,54 @@ public class UIPageListTopicUnApprove extends UIForumKeepStickPageIterator imple
   public void setUpdateContainer(String categoryId, String forumId) {
     this.categoryId = categoryId;
     this.forumId = forumId;
+    //
+    initTopicListAccess();
+  }
+  
+  private void initTopicListAccess() {
+    TopicFilter filter = new TopicFilter(categoryId, forumId);
+    filter.isAdmin(true);
+    if(typeApprove == Utils.WAITING) {
+      filter.isWaiting("true");
+    } else if(typeApprove == Utils.APPROVE) {
+      filter.isApproved("false");
+    }
+    try {
+      topicListAccess = (TopicListAccess) getForumService().getTopics(filter);
+      int pageSize = (int) getUserProfile().getMaxTopicInPage();
+      topicListAccess.initialize(pageSize, pageSelect);
+    } catch (Exception e) {
+      log.error("Failed to load topics " + ((typeApprove == Utils.WAITING) ? " inactivty." : "unapproved."), e);
+    }
+  }
+  
+  @Override
+  public List<Integer> getInfoPage() throws Exception {
+    List<Integer> temp = new ArrayList<Integer>();
+    try {
+      temp.add(topicListAccess.getPageSize());
+      temp.add(topicListAccess.getCurrentPage());
+      temp.add(topicListAccess.getSize());
+      temp.add(topicListAccess.getTotalPages());
+    } catch (Exception e) {
+      temp.add(1);
+      temp.add(1);
+      temp.add(1);
+      temp.add(1);
+    }
+    return temp;
   }
 
-  @SuppressWarnings("unchecked")
   protected List<Topic> getTopicsUnApprove() throws Exception {
-    String type = (typeApprove == Utils.WAITING) ? ForumNodeTypes.EXO_IS_WAITING : (typeApprove == Utils.APPROVE) ? ForumNodeTypes.EXO_IS_APPROVED : ForumNodeTypes.EXO_IS_ACTIVE;
-    pageList = getForumService().getPageTopic(this.categoryId, this.forumId, "@" + type + "='" + ((typeApprove == Utils.WAITING) ? "true" : "false") + "'", ForumUtils.EMPTY_STR);
-    pageList.setPageSize(6);
-    maxPage = pageList.getAvailablePage();
-    topics = pageList.getPage(pageSelect);
-    pageSelect = pageList.getCurrentPage();
+    //
+    topicListAccess.setCurrentPage(pageSelect);
+    this.pageSelect = topicListAccess.getCurrentPage();
+
+    maxPage = topicListAccess.getTotalPages();
+    //
+    topics = Arrays.asList(topicListAccess.load(pageSelect));
+    this.pageSelect = topicListAccess.getCurrentPage();
+    
     if (topics == null)
       topics = new ArrayList<Topic>();
     for (Topic topic : topics) {
@@ -113,14 +153,13 @@ public class UIPageListTopicUnApprove extends UIForumKeepStickPageIterator imple
       Topic topic = uiForm.getTopic(topicId);
       topic = uiForm.getForumService().getTopicUpdate(topic, false);
       if (topic == null) {
-        event.getRequestContext().getUIApplication().addMessage(new ApplicationMessage("UIShowBookMarkForm.msg.link-not-found",
-                                                                                       null,
-                                                                                       ApplicationMessage.WARNING));
+        uiForm.warning("UIShowBookMarkForm.msg.link-not-found");
         return;
       }
       UIPopupContainer popupContainer = uiForm.getChild(UIPopupContainer.class);
-      if (popupContainer == null)
+      if (popupContainer == null) {
         popupContainer = uiForm.addChild(UIPopupContainer.class, null, "PoupContainerTopic");
+      }
       UIPopupAction popupAction = popupContainer.getChild(UIPopupAction.class);
       UIViewTopic viewTopic = popupAction.activate(UIViewTopic.class, 700);
       viewTopic.setTopic(topic);
