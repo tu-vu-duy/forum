@@ -1017,6 +1017,25 @@ public class CachedDataStorage implements DataStorage, Startable {
   public JCRPageList getPagePostByUser(String userName, String userId, boolean isMod, String strOrderBy) throws Exception {
     return storage.getPagePostByUser(userName, userId, isMod, strOrderBy);
   }
+  
+  public List<Post> getPostsByUser(final PostFilter filter, final int offset, final int limit) throws Exception {
+
+    PostListKey key = new PostListKey(filter, offset, limit);
+
+    return buildPostOutput(postListFuture.get(
+        new ServiceContext<ListPostData>() {
+          public ListPostData execute() {
+            try {
+              List<Post> got = storage.getPostsByUser(filter, offset, limit);
+              return buildPostInput(got);
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        },
+        key
+    ));
+  }
 
   public Post getPost(final String categoryId, final String forumId, final String topicId, final String postId) throws Exception {
 
@@ -1045,6 +1064,24 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public JCRPageList getListPostsByIP(String ip, String strOrderBy) throws Exception {
     return storage.getListPostsByIP(ip, strOrderBy);
+  }
+  
+  public List<Post> getPostsByIP(final PostFilter filter, final int offset, final int limit) throws Exception {
+    PostListKey key = new PostListKey(filter, offset, limit);
+
+    return buildPostOutput(postListFuture.get(
+        new ServiceContext<ListPostData>() {
+          public ListPostData execute() {
+            try {
+              List<Post> got = storage.getPostsByIP(filter, offset, limit);
+              return buildPostInput(got);
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        },
+        key
+    ));
   }
 
   public void savePost(String categoryId, String forumId, String topicId, Post post, boolean isNew, MessageBuilder messageBuilder) throws Exception {
@@ -1676,6 +1713,24 @@ public class CachedDataStorage implements DataStorage, Startable {
     storage.writeViews();
   }
 
+  public List<Post> getPostsSplitTopic(final PostFilter filter, final int offset, final int limit) throws Exception {
+    PostListKey key = new PostListKey(filter, offset, limit);
+
+    return buildPostOutput(postListFuture.get(
+        new ServiceContext<ListPostData>() {
+          public ListPostData execute() {
+            try {
+              List<Post> got = storage.getPostsSplitTopic(filter, offset, limit);
+              return buildPostInput(got);
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        },
+        key
+    ));
+  }
+  
   public JCRPageList getPostForSplitTopic(String topicPath) throws Exception {
     return storage.getPostForSplitTopic(topicPath);
   }

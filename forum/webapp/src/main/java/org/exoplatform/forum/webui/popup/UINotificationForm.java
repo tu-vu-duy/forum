@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.webui.BaseEventListener;
-import org.exoplatform.forum.common.webui.WebUIUtils;
 import org.exoplatform.forum.service.ForumAdministration;
 import org.exoplatform.forum.webui.BaseForumForm;
 import org.exoplatform.forum.webui.UIForumPortlet;
@@ -34,9 +33,9 @@ import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.Event.Phase;
 import org.exoplatform.webui.form.UIFormInputWithActions;
 import org.exoplatform.webui.form.UIFormInputWithActions.ActionData;
+import org.exoplatform.webui.form.UIFormRichtextInput;
 import org.exoplatform.webui.form.UIFormStringInput;
 import org.exoplatform.webui.form.input.UICheckBoxInput;
-import org.exoplatform.webui.form.UIFormRichtextInput;
 
 
 @ComponentConfig(

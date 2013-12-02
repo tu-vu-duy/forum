@@ -262,18 +262,18 @@ public class ForumUtils {
     if (!isEmpty(strOrderBy)) {
       // If user want to reverse sort of a property
       if (strOrderBy.indexOf(param) >= 0) {
-        if (strOrderBy.indexOf("descending") > 0) {
-          strOrderBy = param + " ascending";
+        if (strOrderBy.indexOf(Utils.DESC.trim()) > 0) {
+          strOrderBy = param + Utils.ASC;
         } else {
-          strOrderBy = param + " descending";
+          strOrderBy = param + Utils.DESC;
         }
         // User sort in another property
       } else {
-        strOrderBy = param + " ascending";
+        strOrderBy = param + Utils.ASC;
       }
       // In case : The first time user sorting
     } else {
-      strOrderBy = param + " ascending";
+      strOrderBy = param + Utils.ASC;
     }
     return strOrderBy;
   }

@@ -29,6 +29,7 @@ import javax.portlet.PortletSession;
 import javax.xml.namespace.QName;
 
 import org.apache.commons.lang.StringUtils;
+import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.forum.ForumSessionUtils;
@@ -46,7 +47,6 @@ import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumAttachment;
 import org.exoplatform.forum.service.ForumSearchResult;
 import org.exoplatform.forum.service.ForumServiceUtils;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.MessageBuilder;
 import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Tag;
@@ -617,23 +617,6 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     return this.isModeratePost;
   }
 
-  @Override
-  public List<Integer> getInfoPage() throws Exception {
-    List<Integer> temp = new ArrayList<Integer>();
-    try {
-      temp.add(postListAccess.getPageSize());
-      temp.add(postListAccess.getCurrentPage());
-      temp.add(postListAccess.getSize());
-      temp.add(postListAccess.getTotalPages());
-    } catch (Exception e) {
-      temp.add(1);
-      temp.add(1);
-      temp.add(1);
-      temp.add(1);
-    }
-    return temp;
-  }
-
   protected List<Post> getPostPageList() throws Exception {
     Post[] posts = null;
     
@@ -658,11 +641,11 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
       postListAccess.setCurrentPage(pageSelect);
       this.pageSelect = postListAccess.getCurrentPage();
 
-      maxPage = postListAccess.getTotalPages();
-      //update last post view in user profile in load method
-      //more detail in JCRDataStorage#getPosts() method
       posts = postListAccess.load(pageSelect);
       this.pageSelect = postListAccess.getCurrentPage();
+      
+      initPage(postListAccess.getPageSize(), postListAccess.getCurrentPage(),
+               postListAccess.getSize(), postListAccess.getTotalPages());
       
       pagePostRemember.put(topicId, pageSelect);
 
@@ -1204,10 +1187,13 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
   static public class SplitTopicActionListener extends BaseEventListener<UITopicDetail> {
     public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String objectId) throws Exception {
       try {
-        JCRPageList pageList = topicDetail.getForumService().getPostForSplitTopic(topicDetail.categoryId + ForumUtils.SLASH + topicDetail.forumId + ForumUtils.SLASH + topicDetail.topicId);
-        if (pageList.getAvailable() > 0) {
+        String topicPath = new StringBuffer(topicDetail.categoryId).append(ForumUtils.SLASH).append(topicDetail.forumId)
+                            .append(ForumUtils.SLASH).append(topicDetail.topicId).toString();
+        ListAccess<Post> listAccess = topicDetail.getForumService().getPostsSplitTopic(new PostFilter(topicPath, true));
+
+        if (listAccess.getSize() > 0) {
           UISplitTopicForm splitTopicForm = topicDetail.openPopup(UISplitTopicForm.class, 700, 400);
-          splitTopicForm.setPageListPost(pageList);
+          splitTopicForm.setListPosts(listAccess);
           splitTopicForm.setTopic(topicDetail.topic);
         } else {
           warning("UITopicContainer.sms.NotSplit");

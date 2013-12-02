@@ -30,6 +30,7 @@ import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.forum.service.ForumServiceUtils;
+import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.Tag;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.UserProfile;
@@ -146,14 +147,17 @@ public class UITopicsTag extends UIForumKeepStickPageIterator {
 
   @SuppressWarnings("unchecked")
   protected List<Topic> getTopicsTag() throws Exception {
-    this.pageList = getForumService().getTopicByMyTag(userIdAndtagId, strOrderBy);
+    JCRPageList<Topic> pageList = getForumService().getTopicByMyTag(userIdAndtagId, strOrderBy);
     int maxTopic = (int)this.userProfile.getMaxTopicInPage();
-    if (maxTopic <= 0)
+    if (maxTopic <= 0) {
       maxTopic = 10;
-    this.pageList.setPageSize(maxTopic);
-    this.maxPage = this.pageList.getAvailablePage();
+    }
+    pageList.setPageSize(maxTopic);
     topics = pageList.getPage(pageSelect);
     pageSelect = pageList.getCurrentPage();
+
+    initPage(maxTopic, pageSelect, pageList.getAvailable(), pageList.getAvailablePage());
+    
     if (topics == null)
       topics = new ArrayList<Topic>();
     for (Topic topic : topics) {

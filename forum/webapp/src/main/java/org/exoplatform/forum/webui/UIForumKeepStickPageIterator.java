@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.exoplatform.forum.ForumUtils;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.core.UIComponent;
@@ -33,27 +32,38 @@ import org.exoplatform.webui.form.input.UICheckBoxInput;
 @ComponentConfig()
 public class UIForumKeepStickPageIterator extends BaseForumForm {
 
-  public int                         pageSelect      = 1;
+  public int     pageSelect    = 1;
 
-  public int                         maxPage         = 1;
+  public int     availablePage = 1;
 
-  public JCRPageList                 pageList;
+  public int     totalCheked   = 0;
 
-  public int                         totalCheked     = 0;
+  private int    endTabPage    = 0;
 
-  private int                        endTabPage      = 0;
+  private int    beginTabPage  = 0;
 
-  private int                        beginTabPage    = 0;
+  private int    pageSize      = 0;
 
-  public boolean                     isUseAjax       = true;
+  private int    currentPage   = 0;
 
-  public boolean                     isLink          = false;
+  private int    available     = 0;
 
-  public String                      objectId        = ForumUtils.EMPTY_STR;
+  public boolean isUseAjax     = true;
+
+  public boolean isLink        = false;
+
+  public String  objectId      = ForumUtils.EMPTY_STR;
 
   private Map<Integer, List<String>> pageCheckedList = new HashMap<Integer, List<String>>();
 
   public UIForumKeepStickPageIterator() throws Exception {
+  }
+  
+  public void initPage(int pageSize, int currentPage, int available, int availablePage) {
+    this.pageSize = pageSize;
+    this.currentPage = currentPage;
+    this.available = available;
+    this.availablePage = availablePage;
   }
 
   public List<String> getListChecked(int page) {
@@ -88,23 +98,23 @@ public class UIForumKeepStickPageIterator extends BaseForumForm {
   }
 
   public List<String> getTotalpage() throws Exception {
-    if (this.pageSelect > maxPage)
-      this.pageSelect = maxPage;
+    if (this.pageSelect > availablePage)
+      this.pageSelect = availablePage;
     int page = this.pageSelect;
     if (page <= 3) {
       beginTabPage = 1;
-      if (maxPage <= 7)
-        endTabPage = maxPage;
+      if (availablePage <= 7)
+        endTabPage = availablePage;
       else
         endTabPage = 7;
     } else {
-      if (maxPage > (page + 3)) {
+      if (availablePage > (page + 3)) {
         endTabPage = (int) (page + 3);
         beginTabPage = (int) (page - 3);
       } else {
-        endTabPage = maxPage;
-        if (maxPage > 7)
-          beginTabPage = maxPage - 6;
+        endTabPage = availablePage;
+        if (availablePage > 7)
+          beginTabPage = availablePage - 6;
         else
           beginTabPage = 1;
       }
@@ -119,10 +129,10 @@ public class UIForumKeepStickPageIterator extends BaseForumForm {
   public List<Integer> getInfoPage() throws Exception {
     List<Integer> temp = new ArrayList<Integer>();
     try {
-      temp.add(pageList.getPageSize());
-      temp.add(pageList.getCurrentPage());
-      temp.add(pageList.getAvailable());
-      temp.add(maxPage);
+      temp.add(pageSize);
+      temp.add(currentPage);
+      temp.add(available);
+      temp.add(availablePage);
     } catch (Exception e) {
       temp.add(1);
       temp.add(1);
@@ -143,7 +153,7 @@ public class UIForumKeepStickPageIterator extends BaseForumForm {
   public List<String> getIdSelected() throws Exception {
     List<UIComponent> children = this.getChildren();
     List<String> ids = new ArrayList<String>();
-    for (int i = 0; i <= this.maxPage; i++) {
+    for (int i = 0; i <= this.availablePage; i++) {
       if (pageCheckedList.get(i) != null)
         ids.addAll(pageCheckedList.get(i));
     }
@@ -181,7 +191,7 @@ public class UIForumKeepStickPageIterator extends BaseForumForm {
         topicDetail.setIdPostView("top");
       }
       String stateClick = event.getRequestContext().getRequestParameter(OBJECTID).trim();
-      int maxPage = keepStickPageIter.maxPage;
+      int maxPage = keepStickPageIter.availablePage;
       int presentPage = keepStickPageIter.pageSelect;
       if (stateClick.equalsIgnoreCase("next")) {
         if (presentPage < maxPage) {

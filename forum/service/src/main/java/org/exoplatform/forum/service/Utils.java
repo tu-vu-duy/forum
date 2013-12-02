@@ -701,8 +701,8 @@ public class Utils implements ForumNodeTypes {
     SortField orderBy = sortSettings.getField();
     Direction orderType = sortSettings.getDirection();
     sqlBuilder.append(" ORDER BY ").append(EXO_IS_STICKY).append(DESC);
-    String strOrderBy = filter.orderBy();
-    if (strOrderBy == null || isEmpty(strOrderBy)) {
+    String order = filter.orderBy();
+    if (isEmpty(order)) {
       if (orderBy != null) {
         sqlBuilder.append(", exo:").append(orderBy.toString()).append(" ").append(orderType);
         if (!orderBy.equals(SortField.LASTPOST)) {
@@ -712,8 +712,9 @@ public class Utils implements ForumNodeTypes {
         sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
       }
     } else {
-      sqlBuilder.append(", exo:").append(strOrderBy);
-      if (strOrderBy.indexOf(SortField.LASTPOST.toString()) < 0) {
+      order = (order.indexOf("exo") < 0) ? "exo:" + order : order;
+      sqlBuilder.append(", ").append(order);
+      if (order.indexOf(SortField.LASTPOST.toString()) < 0) {
         sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
       }
     }

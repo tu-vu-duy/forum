@@ -35,7 +35,8 @@ public class PostFilter {
   private boolean isAdmin = false;
   private boolean isSplit = false;
 
-  public PostFilter(String categoryId, String forumId, String topicId, String isApproved, String isHidden, String isWaiting, String userLogin) {
+  public PostFilter(String categoryId, String forumId, String topicId, String isApproved,
+                     String isHidden, String isWaiting, String userLogin) {
     this.categoryId = categoryId;
     this.forumId = forumId;
     this.topicId = topicId;

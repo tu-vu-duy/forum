@@ -17,16 +17,17 @@
 package org.exoplatform.forum.webui.popup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.webui.BaseEventListener;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
-import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.model.PostFilter;
+import org.exoplatform.forum.service.impl.model.PostListAccess;
 import org.exoplatform.forum.webui.UIForumKeepStickPageIterator;
 import org.exoplatform.forum.webui.UIForumPortlet;
 import org.exoplatform.forum.webui.UITopicDetail;
@@ -50,14 +51,12 @@ import org.exoplatform.webui.form.input.UICheckBoxInput;
     }
 )
 public class UIPageListPostHidden extends UIForumKeepStickPageIterator implements UIPopupComponent {
-  private ForumService forumService;
 
   private String       categoryId, forumId, topicId;
 
   private List<Post>   listPost = new ArrayList<Post>();
 
   public UIPageListPostHidden() throws Exception {
-    forumService = (ForumService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(ForumService.class);
     this.setActions(new String[] { "UnHidden", "Cancel" });
   }
 
@@ -73,15 +72,25 @@ public class UIPageListPostHidden extends UIForumKeepStickPageIterator implement
     this.topicId = topicId;
   }
 
-  @SuppressWarnings("unchecked")
   protected List<Post> getPosts() throws Exception {
-    pageList = forumService.getPosts(this.categoryId, this.forumId, this.topicId, "true", "true", ForumUtils.EMPTY_STR, ForumUtils.EMPTY_STR);
-    pageList.setPageSize(6);
-    maxPage = pageList.getAvailablePage();
-    listPost = pageList.getPage(pageSelect);
-    pageSelect = pageList.getCurrentPage();
-    if (listPost == null)
+
+    PostFilter filter = new PostFilter(categoryId, forumId, topicId, "true", "true",
+                                       ForumUtils.EMPTY_STR, ForumUtils.EMPTY_STR);
+
+    PostListAccess postListAccess = (PostListAccess) getForumService().getPosts(filter);
+    postListAccess.initialize((int) getUserProfile().getMaxPostInPage(), pageSelect);
+
+    postListAccess.setCurrentPage(pageSelect);
+    pageSelect = postListAccess.getCurrentPage();
+
+    listPost = Arrays.asList(postListAccess.load(pageSelect));
+    pageSelect = postListAccess.getCurrentPage();
+    initPage(postListAccess.getPageSize(), postListAccess.getCurrentPage(),
+             postListAccess.getSize(), postListAccess.getTotalPages());
+
+    if (listPost == null) {
       listPost = new ArrayList<Post>();
+    }
     if (!listPost.isEmpty()) {
       for (Post post : listPost) {
         if (getUICheckBoxInput(post.getId()) != null) {
@@ -91,6 +100,7 @@ public class UIPageListPostHidden extends UIForumKeepStickPageIterator implement
         }
       }
     }
+
     return listPost;
   }
 
@@ -99,7 +109,7 @@ public class UIPageListPostHidden extends UIForumKeepStickPageIterator implement
       if (post.getId().equals(postId))
         return post;
     }
-    return forumService.getPost(this.categoryId, this.forumId, this.topicId, postId);
+    return getForumService().getPost(this.categoryId, this.forumId, this.topicId, postId);
   }
 
   static public class OpenPostLinkActionListener extends BaseEventListener<UIPageListPostHidden> {
@@ -131,7 +141,7 @@ public class UIPageListPostHidden extends UIForumKeepStickPageIterator implement
       if (!haveCheck) {
         warning("UIPageListPostUnApprove.sms.notCheck", false);
       } else {
-        postHidden.forumService.modifyPost(posts, Utils.HIDDEN);
+        postHidden.getForumService().modifyPost(posts, Utils.HIDDEN);
       }
       if (posts.size() == postHidden.listPost.size()) {
         UIForumPortlet forumPortlet = postHidden.getAncestorOfType(UIForumPortlet.class);

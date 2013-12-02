@@ -60,7 +60,7 @@ import org.exoplatform.webui.event.EventListener;
 public class UIPageListTopicByUser extends UIContainer {
   private ForumService forumService;
 
-  private String       strOrderBy = ForumUtils.EMPTY_STR;
+  private String       strOrderBy = Utils.EXO_CREATED_DATE + Utils.DESC;
 
   private String       userName   = ForumUtils.EMPTY_STR;
 

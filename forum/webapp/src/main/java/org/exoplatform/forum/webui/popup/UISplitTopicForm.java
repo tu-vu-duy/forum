@@ -17,16 +17,19 @@
 package org.exoplatform.forum.webui.popup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.CommonUtils;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.model.PostFilter;
+import org.exoplatform.forum.service.impl.model.PostListAccess;
 import org.exoplatform.forum.webui.UIForumKeepStickPageIterator;
 import org.exoplatform.forum.webui.UIForumPortlet;
 import org.exoplatform.forum.webui.UITopicDetail;
@@ -54,8 +57,8 @@ public class UISplitTopicForm extends UIForumKeepStickPageIterator implements UI
   private Topic              topic                   = new Topic();
 
   private boolean            isRender                = true;
-
-  private boolean            isSetPage               = true;
+  
+  private PostListAccess postListAccess = null;
 
   public static final String FIELD_SPLITTHREAD_INPUT = "SplitThread";
 
@@ -74,18 +77,25 @@ public class UISplitTopicForm extends UIForumKeepStickPageIterator implements UI
     return this.isRender;
   }
 
-  @SuppressWarnings("unchecked")
   protected List<Post> getListPost() throws Exception {
-    String path = this.topic.getPath();
-    path = path.substring(path.indexOf(Utils.CATEGORY));
-    if (isSetPage) {
-      pageList = getForumService().getPostForSplitTopic(path);
+    if(postListAccess == null) {
+      String topicPath = this.topic.getPath();
+      topicPath = topicPath.substring(topicPath.indexOf(Utils.CATEGORY));
+      postListAccess = (PostListAccess) getForumService().getPostsSplitTopic(new PostFilter(topicPath, true));
     }
-    pageList.setPageSize(6);
-    maxPage = pageList.getAvailablePage();
-    List<Post> posts = pageList.getPage(pageSelect);
-    pageSelect = pageList.getCurrentPage();
-    if (maxPage <= 1)
+    int pageSize = (int)getUserProfile().getMaxPostInPage();
+    postListAccess.initialize(pageSize, pageSelect);
+    postListAccess.setCurrentPage(pageSelect);
+
+    this.pageSelect = postListAccess.getCurrentPage();
+
+    List<Post> posts = Arrays.asList(postListAccess.load(pageSize));
+    this.pageSelect = postListAccess.getCurrentPage();
+    
+    initPage(pageSize, postListAccess.getCurrentPage(),
+             postListAccess.getSize(), postListAccess.getTotalPages());
+
+    if (availablePage <= 1)
       isRender = false;
     String checkBoxId;
     for (Post post : posts) {
@@ -96,13 +106,11 @@ public class UISplitTopicForm extends UIForumKeepStickPageIterator implements UI
         addUIFormInput(new UICheckBoxInput(checkBoxId, checkBoxId, false));
       }
     }
-    isSetPage = true;
     return posts;
   }
 
-  public void setPageListPost(JCRPageList pageList) {
-    this.pageList = pageList;
-    isSetPage = false;
+  public void setListPosts(ListAccess<Post> listAccess) {
+    this.postListAccess = (PostListAccess) listAccess;
   }
 
   protected Topic getTopic() {

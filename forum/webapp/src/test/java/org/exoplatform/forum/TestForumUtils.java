@@ -229,19 +229,19 @@ public class TestForumUtils extends TestCase {
 
   public void testGetOrderBy() throws Exception {
     String param = "dateTime", strOrderBy = ForumUtils.EMPTY_STR;
-    assertEquals("dateTime ascending",ForumUtils.getOrderBy(strOrderBy, param));
+    assertEquals("dateTime ASC",ForumUtils.getOrderBy(strOrderBy, param));
     param = "dateTime";
-    strOrderBy = "dateTime descending";
-    assertEquals("dateTime ascending",ForumUtils.getOrderBy(strOrderBy, param));
+    strOrderBy = "dateTime DESC";
+    assertEquals("dateTime ASC",ForumUtils.getOrderBy(strOrderBy, param));
     param = "dateTime";
-    strOrderBy = "dateTime ascending";
-    assertEquals("dateTime descending",ForumUtils.getOrderBy(strOrderBy, param));
+    strOrderBy = "dateTime ASC";
+    assertEquals("dateTime DESC",ForumUtils.getOrderBy(strOrderBy, param));
     param = "dateTime";
-    strOrderBy = "dateTime ascending";
-    assertEquals("dateTime descending",ForumUtils.getOrderBy(strOrderBy, param));
+    strOrderBy = "dateTime ASC";
+    assertEquals("dateTime DESC",ForumUtils.getOrderBy(strOrderBy, param));
     param = "dateTime";
-    strOrderBy = "name ascending";
-    assertEquals("dateTime ascending",ForumUtils.getOrderBy(strOrderBy, param));
+    strOrderBy = "name ASC";
+    assertEquals("dateTime ASC",ForumUtils.getOrderBy(strOrderBy, param));
   }
 
   public void testUpdateMultiValues() throws Exception {

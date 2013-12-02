@@ -72,7 +72,7 @@
 	
 	<div class="pull-right">
 	<%
-		if(uicomponent.maxPage > 1) {
+		if(uicomponent.availablePage > 1) {
 			_ctx.include("app:/templates/forum/webui/UIForumKeepStickPageIterator.gtmpl");
 		} 
 	%>
@@ -532,7 +532,7 @@
 		
 		<div class="pull-right">
 		<%
-			if(uicomponent.maxPage > 1) {
+			if(uicomponent.availablePage > 1) {
 				_ctx.include("app:/templates/forum/webui/UIForumKeepStickPageIterator.gtmpl");
 			} 
 		%>

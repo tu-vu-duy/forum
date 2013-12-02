@@ -99,32 +99,18 @@ public class UIPageListTopicUnApprove extends UIForumKeepStickPageIterator imple
     }
   }
   
-  @Override
-  public List<Integer> getInfoPage() throws Exception {
-    List<Integer> temp = new ArrayList<Integer>();
-    try {
-      temp.add(topicListAccess.getPageSize());
-      temp.add(topicListAccess.getCurrentPage());
-      temp.add(topicListAccess.getSize());
-      temp.add(topicListAccess.getTotalPages());
-    } catch (Exception e) {
-      temp.add(1);
-      temp.add(1);
-      temp.add(1);
-      temp.add(1);
-    }
-    return temp;
-  }
-
   protected List<Topic> getTopicsUnApprove() throws Exception {
     //
     topicListAccess.setCurrentPage(pageSelect);
-    this.pageSelect = topicListAccess.getCurrentPage();
+    pageSelect = topicListAccess.getCurrentPage();
 
-    maxPage = topicListAccess.getTotalPages();
+    availablePage = topicListAccess.getTotalPages();
     //
     topics = Arrays.asList(topicListAccess.load(pageSelect));
-    this.pageSelect = topicListAccess.getCurrentPage();
+    pageSelect = topicListAccess.getCurrentPage();
+    
+    initPage(topicListAccess.getPageSize(), pageSelect,
+             topicListAccess.getSize(), topicListAccess.getPageSize());
     
     if (topics == null)
       topics = new ArrayList<Topic>();

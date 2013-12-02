@@ -585,8 +585,20 @@ public interface ForumService extends ForumServiceLegacy {
    * @return Posts.
    * @throws Exception the exception
    * @LevelAPI Platform
+   * 
+   * @deprecated {@link #getPostsSplitTopic(PostFilter)}
    */
   JCRPageList getPostForSplitTopic(String topicPath) throws Exception;
+
+  /**
+   * Gets posts to split topic which are returned as ListAccess.
+   * @param filter The condition to get posts.
+   * @return The posts.
+   * @throws Exception
+   * 
+   * @since 4.1.0
+   */
+  ListAccess<Post> getPostsSplitTopic(PostFilter filter) throws Exception;
 
   /**
    * Gets posts which are returned as ListAccess.
@@ -635,8 +647,20 @@ public interface ForumService extends ForumServiceLegacy {
    * @return Posts.
    * @throws Exception the exception
    * @LevelAPI Platform
+   * 
+   * @deprecated use {@link #getPostsByUser(PostFilter)}
    */
   JCRPageList getPagePostByUser(String userName, String userId, boolean isMod, String strOrderBy) throws Exception;
+  
+  /**
+   * Gets posts by user which are returned as ListAccess.
+   * @param filter The condition to get posts.
+   * @return The posts.
+   * @throws Exception
+   * 
+   * @since 4.1.0
+   */
+  ListAccess<Post> getPostsByUser(PostFilter filter) throws Exception;
 
   /**
    * Gets a post based on category Id, forum Id, topic Id and post Id.
@@ -1489,6 +1513,16 @@ public interface ForumService extends ForumServiceLegacy {
    * @LevelAPI Platform
    */
   JCRPageList getListPostsByIP(String ip, String strOrderBy) throws Exception;
+
+  /**
+   * Gets posts by IP which are returned as ListAccess.
+   * @param filter The condition to get posts.
+   * @return The posts.
+   * @throws Exception
+   * 
+   * @since 4.1.0
+   */
+  ListAccess<Post> getPostsByIP(PostFilter filter) throws Exception;
 
   /**
    * Gets an avatar by a given username.

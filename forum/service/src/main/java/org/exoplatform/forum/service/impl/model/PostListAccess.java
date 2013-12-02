@@ -28,7 +28,7 @@ public class PostListAccess extends AbstractListAccess<Post> {
   private Type type;
   
   public enum Type {
-    POSTS, BY_IP, BY_USER
+    POSTS, BY_IP, BY_USER, BY_SPLIT
   }
   
   public PostListAccess(Type type, DataStorage  storage, PostFilter filter) {
@@ -45,6 +45,15 @@ public class PostListAccess extends AbstractListAccess<Post> {
       case POSTS :
         got = storage.getPosts(filter, offset, limit);
         break;
+      case BY_IP :
+        got = storage.getPostsByIP(filter, offset, limit);
+        break;
+      case BY_USER :
+        got = storage.getPostsByUser(filter, offset, limit);
+        break;
+      case BY_SPLIT :
+        got = storage.getPostsSplitTopic(filter, offset, limit);
+        break;
     default:
       break;     
     }
@@ -58,11 +67,7 @@ public class PostListAccess extends AbstractListAccess<Post> {
   @Override
   public int getSize() throws Exception {
     if (size < 0) {
-      switch(type) {
-        case POSTS :
-          size = storage.getPostsCount(filter);
-          break;
-      }
+      size = storage.getPostsCount(filter);
     }
     return size;
   }

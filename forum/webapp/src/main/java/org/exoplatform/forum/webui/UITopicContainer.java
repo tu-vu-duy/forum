@@ -318,24 +318,6 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     topicListAccess.initialize(pageSize, pageSelect);
   }
   
-  @Override
-  public List<Integer> getInfoPage() throws Exception {
-    List<Integer> temp = new ArrayList<Integer>();
-    try {
-      temp.add(topicListAccess.getPageSize());
-      temp.add(topicListAccess.getCurrentPage());
-      temp.add(topicListAccess.getSize());
-      temp.add(topicListAccess.getTotalPages());
-    } catch (Exception e) {
-      temp.add(1);
-      temp.add(1);
-      temp.add(1);
-      temp.add(1);
-    }
-    return temp;
-  }
-
-
   private String getRemoteIP() throws Exception {
     if (enableIPLogging) {
       return WebUIUtils.getRemoteIP();
@@ -378,12 +360,14 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     topicListAccess.setCurrentPage(pageSelect);
     this.pageSelect = topicListAccess.getCurrentPage();
 
-    maxPage = topicListAccess.getTotalPages();
+    availablePage = topicListAccess.getTotalPages();
     //
     topicList = Arrays.asList(topicListAccess.load(pageSelect));
     this.pageSelect = topicListAccess.getCurrentPage();
     
-    
+    initPage(topicListAccess.getPageSize(), topicListAccess.getCurrentPage(),
+             topicListAccess.getSize(), topicListAccess.getTotalPages());
+
     pageTopicRemember.put(forumId, pageSelect);
     if (topicList == null)
       topicList = new ArrayList<Topic>();

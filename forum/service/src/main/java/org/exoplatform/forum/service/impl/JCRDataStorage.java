@@ -1704,7 +1704,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
               userProfileNode.setProperty(EXO_USER_TITLE, Utils.MODERATOR);
             }
           } catch (Exception e) {
-            logDebug("Failed to removing forumId storage in property moderator of user: " + string);
+            logWarn("Failed to removing forumId storage in property moderator of user: " + string);
           }
         }
       }
@@ -1868,7 +1868,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       addUpdateUserProfileJob(userPostMap);
       getTotalJobWatting(sProvider, new HashSet<String>(Arrays.asList(forum.getModerators())));
     } catch (Exception e) {
-      logDebug("Failed to remove forum: " + forumId);
+      logWarn("Failed to remove forum: " + forumId);
       return null;
     }
     return forum;
@@ -2053,10 +2053,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       }
       return topicList;
     } catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Failed to retrieve topic list for forum " + filter.forumId(), e);
-      }
-      return null;
+        LOG.warn("Failed to retrieve topic list for forum " + filter.forumId(), e);
+      return new ArrayList<Topic>();
     }
   }
 
@@ -2102,7 +2100,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         }
       }
     } catch (Exception e) {
-      return null;
+      return topics;
     }
     return topics;
   }
@@ -2349,8 +2347,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
   public List<Topic> getTopicsByDate(long date, String forumPath, int offset, int limit) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
+    List<Topic> topics = new ArrayList<Topic>();
     try {
-      List<Topic> topics = new ArrayList<Topic>();
       NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, buildSQLQueryGetTopicByDate(date, forumPath), offset, limit, false);
       while (iter.hasNext()) {
         Node node = iter.nextNode();
@@ -2358,7 +2356,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       }
       return topics;
     } catch (Exception e) {
-      return null;
+      return topics;
     }
   }
 
@@ -2439,9 +2437,10 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     }
     if (hasOrder == true) {
       sqlQuery.append(" ORDER BY ").append(EXO_IS_STICKY).append(DESC);
-      if (Utils.isEmpty(filter.orderBy()) == false) {
-        sqlQuery.append(",exo:").append(filter.orderBy());
-        if (EXO_CREATED_DATE.indexOf(filter.orderBy()) < 0) {
+      String order = filter.orderBy();
+      if (Utils.isEmpty(order) == false) {
+        sqlQuery.append(", ").append((order.indexOf("exo") < 0) ? "exo:" + order : order);
+        if (EXO_CREATED_DATE.indexOf(order) < 0) {
           sqlQuery.append(", ").append(EXO_CREATED_DATE).append(ASC);
         }
       } else {
@@ -2455,16 +2454,16 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   public List<Topic> getTopicsByUser(TopicFilter filter, int offset, int limit) throws Exception {
     // String userName, boolean isAdmin, String orderBy
     SessionProvider sProvider = CommonUtils.createSystemProvider();
+    List<Topic> topics = new ArrayList<Topic>();
     try {
       NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, buildQueryTopicsByUser(filter, true), offset, limit, true);
-      List<Topic> topics = new ArrayList<Topic>();
       while (iter.hasNext()) {
         Node node = iter.nextNode();
         topics.add(getTopicNode(node));
       }
       return topics;
     } catch (Exception e) {
-      return null;
+      return topics;
     }
   }
 
@@ -3067,6 +3066,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     return sqlQuery.toString();
   }
 
+  @Override
   public List<Post> getPostsSplitTopic(PostFilter filter, int offset, int limit) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     try {
@@ -3075,11 +3075,9 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery, 0, 0, false);
       return getPosts(iter);
     } catch (PathNotFoundException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Failed to get post for split topic.", e);
-      }
+      logWarn("Failed to get post for split topic.", e);
+      return new ArrayList<Post>();
     }
-    return null;
   }
 
   /**
@@ -3127,7 +3125,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, makePostsSQLQuery(filter, true), offset, limit, false);
       return getPosts(iter);
     } catch (Exception e) {
-      logDebug("Failed to get posts by filter of topic " + filter.getTopicId(), e);
+      logWarn("Failed to get posts by filter of topic " + filter.getTopicId(), e);
       return new ArrayList<Post>();
     }
   }
@@ -3164,6 +3162,9 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     return getPostsCount(filter);
   }
 
+  /**
+   * @deprecated use {@link #getPostsByUser(PostFilter, int, int)}
+   */
   public JCRPageList getPagePostByUser(String userName, String userId, boolean isMod, String strOrderBy) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     try {
@@ -3179,7 +3180,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ").append(EXO_POST);
     sqlQuery.append(" WHERE ")
             .append(Utils.getSQLQueryByProperty("", EXO_IS_FIRST_POST, "false"))
-            .append(Utils.getSQLQueryByProperty("", EXO_OWNER, filter.userName()));
+            .append(Utils.getSQLQueryByProperty("AND", EXO_OWNER, filter.userName()));
 
     if (filter.isAdmin() == false) {
       sqlQuery.append(Utils.getSQLQueryByProperty("AND", EXO_IS_APPROVED, "true"))
@@ -3194,9 +3195,11 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
     if (hasOrder) {
       sqlQuery.append(" ORDER BY ");
-      if (!Utils.isEmpty(filter.orderBy())) {
-        sqlQuery.append(filter.orderBy());
-        if (filter.orderBy().indexOf(EXO_CREATED_DATE) < 0) {
+      String order = filter.orderBy();
+      if (!Utils.isEmpty(order)) {
+        order = (order.indexOf("exo") < 0) ? "exo:" + order : order;
+        sqlQuery.append(order);
+        if (order.indexOf(EXO_CREATED_DATE) < 0) {
           sqlQuery.append(", ").append(EXO_CREATED_DATE).append(DESC);
         }
       } else {
@@ -3207,6 +3210,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     return sqlQuery.toString();
   }
 
+  @Override
   public List<Post> getPostsByUser(PostFilter filter, int offset, int limit) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     try {
@@ -3214,7 +3218,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery, offset, limit, false);
       return getPosts(iter);
     } catch (Exception e) {
-      return null;
+      logWarn("Failed to get posts by user " + filter.userName(), e);
+      return new ArrayList<Post>();
     }
   }
 
@@ -3253,11 +3258,13 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
     sqlQuery.append(" WHERE ").append(Utils.getSQLQueryByProperty("", EXO_REMOTE_ADDR, filter.getIP()));
     if (hasOrder) {
-      if (Utils.isEmpty(filter.orderBy())) {
+      String order = filter.orderBy(); 
+      if (Utils.isEmpty(order)) {
         sqlQuery.append("  ORDER BY ").append(EXO_LAST_POST_DATE).append(DESC);
       } else {
-        sqlQuery.append(" ORDER BY exo:").append(filter.orderBy());
-        if (EXO_LAST_POST_DATE.indexOf(filter.orderBy()) < 0) {
+        order = (order.indexOf("exo") < 0) ? "exo:" + order : order;
+        sqlQuery.append(" ORDER BY ").append(order);
+        if (EXO_LAST_POST_DATE.indexOf(order) < 0) {
           sqlQuery.append(", ").append(EXO_LAST_POST_DATE).append(DESC);
         }
       }
@@ -3277,7 +3284,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       }
       return posts;
     } catch (Exception e) {
-      return null;
+      return new ArrayList<Post>();
     }
   }
 
@@ -3334,7 +3341,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         return attachment;
       }
     } catch (Exception e) {
-      logDebug("Failed to get attachment in node: " + nodeContent.getName());
+      logWarn("Failed to get attachment in node: " + nodeContent.getName());
     }
     return null;
   }
@@ -4232,6 +4239,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       String userIdTagId = userName + ":" + tagId;
       QueryManager qm = categoryHome.getSession().getWorkspace().getQueryManager();
       StringBuilder builder = new StringBuilder();
+      
+      
       builder.append(JCR_ROOT).append(categoryHome.getPath()).append("//element(*,exo:topic)[@exo:tagId='").append(userIdTagId).append("']");
       Query query = qm.createQuery(builder.toString(), Query.XPATH);
       QueryResult result = query.execute();
@@ -7175,7 +7184,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
           profile.save();
         }
       } catch (Exception e) {
-        logDebug(String.format("Failed to update user %s acess for topic %s", entry.getKey(), "bar"), e);
+        logWarn(String.format("Failed to update user %s acess for topic %s", entry.getKey(), "bar"), e);
       }
     }
   }
@@ -7643,7 +7652,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     boolean topicHasLimitedViewers = hasProperty(topicNode, EXO_CAN_VIEW);
 
     if ((notApproved) || isPrivatePost || topicHasLimitedViewers) {
-      logDebug("Post" + postName + " was not added to feed because it is private or topic has restricted audience or it is waiting for approval");
+      logWarn("Post" + postName + " was not added to feed because it is private or topic has restricted audience or it is waiting for approval");
       return null;
     }
 
@@ -7653,7 +7662,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     boolean forumHasRestrictedAudience = (hasProperty(forumNode, EXO_VIEWER));
 
     if (categoryHasRestrictedAudience || forumHasRestrictedAudience) {
-      logDebug("Post" + postName + " was not added to feed because category or forum has restricted audience");
+      logWarn("Post" + postName + " was not added to feed because category or forum has restricted audience");
       return null;
     }
 
@@ -7736,7 +7745,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     } catch (PathNotFoundException e) {
       LOG.info(String.format("User %s doesn't subscribe anything.", userId));
     } catch (RepositoryException e) {
-      logDebug("Can not create feed data for user: " + userId, e);
+      logWarn("Can not create feed data for user: " + userId, e);
     }
 
     try {
@@ -8179,7 +8188,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         }
       }
     } catch (Exception e) {
-      logDebug("Failed to calculate deleted Group.", e);
+      logWarn("Failed to calculate deleted Group.", e);
     }
   }
   
@@ -8221,18 +8230,18 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     LOG.info("JCR Data Storage for forum initialized to " + dataLocator);
   }
 
-  private static void logDebug(String message, Throwable e) {
+  private static void logWarn(String message, Throwable e) {
     if (LOG.isDebugEnabled()) {
       if (e != null) {
-        LOG.debug(message, e);
+        LOG.warn(message, e);
       } else {
-        LOG.debug(message);
+        LOG.warn(message);
       }
     }
   }
 
-  private static void logDebug(String message) {
-    logDebug(message, null);
+  private static void logWarn(String message) {
+    logWarn(message, null);
   }
 
   private Calendar getGreenwichMeanTime() {

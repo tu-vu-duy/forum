@@ -232,18 +232,23 @@ public interface DataStorage {
    * @deprecated use {@link #getPostsCount(PostFilter);
    */
   long getAvailablePost(String categoryId, String forumId, String topicId, String isApproved, String isHidden, String userLogin) throws Exception;
+
   /**
    * 
-   * @deprecated use {@link #getPosts(PostFilter, int, int)
+   * @deprecated use {@link #getPostsByUser(PostFilter, int, int)}
    */
   JCRPageList getPagePostByUser(String userName, String userId, boolean isMod, String strOrderBy) throws Exception;
 
+  List<Post> getPostsByUser(PostFilter filter, int offset, int limit) throws Exception;
+  
   Post getPost(String categoryId, String forumId, String topicId, String postId) throws Exception;
   /**
    * 
-   * @deprecated use {@link #getPosts(PostFilter, int, int)
+   * @deprecated use {@link #getPostsByIP(PostFilter, int, int)}
    */
   JCRPageList getListPostsByIP(String ip, String strOrderBy) throws Exception;
+
+  List<Post> getPostsByIP(PostFilter filter, int offset, int limit) throws Exception;
 
   void savePost(String categoryId, String forumId, String topicId, Post post, boolean isNew, MessageBuilder messageBuilder) throws Exception;
 
@@ -441,8 +446,13 @@ public interface DataStorage {
   void setViewCountTopic(String path, String userRead);
   
   void writeViews();
-
+  /**
+   * 
+   * @deprecated use {@link #getPostsSplitTopic(PostFilter, int, int)}
+   */
   JCRPageList getPostForSplitTopic(String topicPath) throws Exception;
+  
+  List<Post> getPostsSplitTopic(PostFilter filter, int offset, int limit) throws Exception;
 
   void movePost(String[] postPaths, String destTopicPath, boolean isCreatNewTopic, String mailContent, String link) throws Exception;
 

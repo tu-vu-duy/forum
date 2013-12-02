@@ -17,16 +17,17 @@
 package org.exoplatform.forum.webui.popup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.webui.BaseEventListener;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
-import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.model.PostFilter;
+import org.exoplatform.forum.service.impl.model.PostListAccess;
 import org.exoplatform.forum.webui.UIForumKeepStickPageIterator;
 import org.exoplatform.forum.webui.UIForumPortlet;
 import org.exoplatform.forum.webui.UITopicDetail;
@@ -50,16 +51,13 @@ import org.exoplatform.webui.form.input.UICheckBoxInput;
     }
 )
 public class UIPageListPostUnApprove extends UIForumKeepStickPageIterator implements UIPopupComponent {
-  private ForumService forumService;
 
-  private String       categoryId, forumId, topicId;
+  private String   categoryId, forumId, topicId;
 
-  private List<Post>   listAllPost = new ArrayList<Post>();
-  
   private boolean isApprove = true;
+  private int sizeOfPosts = 0;
 
   public UIPageListPostUnApprove() throws Exception {
-    forumService = (ForumService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(ForumService.class);
     this.setActions(new String[] { "UnApprove", "Cancel" });
   }
 
@@ -76,18 +74,28 @@ public class UIPageListPostUnApprove extends UIForumKeepStickPageIterator implem
     this.isApprove = isApprove;
   }
 
-  @SuppressWarnings("unchecked")
   protected List<Post> getPosts() throws Exception {
     String app = "", censer = "true";
     if (isApprove) {
       app = "false";
       censer = "";
     }
-    pageList = forumService.getPosts(this.categoryId, this.forumId, this.topicId, app, ForumUtils.EMPTY_STR, censer, ForumUtils.EMPTY_STR);
-    pageList.setPageSize(6);
-    maxPage = pageList.getAvailablePage();
-    List<Post> posts = pageList.getPage(pageSelect);
-    pageSelect = pageList.getCurrentPage();
+
+    PostFilter filter = new PostFilter(categoryId, forumId, topicId, app, ForumUtils.EMPTY_STR,
+                                       censer, ForumUtils.EMPTY_STR);
+
+    PostListAccess postListAccess = (PostListAccess) getForumService().getPosts(filter);
+    postListAccess.initialize((int) getUserProfile().getMaxPostInPage(), pageSelect);
+
+    postListAccess.setCurrentPage(pageSelect);
+    pageSelect = postListAccess.getCurrentPage();
+
+    List<Post> posts = Arrays.asList(postListAccess.load(pageSelect));
+    pageSelect = postListAccess.getCurrentPage();
+    initPage(postListAccess.getPageSize(), postListAccess.getCurrentPage(),
+             postListAccess.getSize(), postListAccess.getTotalPages());
+
+    sizeOfPosts = postListAccess.getSize();
     if (posts == null)
       posts = new ArrayList<Post>();
     if (!posts.isEmpty()) {
@@ -99,16 +107,11 @@ public class UIPageListPostUnApprove extends UIForumKeepStickPageIterator implem
         }
       }
     }
-    this.listAllPost = pageList.getPage(1);
     return posts;
   }
 
-  private Post getPost(String postId) {
-    for (Post post : this.listAllPost) {
-      if (post.getId().equals(postId))
-        return post;
-    }
-    return null;
+  private Post getPost(String postId) throws Exception {
+    return getForumService().getPost(categoryId, forumId, topicId, postId);
   }
 
   static public class OpenPostLinkActionListener extends BaseEventListener<UIPageListPostUnApprove> {
@@ -146,12 +149,12 @@ public class UIPageListPostUnApprove extends UIForumKeepStickPageIterator implem
         warning("UIPageListPostUnApprove.sms.notCheck", false);
       } else {
         if (postUnApprove.isApprove) {
-          postUnApprove.forumService.modifyPost(posts, Utils.APPROVE);
+          postUnApprove.getForumService().modifyPost(posts, Utils.APPROVE);
         } else {
-          postUnApprove.forumService.modifyPost(posts, Utils.WAITING);
+          postUnApprove.getForumService().modifyPost(posts, Utils.WAITING);
         }
       }
-      if (posts.size() == postUnApprove.listAllPost.size()) {
+      if (posts.size() == postUnApprove.sizeOfPosts) {
         UIForumPortlet forumPortlet = postUnApprove.getAncestorOfType(UIForumPortlet.class);
         forumPortlet.cancelAction();
         UITopicDetail topicDetail = forumPortlet.findFirstComponentOfType(UITopicDetail.class);

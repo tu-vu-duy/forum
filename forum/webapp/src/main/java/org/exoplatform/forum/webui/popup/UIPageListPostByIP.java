@@ -17,6 +17,7 @@
 package org.exoplatform.forum.webui.popup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.exoplatform.forum.ForumUtils;
@@ -25,11 +26,12 @@ import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
 import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.Forum;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.model.PostFilter;
+import org.exoplatform.forum.service.impl.model.PostListAccess;
 import org.exoplatform.forum.webui.BaseForumForm;
 import org.exoplatform.forum.webui.UIForumPageIterator;
 import org.exoplatform.forum.webui.UIForumPortlet;
@@ -55,7 +57,7 @@ public class UIPageListPostByIP extends BaseForumForm implements UIPopupComponen
 
   private String       ip_                = null;
 
-  private String       strOrderBy         = "createdDate descending";
+  private String       strOrderBy         = Utils.EXO_CREATED_DATE + Utils.DESC;
 
   private boolean      hasEnableIPLogging = true;
 
@@ -90,32 +92,31 @@ public class UIPageListPostByIP extends BaseForumForm implements UIPopupComponen
 
   public void setIp(String ip) {
     this.ip_ = ip;
-    strOrderBy = "createdDate descending";
+    strOrderBy = Utils.EXO_CREATED_DATE + Utils.DESC;
   }
 
-  @SuppressWarnings("unchecked")
   protected List<Post> getPostsByUser() throws Exception {
     UIForumPageIterator forumPageIterator = this.getChild(UIForumPageIterator.class);
-    List<Post> posts = null;
+    int pageSelect = forumPageIterator.getPageSelected();
     try {
-      boolean isMod = false;
-      if (this.userProfile.getUserRole() < 2)
-        isMod = true;
-      JCRPageList pageList = getForumService().getListPostsByIP(ip_, strOrderBy);
-      forumPageIterator.initPage(6, pageList.getCurrentPage(),
-                                 pageList.getAvailable(), pageList.getAvailablePage());
-      if (pageList != null)
-        pageList.setPageSize(6);
-      posts = pageList.getPage(forumPageIterator.getPageSelected());
-      forumPageIterator.setSelectPage(pageList.getCurrentPage());
+      PostFilter filter = new PostFilter(ip_, strOrderBy);
+
+      PostListAccess postListAccess = (PostListAccess) getForumService().getPostsByIP(filter);
+
+      postListAccess.initialize((int) getUserProfile().getMaxPostInPage(), pageSelect);
+
+      postListAccess.setCurrentPage(pageSelect);
+      pageSelect = postListAccess.getCurrentPage();
+
+      posts = Arrays.asList(postListAccess.load(pageSelect));
+
+      forumPageIterator.initPage(postListAccess.getPageSize(), postListAccess.getCurrentPage(),
+                                 postListAccess.getSize(), postListAccess.getTotalPages());
+      //
+      forumPageIterator.setSelectPage(postListAccess.getCurrentPage());
     } catch (Exception e) {
-      if (log.isDebugEnabled()) {
-        log.debug(String.format("Failed to get posts of user %s", userProfile.getFullName()), e);
-      }
-    }
-    if (posts == null)
       posts = new ArrayList<Post>();
-    this.posts = posts;
+    }
     return posts;
   }
 

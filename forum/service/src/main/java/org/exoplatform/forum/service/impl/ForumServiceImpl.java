@@ -685,9 +685,15 @@ public class ForumServiceImpl implements ForumService, Startable {
 
   /**
    * {@inheritDoc}
+   * 
+   * @deprecated use {@link #getPostsSplitTopic(PostFilter)}
    */
   public JCRPageList getPostForSplitTopic(String topicPath) throws Exception {
     return storage.getPostForSplitTopic(topicPath);
+  }
+  
+  public ListAccess<Post> getPostsSplitTopic(PostFilter filter) throws Exception {
+    return new PostListAccess(PostListAccess.Type.BY_SPLIT, storage, filter);
   }
 
   /**
@@ -1088,6 +1094,10 @@ public class ForumServiceImpl implements ForumService, Startable {
     return storage.getPagePostByUser(userName, userId, isMod, strOrderBy);
   }
 
+  public ListAccess<Post> getPostsByUser(PostFilter filter) throws Exception {
+    return new PostListAccess(PostListAccess.Type.BY_SPLIT, storage, filter);
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -1462,9 +1472,15 @@ public class ForumServiceImpl implements ForumService, Startable {
 
   /**
    * {@inheritDoc}
+   * 
+   * @deprecated use {@link #getPostsByIP(PostFilter)}
    */
   public JCRPageList getListPostsByIP(String ip, String strOrderBy) throws Exception {
     return storage.getListPostsByIP(ip, strOrderBy);
+  }
+
+  public ListAccess<Post> getPostsByIP(PostFilter filter) throws Exception {
+    return new PostListAccess(PostListAccess.Type.BY_IP, storage, filter);
   }
 
   /**

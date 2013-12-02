@@ -17,20 +17,22 @@
 package org.exoplatform.forum.webui.popup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
 import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumService;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.Post;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.model.PostFilter;
+import org.exoplatform.forum.service.impl.model.PostListAccess;
 import org.exoplatform.forum.webui.UIForumContainer;
 import org.exoplatform.forum.webui.UIForumDescription;
 import org.exoplatform.forum.webui.UIForumPageIterator;
@@ -38,8 +40,6 @@ import org.exoplatform.forum.webui.UIForumPortlet;
 import org.exoplatform.forum.webui.UITopicDetail;
 import org.exoplatform.forum.webui.UITopicDetailContainer;
 import org.exoplatform.forum.webui.UITopicPoll;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -61,16 +61,14 @@ public class UIPageListPostByUser extends UIContainer {
 
   private String       userName           = ForumUtils.EMPTY_STR;
 
-  private String       strOrderBy         = Utils.EXO_CREATED_DATE.concat(Utils.DESCENDING);
+  private String       strOrderBy         = Utils.EXO_CREATED_DATE + Utils.DESC;
 
   private boolean      hasEnableIPLogging = true;
 
   private List<Post>   posts              = new ArrayList<Post>();
 
-  private Log          log                = ExoLogger.getLogger(UIPageListPostByUser.class);
-
   public UIPageListPostByUser() throws Exception {
-    forumService = (ForumService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(ForumService.class);
+    forumService = CommonsUtils.getService(ForumService.class);
     this.userName = null;
     addChild(UIForumPageIterator.class, null, "PageListPostByUser");
   }
@@ -87,31 +85,34 @@ public class UIPageListPostByUser extends UIContainer {
 
   public void setUserName(String userId) {
     this.userName = userId;
-    strOrderBy = Utils.EXO_CREATED_DATE.concat(Utils.DESCENDING);
+    strOrderBy = Utils.EXO_CREATED_DATE.concat(Utils.DESC);
   }
 
-  @SuppressWarnings("unchecked")
   protected List<Post> getPostsByUser() throws Exception {
     UIForumPageIterator forumPageIterator = this.getChild(UIForumPageIterator.class);
-    List<Post> posts = null;
+    int pageSelect = forumPageIterator.getPageSelected();
     try {
       UserProfile userProfile = getUserProfile();
-      boolean isMod = (userProfile.getUserRole() < 2) ? true : false;
-      JCRPageList pageList = forumService.getPagePostByUser(this.userName, userProfile.getUserId(), isMod, strOrderBy);
-      forumPageIterator.initPage(10, pageList.getCurrentPage(),
-                                 pageList.getAvailable(), pageList.getAvailablePage());
-      if (pageList != null) {
-        pageList.setPageSize(10);
-      }
-      posts = pageList.getPage(forumPageIterator.getPageSelected());
-      forumPageIterator.setSelectPage(pageList.getCurrentPage());
+      boolean isAdmin = (userProfile.getUserRole() < 2) ? true : false;
+      PostFilter filter = new PostFilter(userName, userProfile.getUserId(), isAdmin, strOrderBy);
+
+      PostListAccess postListAccess = (PostListAccess) forumService.getPostsByUser(filter);
+
+      postListAccess.initialize((int) getUserProfile().getMaxPostInPage(), pageSelect);
+
+      postListAccess.setCurrentPage(pageSelect);
+      pageSelect = postListAccess.getCurrentPage();
+
+      posts = Arrays.asList(postListAccess.load(pageSelect));
+
+      forumPageIterator.initPage(postListAccess.getPageSize(), postListAccess.getCurrentPage(),
+                                 postListAccess.getSize(), postListAccess.getTotalPages());
+      //
+      forumPageIterator.setSelectPage(postListAccess.getCurrentPage());
     } catch (Exception e) {
-      log.trace("\nThe post must exist: " + e.getMessage() + "\n" + e.getCause());
-    }
-    if (posts == null) {
       posts = new ArrayList<Post>();
     }
-    this.posts = posts;
+    
     return posts;
   }
 
