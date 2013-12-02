@@ -110,11 +110,12 @@ public class UIForumListSearch extends BaseForumForm {
     return isShowIter;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "deprecation" })
   public List<ForumSearchResult> getListEvent() {
     pageList = new ForumPageList(pageSize, listEvent.size());
     pageList.setPageSize(pageSize);
-    pageIterator.updatePageList(pageList);
+    pageIterator.initPage(pageSize, pageList.getCurrentPage(),
+                          pageList.getAvailable(), pageList.getAvailablePage());
     isShowIter = true;
     if (pageList.getAvailablePage() <= 1)
       isShowIter = false;

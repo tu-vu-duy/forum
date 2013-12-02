@@ -78,8 +78,9 @@ public class UIListPrivateMessage extends UIContainer {
   protected List<ForumPrivateMessage> getPrivateMessages() throws Exception {
     JCRPageList pageList = this.forumService.getPrivateMessage(userName, messageType);
     UIForumPageIterator forumPageIterator = getChild(UIForumPageIterator.class);
-    forumPageIterator.updatePageList(pageList);
     if (pageList != null) {
+      forumPageIterator.initPage(10, pageList.getCurrentPage(),
+                                 pageList.getAvailable(), pageList.getAvailablePage());
       pageList.setPageSize(10);
       int page = forumPageIterator.getPageSelected();
       privateMessages = pageList.getPage(page);

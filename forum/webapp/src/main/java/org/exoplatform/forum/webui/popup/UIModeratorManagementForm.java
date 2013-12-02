@@ -180,7 +180,8 @@ public class UIModeratorManagementForm extends BaseForumForm implements UIPopupC
   public void setPageListUserProfile() throws Exception {
     userPageList = this.getForumService().getPageListUserProfile();
     userPageList.setPageSize(5);
-    this.pageIterator.updatePageList(this.userPageList);
+    this.pageIterator.initPage(5, userPageList.getCurrentPage(),
+                               userPageList.getAvailable(), userPageList.getAvailablePage());
   }
 
   private boolean isAdmin(String userId) throws Exception {
@@ -672,7 +673,8 @@ public class UIModeratorManagementForm extends BaseForumForm implements UIPopupC
 
       this.userPageList = new ForumPageList(results);
       this.userPageList.setPageSize(5);
-      pageIterator.updatePageList(this.userPageList);
+      pageIterator.initPage(5, userPageList.getCurrentPage(),
+                            userPageList.getAvailable(), userPageList.getAvailablePage());
       pageIterator.setSelectPage(1);
       this.isViewSearchUser = true;
     } catch (Exception e) {

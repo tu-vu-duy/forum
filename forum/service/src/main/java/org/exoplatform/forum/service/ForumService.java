@@ -293,6 +293,8 @@ public interface ForumService extends ForumServiceLegacy {
    * @return Topics.
    * @throws Exception the exception
    * @LevelAPI Platform
+   * 
+   * @deprecated used {@link #getTopics(TopicFilter)}
    */
   JCRPageList getPageTopic(String categoryId, String forumId, String strQuery, String strOrderBy) throws Exception;
 
@@ -372,7 +374,7 @@ public interface ForumService extends ForumServiceLegacy {
    * 
    * @param categoryId Id of the category.
    * @param forumId Id of the forum.
-   * @return A lis of topics.
+   * @return A list of topics.
    * @throws Exception the exception
    * @LevelAPI Platform
    * 

@@ -1078,7 +1078,7 @@ public class ForumServiceImpl implements ForumService, Startable {
    */
   @Override
   public ListAccess<Topic> getPageTopicByUser(TopicFilter filter) throws Exception {
-    return new TopicListAccess(TopicListAccess.Type.TOPICS, storage, filter);
+    return new TopicListAccess(TopicListAccess.Type.BY_USER, storage, filter);
   }
 
   /**

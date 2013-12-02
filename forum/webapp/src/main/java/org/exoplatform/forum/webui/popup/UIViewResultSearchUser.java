@@ -51,7 +51,8 @@ public class UIViewResultSearchUser extends UIForm implements UIPopupComponent {
   public void setPageListSearch(JCRPageList pageList) {
     this.pageList = pageList;
     this.pageList.setPageSize(5);
-    this.getChild(UIForumPageIterator.class).updatePageList(this.pageList);
+    this.getChild(UIForumPageIterator.class).initPage(5, pageList.getCurrentPage(),
+                                                      pageList.getAvailable(), pageList.getAvailablePage());
   }
 
   @SuppressWarnings("unchecked")

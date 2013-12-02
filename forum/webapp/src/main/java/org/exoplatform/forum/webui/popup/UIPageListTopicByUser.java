@@ -17,19 +17,21 @@
 package org.exoplatform.forum.webui.popup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
 import org.exoplatform.forum.service.Category;
 import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumService;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.model.TopicFilter;
+import org.exoplatform.forum.service.impl.model.TopicListAccess;
 import org.exoplatform.forum.webui.UIForumContainer;
 import org.exoplatform.forum.webui.UIForumDescription;
 import org.exoplatform.forum.webui.UIForumPageIterator;
@@ -58,8 +60,6 @@ import org.exoplatform.webui.event.EventListener;
 public class UIPageListTopicByUser extends UIContainer {
   private ForumService forumService;
 
-  private JCRPageList  pageList;
-
   private String       strOrderBy = ForumUtils.EMPTY_STR;
 
   private String       userName   = ForumUtils.EMPTY_STR;
@@ -68,10 +68,12 @@ public class UIPageListTopicByUser extends UIContainer {
 
   private List<Topic>  topics     = new ArrayList<Topic>();
 
-  private Log          log        = ExoLogger.getLogger(UIPageListTopicByUser.class);
+  private Log          LOG        = ExoLogger.getLogger(UIPageListTopicByUser.class);
+  
+  private TopicListAccess topicListAccess = null;
 
   public UIPageListTopicByUser() throws Exception {
-    forumService = (ForumService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(ForumService.class);
+    forumService = (ForumService) CommonsUtils.getService(ForumService.class);
     addChild(UIForumPageIterator.class, null, "PageListTopicByUser");
   }
 
@@ -88,22 +90,22 @@ public class UIPageListTopicByUser extends UIContainer {
   public void setUserName(String userName) {
     this.userName = userName;
   }
-
-  @SuppressWarnings("unchecked")
+  
   protected List<Topic> getTopicsByUser() throws Exception {
-    UIForumPageIterator forumPageIterator = this.getChild(UIForumPageIterator.class);
+    UIForumPageIterator forumPageIterator = getChild(UIForumPageIterator.class);
     try {
-      boolean isMod = false;
-      if (getUserProfile().getUserRole() == 0)
-        isMod = true;
-      pageList = forumService.getPageTopicByUser(this.userName, isMod, strOrderBy);
-      forumPageIterator.updatePageList(pageList);
-      if (pageList != null)
-        pageList.setPageSize(5);
-      topics = pageList.getPage(forumPageIterator.getPageSelected());
-      forumPageIterator.setSelectPage(pageList.getCurrentPage());
+      TopicFilter filter = new TopicFilter(userName, (getUserProfile().getUserRole() == 0), strOrderBy);
+      topicListAccess = (TopicListAccess) forumService.getPageTopicByUser(filter);
+      int pageSize = (int) getUserProfile().getMaxTopicInPage();
+      topicListAccess.initialize(pageSize, forumPageIterator.getPageSelected());
+
+      topics = Arrays.asList(topicListAccess.load(forumPageIterator.getPageSelected()));
+      //
+      forumPageIterator.setSelectPage(topicListAccess.getCurrentPage());
+      forumPageIterator.initPage(topicListAccess.getPageSize(), topicListAccess.getCurrentPage(),
+                                 topicListAccess.getSize(), topicListAccess.getTotalPages());
     } catch (Exception e) {
-      log.trace("\nThe topic(s) must exist: " + e.getMessage() + "\n" + e.getCause());
+      LOG.warn("\nThe topic(s) must exist: " + e.getMessage() + "\n" + e.getCause());
     }
     return topics;
   }

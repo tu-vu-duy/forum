@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.exoplatform.forum.ForumUtils;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.UIComponent;
@@ -35,40 +34,49 @@ import org.exoplatform.webui.event.EventListener;
    }
 )
 public class UIForumPageIterator extends UIContainer {
-  private JCRPageList pageList;
 
-  private int         page                 = 1;
+  private int page          = 1;
 
-  private int         endTabPage           = 0;
+  private int endTabPage    = 0;
 
-  private int         beginTabPage         = 0;
+  private int beginTabPage  = 0;
+  
+  private int pageSize      = 0;
+
+  private int currentPage   = 0;
+
+  private int available     = 0;
+
+  private int availablePage = 0;
 
   public UIForumPageIterator() throws Exception {
   }
-
-  public void updatePageList(JCRPageList pageList) {
-    this.pageList = pageList;
+  
+  public void initPage(int pageSize, int currentPage, int available, int availablePage) {
+    this.pageSize = pageSize;
+    this.currentPage = currentPage;
+    this.available = available;
+    this.availablePage = availablePage;
   }
 
   protected List<String> getTotalpage() throws Exception {
-    int max_Page = (int) pageList.getAvailablePage();
-    if (this.page > max_Page)
-      this.page = max_Page;
+    if (this.page > availablePage)
+      this.page = availablePage;
     long page = this.page;
     if (page <= 3) {
       beginTabPage = 1;
-      if (max_Page <= 7)
-        endTabPage = max_Page;
+      if (availablePage <= 7)
+        endTabPage = availablePage;
       else
         endTabPage = 7;
     } else {
-      if (max_Page > (page + 3)) {
+      if (availablePage > (page + 3)) {
         endTabPage = (int) (page + 3);
         beginTabPage = (int) (page - 3);
       } else {
-        endTabPage = max_Page;
-        if (max_Page > 7)
-          beginTabPage = max_Page - 6;
+        endTabPage = availablePage;
+        if (availablePage > 7)
+          beginTabPage = availablePage - 6;
         else
           beginTabPage = 1;
       }
@@ -80,18 +88,18 @@ public class UIForumPageIterator extends UIContainer {
     return temp;
   }
 
-  public List<Long> getInfoPage() throws Exception {
-    List<Long> temp = new ArrayList<Long>();
+  public List<Integer> getInfoPage() throws Exception {
+    List<Integer> temp = new ArrayList<Integer>();
     try {
-      temp.add((long) pageList.getPageSize());
-      temp.add((long) pageList.getCurrentPage());
-      temp.add((long) pageList.getAvailable());
-      temp.add((long) pageList.getAvailablePage());
+      temp.add(pageSize);
+      temp.add(currentPage);
+      temp.add(available);
+      temp.add(availablePage);
     } catch (Exception e) {
-      temp.add((long) 1);
-      temp.add((long) 1);
-      temp.add((long) 1);
-      temp.add((long) 1);
+      temp.add(1);
+      temp.add(1);
+      temp.add(1);
+      temp.add(1);
     }
     return temp;
   }
@@ -112,10 +120,9 @@ public class UIForumPageIterator extends UIContainer {
         topicDetail.setIdPostView("top");
       }
       String stateClick = event.getRequestContext().getRequestParameter(OBJECTID).trim();
-      int maxPage = forumPageIterator.pageList.getAvailablePage();
       int presentPage = forumPageIterator.page;
       if (stateClick.equalsIgnoreCase("next")) {
-        if (presentPage < maxPage) {
+        if (presentPage < forumPageIterator.availablePage) {
           forumPageIterator.page = presentPage + 1;
         }
       } else if (stateClick.equalsIgnoreCase("previous")) {
@@ -123,8 +130,8 @@ public class UIForumPageIterator extends UIContainer {
           forumPageIterator.page = presentPage - 1;
         }
       } else if (stateClick.equalsIgnoreCase("last")) {
-        if (presentPage != maxPage) {
-          forumPageIterator.page = maxPage;
+        if (presentPage != forumPageIterator.availablePage) {
+          forumPageIterator.page = forumPageIterator.availablePage;
         }
       } else if (stateClick.equalsIgnoreCase("first")) {
         if (presentPage != 1) {
@@ -132,7 +139,7 @@ public class UIForumPageIterator extends UIContainer {
         }
       } else {
         int temp = Integer.parseInt(stateClick);
-        if (temp > 0 && temp <= maxPage && temp != presentPage) {
+        if (temp > 0 && temp <= forumPageIterator.availablePage && temp != presentPage) {
           forumPageIterator.page = temp;
         }
       }
