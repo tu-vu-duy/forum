@@ -692,17 +692,16 @@ public class Utils implements ForumNodeTypes {
     }
 
     if (hasOrder == true) {
-      return buildOrderByTopic(sortSettings, filter, sqlBuilder);
+      return buildOrderByTopic(sortSettings, filter.orderBy(), sqlBuilder);
     }
     return sqlBuilder.toString();
   }
 
-  public static String buildOrderByTopic(SortSettings sortSettings, TopicFilter filter, StringBuilder sqlBuilder) {
-    SortField orderBy = sortSettings.getField();
-    Direction orderType = sortSettings.getDirection();
+  public static String buildOrderByTopic(SortSettings sortSettings, String order, StringBuilder sqlBuilder) {
     sqlBuilder.append(" ORDER BY ").append(EXO_IS_STICKY).append(DESC);
-    String order = filter.orderBy();
     if (isEmpty(order)) {
+      SortField orderBy = sortSettings.getField();
+      Direction orderType = sortSettings.getDirection();
       if (orderBy != null) {
         sqlBuilder.append(", exo:").append(orderBy.toString()).append(" ").append(orderType);
         if (!orderBy.equals(SortField.LASTPOST)) {

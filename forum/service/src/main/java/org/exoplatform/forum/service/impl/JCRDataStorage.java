@@ -4237,48 +4237,41 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       List<String> oldTagsId = Utils.valuesToList(topicNode.getProperty(EXO_TAG_ID).getValues());
       // remove in topic.
       String userIdTagId = userName + ":" + tagId;
-      QueryManager qm = categoryHome.getSession().getWorkspace().getQueryManager();
-      StringBuilder builder = new StringBuilder();
+      StringBuilder builder = new StringBuilder("SELECT * FROM ").append(EXO_TOPIC);
+      builder.append(" WHERE ").append(EXO_TAG_ID).append("='").append(userIdTagId).append("'");
       
+      NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, builder.toString(), 0, 0, false);
+      long size = iter.getSize();
       
-      builder.append(JCR_ROOT).append(categoryHome.getPath()).append("//element(*,exo:topic)[@exo:tagId='").append(userIdTagId).append("']");
-      Query query = qm.createQuery(builder.toString(), Query.XPATH);
-      QueryResult result = query.execute();
-      NodeIterator iter = result.getNodes();
       if (oldTagsId.contains(userIdTagId)) {
         oldTagsId.remove(userIdTagId);
         topicNode.setProperty(EXO_TAG_ID, oldTagsId.toArray(new String[oldTagsId.size()]));
-        if (topicNode.isNew()) {
-          topicNode.getSession().save();
-        } else {
-          topicNode.save();
-        }
       }
       Tag tag = getTag(tagId);
       List<String> userTags = new ArrayList<String>();
       userTags.addAll(Arrays.asList(tag.getUserTag()));
-      if (iter.getSize() == 1 && userTags.size() > 1) {
+      if (size == 1 && userTags.size() > 1) {
         if (userTags.contains(userName)) {
           userTags.remove(userName);
           tag.setUserTag(userTags.toArray(new String[userTags.size()]));
           Node tagNode = getTagHome(sProvider).getNode(tagId);
           long count = tagNode.getProperty(EXO_USE_COUNT).getLong();
-          if (count > 1)
+          if (count > 1){
             tagNode.setProperty(EXO_USE_COUNT, count - 1);
-          tagNode.setProperty(EXO_USER_TAG, userTags.toArray(new String[userTags.size()]));
-          tagNode.save();
+          }
+          tagNode.setProperty(EXO_USER_TAG, tag.getUserTag());
         }
-      } else if (iter.getSize() == 1 && userTags.size() == 1) {
+      } else if (size == 1 && userTags.size() == 1) {
         Node tagHomNode = getTagHome(sProvider);
         tagHomNode.getNode(tagId).remove();
-        tagHomNode.save();
-      } else if (iter.getSize() > 1) {
+      } else if (size > 1) {
         Node tagNode = getTagHome(sProvider).getNode(tagId);
         long count = tagNode.getProperty(EXO_USE_COUNT).getLong();
-        if (count > 1)
+        if (count > 1) {
           tagNode.setProperty(EXO_USE_COUNT, count - 1);
-        tagNode.save();
+        }
       }
+      topicNode.getSession().save();
     } catch (Exception e) {
       LOG.error("Failed to untag.", e);
     }
@@ -4298,67 +4291,48 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     List<String> tagNames = new ArrayList<String>();
     try {
-      Node tagHome = getTagHome(sProvider);
-      QueryManager qm = tagHome.getSession().getWorkspace().getQueryManager();
       int t = userAndTopicId.indexOf(",");
       String userId = userAndTopicId.substring(0, t);
-      NodeIterator iter = getTopicNodeIteratorByTag(sProvider, qm, userAndTopicId);
+      List<String> tagIds = getTagsByTopic(sProvider, userAndTopicId);
+      
       StringBuilder builder = new StringBuilder();
       StringBuilder builder1 = new StringBuilder();
-      if (iter.getSize() > 0) {
-        Node node = (Node) iter.nextNode();
-        if (node.hasProperty(EXO_TAG_ID)) {
-          boolean b = true;
-          t = 0;
-          List<String> list = new ArrayList<String>();
-          for (String string : Utils.valuesToList(node.getProperty(EXO_TAG_ID).getValues())) {
-            String[] temp = string.split(":");
-            if (temp.length == 2) {
-              if (temp[0].equals(userId)) {
-                if (t == 0)
-                  builder.append("(@exo:id != '").append(temp[1]).append("'");
-                else
-                  builder.append(" and @exo:id != '").append(temp[1]).append("'");
-                list.add(temp[1]);
-                t = 1;
-              } else if (!list.contains(temp[1])) {
-                if (b)
-                  builder1.append(" (@exo:id='").append(temp[1]).append("'");
-                else
-                  builder1.append(" or @exo:id='").append(temp[1]).append("'");
-                b = false;
-              }
+      List<String> list = new ArrayList<String>();
+      for (String string : tagIds) {
+        String[] temp = string.split(":");
+        if (temp.length == 2) {
+          if (temp[0].equals(userId)) {
+            if (builder.length() == 0) {
+              builder.append(EXO_ID).append("<>'").append(temp[1]).append("'");
+            } else {
+              builder.append(" AND ").append(EXO_ID).append("<>'").append(temp[1]).append("'");
+            }
+            list.add(temp[1]);
+          } else if (list.contains(temp[1]) == false) {
+            if (builder1.length() == 0) {
+              builder1.append("(").append(EXO_ID).append("='").append(temp[1]).append("'");
+            } else {
+              builder1.append(" OR ").append(EXO_ID).append("='").append(temp[1]).append("'");
             }
           }
-          if (!b)
-            builder1.append(")");
-          if (t == 1)
-            builder.append(")");
         }
-      }
-      if (builder1.length() == 0) {
-        return tagNames;
-      }
-      StringBuffer queryString = new StringBuffer();
-      queryString.append(JCR_ROOT).append(tagHome.getPath()).append("//element(*,exo:forumTag)");
-      boolean isQr = false;
-      if (builder.length() > 0) {
-        queryString.append("[").append(builder);
-        isQr = true;
       }
       if (builder1.length() > 0) {
-        if (isQr) {
-          queryString.append(" and ").append(builder1);
-        } else {
-          queryString.append("[").append(builder1);
-          isQr = true;
-        }
+        builder1.append(")");
+      } else {
+        return tagNames;
       }
-      if (isQr)
-        queryString.append("]");
-      queryString.append("order by @exo:useCount descending, @exo:name ascending ");
-      Query query = qm.createQuery(queryString.toString(), Query.XPATH);
-      iter = query.execute().getNodes();
+      //
+      StringBuilder sqlQuery = jcrPathLikeAndNotLike(EXO_FORUM_TAG, "/" + dataLocator.getTagsLocation());
+      if (builder.length() > 0) {
+        sqlQuery.append(" AND ").append(builder);
+      }
+      if (builder1.length() > 0) {
+        sqlQuery.append(" AND ").append(builder1);
+      }
+      sqlQuery.append("ORDER BY ").append(EXO_USE_COUNT).append(DESC)
+              .append(", ").append(EXO_NAME).append(ASC);
+      NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery.toString(), 0, 0, false);
       return getTagName(iter, tagNames);
     } catch (Exception e) {
       return tagNames;
@@ -4379,50 +4353,41 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     return tagNames;
   }
 
-  private NodeIterator getTopicNodeIteratorByTag(SessionProvider sProvider, QueryManager qm, String userAndTopicId) throws Exception {
-    Node categoryHome = getCategoryHome(sProvider);
-    StringBuffer queryString = new StringBuffer();
+  private List<String> getTagsByTopic(SessionProvider sProvider, String userAndTopicId) throws Exception {
     String topicId = userAndTopicId.substring(userAndTopicId.indexOf(",") + 1);
-    queryString.append(JCR_ROOT).append(categoryHome.getPath()).append("//element(*,exo:topic)[exo:id='").append(topicId).append("']");
-    Query query = qm.createQuery(queryString.toString(), Query.XPATH);
-    return query.execute().getNodes();
+    
+    Node topic = getNodeById(sProvider, topicId, Utils.TOPIC);
+    return new PropertyReader(topic).list(EXO_TAG_ID, new ArrayList<String>());
   }
 
   public List<String> getAllTagName(String keyValue, String userAndTopicId) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     List<String> tagNames = new ArrayList<String>();
     try {
-      Node tagHome = getTagHome(sProvider);
-      QueryManager qm = tagHome.getSession().getWorkspace().getQueryManager();
-      int t = userAndTopicId.indexOf(",");
-      String userId = userAndTopicId.substring(0, t);
-      NodeIterator iter = getTopicNodeIteratorByTag(sProvider, qm, userAndTopicId);
+      String userId = userAndTopicId.substring(0, userAndTopicId.indexOf(","));
+      List<String> tagIds = getTagsByTopic(sProvider, userAndTopicId);
+      
       StringBuilder builder = new StringBuilder();
-      if (iter.getSize() > 0) {
-        Node node = (Node) iter.nextNode();
-        if (node.hasProperty(EXO_TAG_ID)) {
-          t = 0;
-          for (String string : Utils.valuesToList(node.getProperty(EXO_TAG_ID).getValues())) {
-            String[] temp = string.split(":");
-            if (temp.length == 2 && temp[0].equals(userId)) {
-              if (t == 0)
-                builder.append("@exo:id != '").append(temp[1]).append("'");
-              else
-                builder.append(" and @exo:id != '").append(temp[1]).append("'");
-              t = 1;
-            }
+      for (String string : tagIds) {
+        String[] temp = string.split(":");
+        if (temp.length == 2 && temp[0].equals(userId)) {
+          if (builder.length() == 0) {
+            builder.append(EXO_ID).append("<>'").append(temp[1]).append("'");
+          } else {
+            builder.append(" AND ").append(EXO_ID).append("<>'").append(temp[1]).append("'");
           }
         }
       }
 
-      StringBuffer queryString = new StringBuffer();
-      queryString.append(JCR_ROOT).append(tagHome.getPath()).append("//element(*,exo:forumTag)[(jcr:contains(@exo:name, '").append(keyValue).append("*'))");
+      StringBuilder sqlQuery = jcrPathLikeAndNotLike(EXO_FORUM_TAG, "/" + dataLocator.getTagsLocation());
+      sqlQuery.append(" AND UPPER(").append(EXO_NAME).append(") LIKE '").append(keyValue.toUpperCase()).append("%'");
       if (builder.length() > 0) {
-        queryString.append(" and (").append(builder).append(")");
+        sqlQuery.append(" AND (").append(builder).append(")");
       }
-      queryString.append("]order by @exo:useCount descending, @exo:name ascending ");
-      Query query = qm.createQuery(queryString.toString(), Query.XPATH);
-      iter = query.execute().getNodes();
+      sqlQuery.append("ORDER BY ").append(EXO_USE_COUNT).append(DESC)
+              .append(", ").append(EXO_NAME).append(ASC);
+
+      NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery.toString(), 0, 0, true);
       return getTagName(iter, tagNames);
     } catch (Exception e) {
       return tagNames;
@@ -4434,13 +4399,12 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     List<Tag> tags = new ArrayList<Tag>();
     try {
       Node tagHome = getTagHome(sProvider);
-      QueryManager qm = tagHome.getSession().getWorkspace().getQueryManager();
-      StringBuffer queryString = new StringBuffer(JCR_ROOT + tagHome.getPath() + "/element(*,exo:forumTag)");
-      Query query = qm.createQuery(queryString.toString(), Query.XPATH);
-      QueryResult result = query.execute();
-      NodeIterator iter = result.getNodes();
+      NodeIterator iter = tagHome.getNodes();
       while (iter.hasNext()) {
-        tags.add(getTagNode((Node) iter.nextNode()));
+        Node node = iter.nextNode();
+        if (node.isNodeType(EXO_FORUM_TAG)) {
+          tags.add(getTagNode(node));
+        }
       }
       return tags;
     } catch (Exception e) {
@@ -4467,9 +4431,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         try {
           tags.add(getTagNode(tagHome.getNode(id)));
         } catch (Exception e) {
-          if (LOG.isDebugEnabled()){
-            LOG.debug(String.format("Failed to get tag node with id %s", id), e);
-          }
+          logWarn(String.format("Failed to get tag node with id %s", id), e);
         }
       }
       return tags;
@@ -4481,28 +4443,17 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   public JCRPageList getTopicByMyTag(String userIdAndtagId, String strOrderBy) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     try {
-      Node categoryHome = getCategoryHome(sProvider);
-      QueryManager qm = categoryHome.getSession().getWorkspace().getQueryManager();
-      StringBuilder builder = new StringBuilder();
-      builder.append(JCR_ROOT).append(categoryHome.getPath()).append("//element(*,exo:topic)");
+
+      StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ").append(EXO_TOPIC).append(" WHERE ");
+
       if (userIdAndtagId.indexOf(":") > 0) {
-        builder.append("[@exo:tagId='").append(userIdAndtagId).append("']");
+        sqlQuery.append(EXO_TAG_ID).append("='").append(userIdAndtagId).append("'");
       } else {
-        builder.append("[jcr:contains(@exo:tagId,'").append(userIdAndtagId).append("')]");
+        sqlQuery.append("UPPER(").append(EXO_TAG_ID).append(") LIKE '%").append(userIdAndtagId.toUpperCase()).append("%'");
       }
-      builder.append(" order by @exo:isSticky descending");
-      if (Utils.isEmpty(strOrderBy)) {
-        builder.append(", @exo:lastPostDate descending");
-      } else {
-        builder.append(", @exo:").append(strOrderBy);
-        if (strOrderBy.indexOf("lastPostDate") < 0) {
-          builder.append(", @exo:lastPostDate descending");
-        }
-      }
-      String pathQuery = builder.toString();
-      Query query = qm.createQuery(pathQuery, Query.XPATH);
-      QueryResult result = query.execute();
-      NodeIterator iter = result.getNodes();
+
+      String pathQuery = Utils.buildOrderByTopic(null, strOrderBy, sqlQuery);
+      NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, pathQuery, 0, 0, false);
       JCRPageList pagelist = new ForumPageList(iter, 10, pathQuery, true);
       return pagelist;
     } catch (Exception e) {
@@ -4563,14 +4514,14 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   public JCRPageList searchUserProfile(String userSearch) throws Exception {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     try {
-      Node userProfileHome = getUserProfileHome(sProvider);
-      QueryManager qm = userProfileHome.getSession().getWorkspace().getQueryManager();
-      StringBuffer stringBuffer = new StringBuffer();
-      stringBuffer.append(JCR_ROOT).append(userProfileHome.getPath()).append("/element(*,").append(EXO_FORUM_USER_PROFILE).append(")").append("[(jcr:contains(., '").append(userSearch).append("'))]");
-      Query query = qm.createQuery(stringBuffer.toString(), Query.XPATH);
-      QueryResult result = query.execute();
-      NodeIterator iter = result.getNodes();
-      JCRPageList pagelist = new ForumPageList(iter, 10, stringBuffer.toString(), true);
+      String fullPath = "/" + dataLocator.getUserProfilesLocation();
+      
+      StringBuilder sqlQuery = jcrPathLikeAndNotLike(EXO_FORUM_USER_PROFILE, fullPath);
+
+      sqlQuery.append(" AND CONTAINS(*,'").append(userSearch).append("')");
+      
+      NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery.toString(), 0, 0, false);
+      JCRPageList pagelist = new ForumPageList(iter, 10, sqlQuery.toString(), true);
       return pagelist;
     } catch (Exception e) {
       return null;
@@ -5255,12 +5206,13 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     Node userProfileNode = getUserProfileHome(sProvider);
     try {
       Node profileNode = userProfileNode.getNode(userName);
-      QueryManager qm = profileNode.getSession().getWorkspace().getQueryManager();
-      String pathQuery = JCR_ROOT + profileNode.getPath() + "/element(*,exo:privateMessage)[@exo:type='" + type + "'] order by @exo:receivedDate descending";
-      Query query = qm.createQuery(pathQuery, Query.XPATH);
-      QueryResult result = query.execute();
-      NodeIterator iter = result.getNodes();
-      JCRPageList pagelist = new ForumPageList(iter, 10, pathQuery, true);
+
+      StringBuilder sqlQuery = jcrPathLikeAndNotLike(EXO_PRIVATE_MESSAGE, profileNode.getPath());
+      sqlQuery.append(" AND ").append(EXO_TYPE).append("='").append(type).append("'");
+      sqlQuery.append(" ORDER BY ").append(EXO_RECEIVED_DATE).append(DESC);
+
+      NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery.toString(), 0, 0, false);
+      JCRPageList pagelist = new ForumPageList(iter, 10, sqlQuery.toString(), true);
       return pagelist;
     } catch (Exception e) {
       return null;
@@ -5560,19 +5512,17 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   private Node getNodeById(SessionProvider sProvider, String id, String type) {
     try {
       Node categoryHome = getCategoryHome(sProvider);
-      if (type.equals(Utils.CATEGORY))
+      if (type.equals(Utils.CATEGORY)){
         return categoryHome.getNode(id);
-      QueryManager qm = categoryHome.getSession().getWorkspace().getQueryManager();
-      StringBuffer stringBuffer = new StringBuffer(JCR_ROOT).append(categoryHome.getPath()).append("//element(*,exo:").append(type)
-                  .append(")[(@").append(EXO_ID).append("='").append(id).append("') or (fn:name()='").append(id).append("')]");
-      Query query = qm.createQuery(stringBuffer.toString(), Query.XPATH);
-      QueryResult result = query.execute();
-      NodeIterator iter = result.getNodes();
+      }
+      
+      StringBuilder sqlQuery = new StringBuilder("SELECT * FROM exo:").append(type).append(" WHERE ");
+      sqlQuery.append("(").append(EXO_ID).append("='").append(id).append("' OR fn:name()='").append(id).append("')");
+      
+      NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery.toString(), 0, 1, false);
       if (iter.getSize() > 0) return iter.nextNode();
     } catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Can not get Node by Id: " + id, e);
-      }
+      logWarn("Can not get Node by Id: " + id + e.getMessage());
     }
     return null;
   }
@@ -7776,11 +7726,10 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
    */
   public boolean populateUserProfile(User user, UserProfile profileTemplate, boolean isNew) throws Exception {
     boolean added = false;
-    sessionManager.openSession();
-
+    SessionProvider sProvider = SessionProvider.createSystemProvider();
     try {
       Node profile = null;
-      Node profileHome = getUserProfileHome();
+      Node profileHome = getUserProfileHome(sProvider);
       final String userName = user.getUserName();
       if (profileHome.hasNode(userName)) {
         if (isNew) {
@@ -7794,10 +7743,17 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       }
 
       Calendar cal = getGreenwichMeanTime();
+      Date date = user.getLastLoginTime();
+      if(date != null) {
+        cal.setTime(date);
+      }
       profile.setProperty(EXO_USER_ID, userName);
       profile.setProperty(EXO_LAST_LOGIN_DATE, cal);
       profile.setProperty(EXO_EMAIL, user.getEmail());
       profile.setProperty(EXO_FULL_NAME, user.getDisplayName());
+      profile.setProperty(EXO_SCREEN_NAME, user.getDisplayName());
+      profile.setProperty(EXO_FIRST_NAME, user.getFirstName());
+      profile.setProperty(EXO_LAST_NAME, user.getLastName());
       cal.setTime(user.getCreatedDate());
       profile.setProperty(EXO_JOINED_DATE, cal);
       if (isAdminRole(userName)) {
@@ -7825,7 +7781,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       LOG.error("Error while populating user profile: " + e.getMessage());
       throw e;
     } finally {
-      sessionManager.closeSession(true);
+      sProvider.close();
     }
   }
 
