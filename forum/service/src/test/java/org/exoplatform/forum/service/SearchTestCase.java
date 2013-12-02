@@ -55,13 +55,13 @@ public class SearchTestCase extends BaseForumServiceTestCase {
     //Root create a category
     Category cat = new Category();
     cat.setOwner("root");
-    cat.setCategoryName("social");
+    cat.setCategoryName("social root");
     cat.setDescription("about your team");
     forumService_.saveCategory(cat, true);
     //Root create a forum
     Forum forum = new Forum();
     forum.setOwner("root");
-    forum.setForumName("general question");
+    forum.setForumName("general question root");
     forum.setDescription("all yours questions here");
     String[] mods = {"john"};
     forum.setModerators(mods);
@@ -102,7 +102,7 @@ public class SearchTestCase extends BaseForumServiceTestCase {
     Forum forumNew = new Forum();
     forumNew.setOwner("root");
     forumNew.setForumName("new forum");
-    forumNew.setDescription("new description");
+    forumNew.setDescription("new description root");
     forumNew.setIsLock(true);
     forumService_.saveForum(cat.getId(), forumNew, true);
   }

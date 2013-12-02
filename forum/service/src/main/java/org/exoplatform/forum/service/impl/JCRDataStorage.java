@@ -5583,7 +5583,6 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     SessionProvider sProvider = CommonUtils.createSystemProvider();
     try {
       Node categoryHome = getCategoryHome(sProvider);
-      QueryManager qm = categoryHome.getSession().getWorkspace().getQueryManager();
 
       // Check path query
       if (pathQuery == null || pathQuery.length() <= 0) {
@@ -5614,108 +5613,135 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         listForumIds = mapList.get(Utils.FORUM);
       }
       for (String type : types) {
-        StringBuffer queryString = new StringBuffer();
-        // select * from exo:type -- category, forum ,topic , post
-        queryString.append(JCR_ROOT).append(pathQuery).append("//element(*,exo:").append(type).append(")");
-        queryString.append("[");
-
-        // if search in category and list category that user can view not null
+        StringBuilder sqlQuery = new StringBuilder();
+        
+        isAnd = false;
         if (type.equals(Utils.CATEGORY)) {
+          sqlQuery = jcrPathLikeAndNotLike(EXO_FORUM_CATEGORY, pathQuery);
+          
           if (listCateIds != null && listCateIds.size() > 0) {
-            queryString.append("(");
+            sqlQuery.append(" AND (");
             // select all category have name in list user can view
             for (int i = 0; i < listCateIds.size(); i++) {
-              queryString.append("fn:name() = '").append(listCateIds.get(i)).append("'");
-              if (i < listCateIds.size() - 1)
-                queryString.append(" or ");
+              if (i > 0) {
+                sqlQuery.append(" OR ");
+              }
+              sqlQuery.append("fn:name()='").append(listCateIds.get(i)).append("'");
             }
-            queryString.append(") and ");
+            sqlQuery.append(")");
           }
-          // Select all forum that user can view
-        } else if (listForumIds != null && listForumIds.size() > 0) {
-          if (type.equals(Utils.FORUM))
-            searchBy = "fn:name()";
-          else
-            searchBy = "@exo:path";
-          queryString.append("(");
-          for (int i = 0; i < listForumIds.size(); i++) {
-            queryString.append(searchBy).append("='").append(listForumIds.get(i)).append("'");
-            if (i < listForumIds.size() - 1)
-              queryString.append(" or ");
+          isAnd = true;
+        } else {
+          sqlQuery.append("SELECT * FROM exo:").append(type).append(" WHERE ");
+          
+          if(listForumIds != null && listForumIds.size() > 0) {
+            if (type.equals(Utils.FORUM)) {
+              searchBy = "fn:name()";
+            } else {
+              searchBy = EXO_PATH;
+            }
+            sqlQuery.append("(");
+            for (int i = 0; i < listForumIds.size(); i++) {
+              if (i > 0) {
+                sqlQuery.append(" OR ");
+              }
+              sqlQuery.append(searchBy).append("='").append(listForumIds.get(i)).append("'");
+            }
+            sqlQuery.append(")");
+            isAnd = true;
           }
-          queryString.append(") and ");
         }
+        
         // Append text query
-        if (textQuery != null && textQuery.length() > 0 && !textQuery.equals("null")) {
-          queryString.append("(jcr:contains(., '").append(textQuery).append("'))");
+        if (Utils.isEmpty(textQuery) == false && textQuery.equals("null") == false) {
+          sqlQuery.append((isAnd) ? " AND (" : "(");
+          if (type.equals(Utils.POST) == false) {
+            sqlQuery.append("CONTAINS(").append(EXO_NAME).append(", '").append(textQuery).append("') OR ")
+                    .append("CONTAINS(").append(EXO_DESCRIPTION).append(", '").append(textQuery).append("')");
+          } else {
+            sqlQuery.append("CONTAINS(").append(EXO_MESSAGE).append(", '").append(textQuery).append("')");
+          }
+          if (type.equals(Utils.POST) || type.equals(Utils.TOPIC)) {
+            sqlQuery.append(" OR CONTAINS(").append(EXO_OWNER).append(", '").append(textQuery).append("')");
+            if (type.equals(Utils.TOPIC)) {
+              sqlQuery.append(" OR CONTAINS(").append(EXO_LAST_POST_BY).append(", '").append(textQuery).append("')");
+            }
+          } else {
+            sqlQuery.append(" OR CONTAINS(").append(EXO_MODERATORS).append(", '").append(textQuery).append("')");
+          }
+          sqlQuery.append(")");
           isAnd = true;
         }
 
         // if user isn't admin
-        if (!isAdmin) {
-          StringBuilder builder = new StringBuilder();
-
-          // check user if user is moderator
-          if (forumIdsOfModerator != null && !forumIdsOfModerator.isEmpty()) {
-            for (String string : forumIdsOfModerator) {
-              builder.append(" or (@exo:path='").append(string).append("')");
-            }
-          }
-
+        if (isAdmin == false) {
           // search forum not close in this user is moderator
           if (type.equals(Utils.FORUM)) {
-            if (isAnd)
-              queryString.append(" and ");
-            queryString.append("(@exo:isClosed='false'");
-            for (String forumId : forumIdsOfModerator) {
-              queryString.append(" or fn:name()='").append(forumId).append("'");
+            if (isAnd) {
+              sqlQuery.append(" AND ");
             }
-            queryString.append(")");
-          } else {
+            sqlQuery.append("(exo:isClosed='false'");
+            if (forumIdsOfModerator != null) {
+              for (String forumId : forumIdsOfModerator) {
+                sqlQuery.append(" OR fn:name()='").append(forumId).append("'");
+              }
+            }
+            sqlQuery.append(")");
+          } else if (type.equals(Utils.CATEGORY) == false) {
+            StringBuilder builder = new StringBuilder();
+            // check user if user is moderator
+            if (forumIdsOfModerator != null) {
+              for (String id : forumIdsOfModerator) {
+                if(builder.length() > 0) {
+                  builder.append(" OR ");
+                }
+                builder.append("(").append(EXO_PATH).append("='").append(id).append("')");
+              }
+            }
             // search topic
             if (type.equals(Utils.TOPIC)) {
-              if (isAnd)
-                queryString.append(" and ");
-              queryString.append("((@exo:isClosed='false' and @exo:isWaiting='false' and @exo:isApproved='true' and @exo:isActive='true' and @exo:isActiveByForum='true')");
-              if (builder.length() > 0) {
-                queryString.append(builder);
+              if (isAnd){
+                sqlQuery.append(" AND ");
               }
-              queryString.append(")");
-              String str = Utils.buildXpathByUserInfo(EXO_CAN_VIEW, listOfUser);
+              sqlQuery.append("((exo:isClosed='false' AND exo:isWaiting='false' AND exo:isApproved='true' AND exo:isActive='true' AND exo:isActiveByForum='true')");
+              
+              if (builder.length() > 0) {
+                sqlQuery.append(" OR ").append(builder);
+              }
+              sqlQuery.append(")");
+              String str = Utils.buildSQLByUserInfo(EXO_CAN_VIEW, listOfUser);
               if (!Utils.isEmpty(str)) {
-                if (isAnd){
-                  queryString.append(" and ");
+                if (isAnd) {
+                  sqlQuery.append(" AND ");
                 }
-                queryString.append("(@").append(Utils.EXO_OWNER).append("='").append(userId).append("' or ")
-                           .append(Utils.buildXpathHasProperty(EXO_CAN_VIEW)).append(" or ").append(str)
-                           .append(")");
+                sqlQuery.append("(").append(Utils.EXO_OWNER).append("='").append(userId).append("' OR ")
+                        .append(Utils.buildSQLHasProperty(EXO_CAN_VIEW)).append(" OR ").append(str)
+                        .append(")");
               }
 
               // seach post
             } else if (type.equals(Utils.POST)) {
-              if (isAnd)
-                queryString.append(" and ");
-              queryString.append("((@exo:isApproved='true' and @exo:isHidden='false' and @exo:isActiveByTopic='true')");
-              if (builder.length() > 0) {
-                queryString.append(builder);
+              if (isAnd){
+                sqlQuery.append(" AND ");
               }
-              queryString.append(") and (@exo:userPrivate='exoUserPri'").append(" or @exo:userPrivate='").append(userId).append("') and @exo:isFirstPost='false'");
+              sqlQuery.append("((exo:isApproved='true' AND exo:isHidden='false' AND exo:isActiveByTopic='true')");
+              if (builder.length() > 0) {
+                sqlQuery.append(" OR ").append(builder);
+              }
+              sqlQuery.append(") AND (exo:userPrivate='exoUserPri' OR exo:userPrivate='").append(userId).append("') AND exo:isFirstPost='false'");
             }
           }
         } else {
           if (type.equals(Utils.POST)) {
-            if (isAnd)
-              queryString.append(" and ");
-            queryString.append("(@exo:userPrivate='exoUserPri'").append(" or @exo:userPrivate='").append(userId).append("') and @exo:isFirstPost='false'");
+            if (isAnd){
+              sqlQuery.append(" AND ");
+            }
+            sqlQuery.append("(exo:userPrivate='exoUserPri' OR exo:userPrivate='").append(userId).append("') AND exo:isFirstPost='false'");
           }
         }
-        queryString.append("]");
-
-        // System.out.println("\n\n=======>"+queryString.toString());
-        Query query = qm.createQuery(queryString.toString(), Query.XPATH);
-
-        QueryResult result = query.execute();
-        NodeIterator iter = result.getNodes();
+        sqlQuery.append(" ORDER BY ").append(EXO_NAME).append(ASC).append(", ").append(EXO_CREATED_DATE).append(DESC);
+//         System.out.println("\n\n=======>"+sqlQuery.toString());
+        NodeIterator iter = getNodeIteratorBySQLQuery(sProvider, sqlQuery.toString(), 0, 0, true);
         // System.out.println("\n\n=======>iter: "+iter.getSize());
         while (iter.hasNext()) {
           Node nodeObj = iter.nextNode();
