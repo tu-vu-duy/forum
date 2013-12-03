@@ -504,29 +504,27 @@ public class Utils implements ForumNodeTypes {
     return new StringBuilder();
   }
 
-  public static StringBuilder getSQLQuery(String isApproved, String isHidden, String isWaiting, String userLogin) throws Exception {
+  public static StringBuilder getSQLQueryPosts(String isApproved, String isHidden, String isWaiting, String userLogin) throws Exception {
     StringBuilder sqlQuery = new StringBuilder();
-    String typeAdd = null;
-    String str = getSQLQueryByProperty(typeAdd, EXO_USER_PRIVATE, userLogin);
+    String str = getSQLQueryByProperty("", EXO_USER_PRIVATE, userLogin);
     if (!isEmpty(str)) {
       sqlQuery.append("(").append(str);
-      typeAdd = "OR";
+      if (EXO_USER_PRI.equals(userLogin) == false) {
+        sqlQuery.append(getSQLQueryByProperty("OR", EXO_USER_PRIVATE, EXO_USER_PRI));
+      }
+      sqlQuery.append(")");
+    } else {
+      sqlQuery.append(getSQLQueryByProperty("", EXO_USER_PRIVATE, EXO_USER_PRI));
     }
-    if ("OR".equals(typeAdd)) {
-      sqlQuery.append(getSQLQueryByProperty(typeAdd, EXO_USER_PRIVATE, EXO_USER_PRI)).append(")");
-      typeAdd = "AND";
-    }
-    str = getSQLQueryByProperty(typeAdd, EXO_IS_APPROVED, isApproved);
+    str = getSQLQueryByProperty("AND", EXO_IS_APPROVED, isApproved);
     if (!isEmpty(str)) {
       sqlQuery.append(str);
-      typeAdd = "AND";
     }
-    str = getSQLQueryByProperty(typeAdd, EXO_IS_HIDDEN, isHidden);
+    str = getSQLQueryByProperty("AND", EXO_IS_HIDDEN, isHidden);
     if (!isEmpty(str)) {
       sqlQuery.append(str);
-      typeAdd = "AND";
     }
-    str = getSQLQueryByProperty(typeAdd, EXO_IS_WAITING, isWaiting);
+    str = getSQLQueryByProperty("AND", EXO_IS_WAITING, isWaiting);
     if (!isEmpty(str)) {
       sqlQuery.append(str);
     }
@@ -700,9 +698,9 @@ public class Utils implements ForumNodeTypes {
   public static String buildOrderByTopic(SortSettings sortSettings, String order, StringBuilder sqlBuilder) {
     sqlBuilder.append(" ORDER BY ").append(EXO_IS_STICKY).append(DESC);
     if (isEmpty(order)) {
-      SortField orderBy = sortSettings.getField();
-      Direction orderType = sortSettings.getDirection();
-      if (orderBy != null) {
+      if (sortSettings != null && sortSettings.getField() != null) {
+        SortField orderBy = sortSettings.getField();
+        Direction orderType = sortSettings.getDirection();
         sqlBuilder.append(", exo:").append(orderBy.toString()).append(" ").append(orderType);
         if (!orderBy.equals(SortField.LASTPOST)) {
           sqlBuilder.append(", ").append(EXO_LAST_POST_DATE).append(DESC);

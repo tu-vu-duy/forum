@@ -298,8 +298,7 @@ public class UITopicsTag extends UIForumKeepStickPageIterator {
       if (!ForumUtils.isEmpty(topicId)) {
         try {
           Topic topic = topicTag.getTopic(topicId);
-          String path = topic.getPath();
-          path = path.substring(path.indexOf(Utils.CATEGORY));
+          String path = Utils.getSubPath(topic.getPath());
           List<String> values = new ArrayList<String>();
           values.add(topicTag.userProfile.getEmail());
           topicTag.getForumService().addWatch(1, path, values, topicTag.userProfile.getUserId());
