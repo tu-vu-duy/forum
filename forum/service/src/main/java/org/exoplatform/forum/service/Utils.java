@@ -504,7 +504,7 @@ public class Utils implements ForumNodeTypes {
     return new StringBuilder();
   }
 
-  public static StringBuilder getSQLQueryPosts(String isApproved, String isHidden, String isWaiting, String userLogin) throws Exception {
+  public static StringBuilder getSQLQueryPosts(String isApproved, String isHidden, String isWaiting, String userLogin) {
     StringBuilder sqlQuery = new StringBuilder();
     String str = getSQLQueryByProperty("", EXO_USER_PRIVATE, userLogin);
     if (!isEmpty(str)) {
@@ -777,6 +777,18 @@ public class Utils implements ForumNodeTypes {
       return queryForum.toString();
     }
     return CommonUtils.EMPTY_STR;
+  }
+  
+  public static StringBuilder jcrPathLikeAndNotLike(String nodeType, String fullPath) {
+    StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ").append(nodeType)
+        .append(" WHERE (").append(jcrPathLikeAndNotLike(fullPath)).append(")");
+    return sqlQuery;
+  }
+
+  public static StringBuilder jcrPathLikeAndNotLike(String fullPath) {
+    StringBuilder sqlQuery = new StringBuilder(JCR_PATH).append(" LIKE '").append(fullPath)
+        .append("/%' AND NOT ").append(JCR_PATH).append(" LIKE '").append(fullPath).append("/%/%'");
+    return sqlQuery;
   }
 
   /**

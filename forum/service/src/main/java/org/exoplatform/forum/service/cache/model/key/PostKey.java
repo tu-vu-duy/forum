@@ -2,8 +2,10 @@ package org.exoplatform.forum.service.cache.model.key;
 
 import org.exoplatform.forum.common.cache.model.ScopeCacheKey;
 import org.exoplatform.forum.service.Post;
+import org.exoplatform.forum.service.Utils;
 
 public class PostKey extends ScopeCacheKey {
+  private static final long serialVersionUID = 1L;
 
   private final String category;
   private final String forum;
@@ -11,19 +13,21 @@ public class PostKey extends ScopeCacheKey {
   private final String post;
 
   public PostKey(String category, String forum, String topic, String post) {
-    this.category = category;
-    this.forum = forum;
-    this.topic = topic;
-    this.post = post;
+    if (post.lastIndexOf("/") > 0) {
+      this.category = Utils.getCategoryId(post);
+      this.forum = Utils.getCategoryId(post);
+      this.topic = Utils.getCategoryId(post);
+      this.post = Utils.getIdByType(post, Utils.POST);
+    } else {
+      this.category = category;
+      this.forum = forum;
+      this.topic = topic;
+      this.post = post;
+    }
   }
 
   public PostKey(Post post) {
-    int endPos = post.getPath().indexOf(post.getForumId()) - 1;
-    String catId = post.getPath().substring(0, endPos);
-    int startPos = catId.lastIndexOf("/") + 1;
-    catId = catId.substring(startPos);
-
-    this.category = catId;
+    this.category = post.getCategoryId();
     this.forum = post.getForumId();
     this.topic = post.getTopicId();
     this.post = post.getId();

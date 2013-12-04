@@ -77,7 +77,7 @@ public class ForumWebserviceTestCase extends AbstractResourceTest {
     
     // assert data
     MessageBean bean = (MessageBean)response.getEntity();
-    assertEquals(bean.getData().size(), 5);
+    assertEquals(5, bean.getData().size());
 
   }
   
@@ -96,7 +96,7 @@ public class ForumWebserviceTestCase extends AbstractResourceTest {
     
     // assert data
     MessageBean bean = (MessageBean)response.getEntity();
-    assertEquals(bean.getData().size(), 5);
+    assertEquals(5, bean.getData().size());
   }
   
   /**

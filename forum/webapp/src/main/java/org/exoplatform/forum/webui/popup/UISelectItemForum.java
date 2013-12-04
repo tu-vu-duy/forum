@@ -21,9 +21,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.exoplatform.forum.ForumUtils;
-import org.exoplatform.forum.service.ForumLinkData;
+import org.exoplatform.forum.service.Category;
+import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.filter.model.ForumFilter;
 import org.exoplatform.forum.webui.BaseForumForm;
 import org.exoplatform.forum.webui.UIForumPortlet;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
@@ -45,11 +46,11 @@ import org.exoplatform.webui.form.input.UICheckBoxInput;
   }
 )
 public class UISelectItemForum extends BaseForumForm implements UIPopupComponent {
-  List<ForumLinkData>                      forumLinks       = null;
-
-  private Map<String, List<ForumLinkData>> mapListForum     = new HashMap<String, List<ForumLinkData>>();
 
   private List<String>                     listIdIsSelected = new ArrayList<String>();
+
+  private List<Category>                   categories       = new ArrayList<Category>();
+  private Map<String, List<Forum>>         mapForums        = new HashMap<String, List<Forum>>();
 
   public UISelectItemForum() {
   }
@@ -60,67 +61,56 @@ public class UISelectItemForum extends BaseForumForm implements UIPopupComponent
   public void deActivate() {
   }
 
+  private boolean isInspace(String cateId) {
+    return Utils.CATEGORY_SPACE_ID_PREFIX.equals(cateId);
+  }
+
   public void initSelectForum(List<String> listIdIsSelected, String userId) throws Exception {
     this.listIdIsSelected = listIdIsSelected;
-    forumLinks = new ArrayList<ForumLinkData>();
-    String cateQuery = new StringBuffer("[(@").append(Utils.EXO_ID)
-                        .append("!='").append(Utils.CATEGORY_SPACE_ID_PREFIX).append("')]").toString();
-    forumLinks.addAll(getForumService().getAllLink(cateQuery, ForumUtils.EMPTY_STR));
-    //
-    List<String> groupIds = Utils.getGroupSpaceOfUser(userId);
-    String strQuryForum = Utils.buildQueryForumInSpaceOfUser(userId, groupIds);
-        
-    if (ForumUtils.isEmpty(strQuryForum) == false) {
-      cateQuery = cateQuery.replace("!=", "=");
-      forumLinks.addAll(getForumService().getAllLink(cateQuery, new StringBuffer("[").append(strQuryForum).append("]").toString()));
+    categories = getForumService().getCategories();
+    for (Category cat : categories) {
+      if (isInspace(cat.getId()) == false) {
+        List<Forum> forums = getForumService().getForums(new ForumFilter(cat.getId(), true).userId(userId));
+        mapForums.put(cat.getId(), forums);
+      }
     }
-    //
     initCheckboxInput();
   }
   
   private void initCheckboxInput() {
-    mapListForum.clear();
-    List<ForumLinkData> linkForum;
-    String cateId;
-    for (ForumLinkData forumLink : forumLinks) {
-      if (forumLink.getType().equals(Utils.CATEGORY)) {
-        cateId = forumLink.getId();
-        linkForum = new ArrayList<ForumLinkData>();
-        for (ForumLinkData forumlist : forumLinks) {
-          if (forumlist.getType().equals(Utils.FORUM) && forumlist.getPath().indexOf(cateId) >= 0) {
-            linkForum.add(forumlist);
-            String inputId = forumlist.getPath().replace("/", "");
-            UICheckBoxInput checkbox = getUICheckBoxInput(inputId);
-            if (checkbox == null) {
-              checkbox = new UICheckBoxInput(inputId, inputId, false);
-              addUIFormInput(checkbox);
-            }
-            checkbox.setChecked(getCheckedForum(forumlist.getId()));
-          }
+    for (String categoryId : mapForums.keySet()) {
+      for (Forum forum : mapForums.get(categoryId)) {
+        String inputId = categoryId + "_" + forum.getId();
+        UICheckBoxInput checkbox = getUICheckBoxInput(inputId);
+        if (checkbox == null) {
+          checkbox = new UICheckBoxInput(inputId, inputId, false);
+          addUIFormInput(checkbox);
         }
-        mapListForum.put(cateId, linkForum);
+        checkbox.setChecked(getCheckedForum(forum.getId()));
       }
     }
   }
   
 
-  protected List<ForumLinkData> getForumLinks() throws Exception {
-    return forumLinks;
+  protected List<Category> getCategories() throws Exception {
+    return categories;
   }
 
   protected boolean getCheckedForum(String forumId) {
     return listIdIsSelected.contains(forumId) ? true : false;
   }
 
-  protected List<ForumLinkData> getForums(String categoryId) {
-    List<ForumLinkData> forumLinkDatas = mapListForum.get(categoryId);
-    return (forumLinkDatas != null) ? forumLinkDatas : new ArrayList<ForumLinkData>();
+  protected List<Forum> getForums(String categoryId) {
+    List<Forum> forums = mapForums.get(categoryId);
+    return (forums != null) ? forums : new ArrayList<Forum>();
   }
 
-  private ForumLinkData getForumLinkData(String id) throws Exception {
-    for (ForumLinkData linkData : forumLinks) {
-      if (linkData.getPath().replace("/", "").equals(id))
-        return linkData;
+  private Forum getForum(String inputId) throws Exception {
+    String cateId = inputId.split("_")[0];
+    for (Forum forum : getForums(cateId)) {
+      if (inputId.indexOf(forum.getId()) > 0) {
+        return forum;
+      }
     }
     return null;
   }
@@ -133,9 +123,9 @@ public class UISelectItemForum extends BaseForumForm implements UIPopupComponent
       for (UIComponent child : children) {
         if (child instanceof UICheckBoxInput) {
           if (((UICheckBoxInput) child).isChecked()) {
-            ForumLinkData linkData = uiForm.getForumLinkData(child.getId());
-            if(linkData != null){
-              listIdSelected.add(linkData.getName() + "(" + linkData.getPath());
+            Forum forum = uiForm.getForum(child.getId());
+            if (forum != null) {
+              listIdSelected.add(forum.getForumName() + "(" + Utils.getSubPath(forum.getPath()));
             }
           }
         }
