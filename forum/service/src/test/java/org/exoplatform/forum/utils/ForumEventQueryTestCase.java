@@ -36,136 +36,149 @@ public class ForumEventQueryTestCase extends TestCase {
 
   public void testQuerySearchCategory() {
     List<String> categoryIds = new ArrayList<String>();
-    String selector = "/jcr:root/forumPath//element(*,exo:forumCategory)";
+    String selector = "SELECT * FROM exo:forumCategory WHERE (jcr:path LIKE '/root/categoryHome/%' AND NOT jcr:path LIKE '/root/categoryHome/%/%')";
     ForumEventQuery eventQuery = new ForumEventQuery();
-    String predicate = "";
+    String predicate = "", first = "(", end = ")";
     eventQuery.setType(Utils.CATEGORY);
-    eventQuery.setPath("/forumPath");
+    eventQuery.setPath("/root/categoryHome");
 
     // not conditions
     assertEquals(selector + predicate, eventQuery.getPathQuery(categoryIds));
+    assertEquals(true, eventQuery.getIsEmpty());
+
+    selector += " AND ";
     // set text search
     eventQuery.setKeyValue("text search");
     // only category name
     eventQuery.setValueIn("title");
-    predicate = "[(jcr:contains(@exo:name, 'text search'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(exo:name, 'text search')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // all value of category
     eventQuery.setValueIn("all");
-    predicate = "[(jcr:contains(., 'text search'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(*, 'text search')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     eventQuery.setByUser("root");
-    predicate += " and (@exo:owner='root')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:owner='root')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     eventQuery.setModerator("demo");
-    predicate += " and (@exo:moderators='demo')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:moderators='demo')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     String tempPredicate = predicate;
     // case 1: only from date
     Calendar calendar = GregorianCalendar.getInstance();
     eventQuery.setFromDateCreated(calendar);
-    predicate += " and (@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // case 2: only to date
     predicate = tempPredicate;
     eventQuery.setFromDateCreated(null);
     eventQuery.setToDateCreated(calendar);
-    predicate += " and (@exo:createdDate <= xs:dateTime('" + ISO8601.format(calendar) + "'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:createdDate <= TIMESTAMP '" + ISO8601.format(calendar) + "')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // case 3: from date to date
     predicate = tempPredicate;
     eventQuery.setFromDateCreated(calendar);
-    predicate += " and ((@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "')) and (@exo:createdDate <= xs:dateTime('" + ISO8601.format(calendar) + "'))) ";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "'" +
+                 " AND exo:createdDate <= TIMESTAMP '" + ISO8601.format(calendar) + "')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // set category Scoping
     categoryIds.addAll(Arrays.asList(new String[] { "CategoryId1", "CategoryId2", "CategoryId3" }));
-    predicate += " and (fn:name()='CategoryId1' or fn:name()='CategoryId2' or fn:name()='CategoryId3')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND ((fn:name()='CategoryId1') OR (fn:name()='CategoryId2') OR (fn:name()='CategoryId3'))";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
   }
 
   public void testQuerySearchForum() {
     List<String> categoryIds = new ArrayList<String>();
-    String selector = "/jcr:root/forumPath//element(*,exo:forum)";
+    String selector = "SELECT * FROM exo:forum WHERE (jcr:path LIKE '/root/categoryHome/forumCategoryabc/%' " +
+    		              "AND NOT jcr:path LIKE '/root/categoryHome/forumCategoryabc/%/%')";
     ForumEventQuery eventQuery = new ForumEventQuery();
-    String predicate = "";
+    String predicate = "", first = "(", end = ")";
     eventQuery.setType(Utils.FORUM);
-    eventQuery.setPath("/forumPath");
+    // get forums on only one category
+    eventQuery.setPath("/root/categoryHome/forumCategoryabc");
     // not conditions
     assertEquals(selector + predicate, eventQuery.getPathQuery(categoryIds));
-
+    assertEquals(true, eventQuery.getIsEmpty());
+    // get forums on all categories
+    eventQuery.setPath("/root/categoryHome");
+    selector = "SELECT * FROM exo:forum WHERE (jcr:path LIKE '/root/categoryHome/%')";
+    assertEquals(selector + predicate, eventQuery.getPathQuery(categoryIds));
+    assertEquals(true, eventQuery.getIsEmpty());
+    
+    selector += " AND ";
     eventQuery.setKeyValue("text search");
     // only forum name
     eventQuery.setValueIn("title");
-    predicate = "[(jcr:contains(@exo:name, 'text search'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(exo:name, 'text search')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // all value of forums
     eventQuery.setValueIn("all");
-    predicate = "[(jcr:contains(., 'text search'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(*, 'text search')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // set User
     eventQuery.setByUser("root");
-    predicate += " and (@exo:owner='root')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:owner='root')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // Set Close
     String tempPredicate = predicate;
     // Case 1: With Administrator search
     eventQuery.setUserPermission(0);
     eventQuery.setIsClose("true"); // or false, if value is 'all', not new X-path
-    predicate += " and (@exo:isClosed='true')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:isClosed='true')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // With normal user or anonim-user not use value isClose.
     // Case 2: With moderator - add moderator search
     eventQuery.setUserPermission(1);
     // sub case 1: close is false;
     eventQuery.setIsClose("false"); // same for case search Administrator with isClose = false.
-    predicate = tempPredicate + " and (@exo:isClosed='false')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = tempPredicate + " AND (exo:isClosed='false')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // sub case 2: close is true
     eventQuery.setIsClose("true");
     List<String> listOfUser = Arrays.asList(new String[] { "john", "/foo/bar", "bez:/foo/dez" });// userName, group and membership of this user.
     eventQuery.setListOfUser(listOfUser);
-    predicate = tempPredicate + " and (@exo:isClosed='true' and (@exo:moderators = 'john' or @exo:moderators = '/foo/bar' or @exo:moderators = '*:/foo/bar' or @exo:moderators = 'bez:/foo/dez' or @exo:moderators = '*:/foo/dez'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = tempPredicate + " AND ((exo:isClosed='true') AND exo:moderators='john' OR exo:moderators='/foo/bar' OR exo:moderators='*:/foo/bar' OR exo:moderators='bez:/foo/dez' OR exo:moderators='*:/foo/dez')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // sub case 3: close is all
     eventQuery.setIsClose("all");
-    predicate = tempPredicate + " and (@exo:isClosed='false' or (@exo:moderators = 'john' or @exo:moderators = '/foo/bar' or @exo:moderators = '*:/foo/bar' or @exo:moderators = 'bez:/foo/dez' or @exo:moderators = '*:/foo/dez'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = tempPredicate + " AND ((exo:isClosed='false') OR exo:moderators='john' OR exo:moderators='/foo/bar' OR exo:moderators='*:/foo/bar' OR exo:moderators='bez:/foo/dez' OR exo:moderators='*:/foo/dez')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
-    // set Lock, if isLock = 'all', not build new x-path
+    // set Lock, if isLock = 'all', not build new query
     eventQuery.setIsLock("all");
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
     // isLock != 'all'
     eventQuery.setIsLock("false");
-    predicate += " and (@exo:isLock='false')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:isLock='false')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // set moderator
     eventQuery.setModerator("demo");
-    predicate += " and (@exo:moderators='demo')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:moderators='demo')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // set topic count
     eventQuery.setTopicCountMin("50");
-    predicate += " and (@exo:topicCount>=50)";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:topicCount>=50)";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // set post count
     eventQuery.setPostCountMin("100");
-    predicate += " and (@exo:postCount>=100)";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:postCount>=100)";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // set from date
     tempPredicate = predicate;
     Calendar calendar = GregorianCalendar.getInstance();
     eventQuery.setFromDateCreated(calendar);
-    predicate += " and (@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // set to date but not from date
     eventQuery.setFromDateCreated(null);
@@ -173,73 +186,84 @@ public class ForumEventQueryTestCase extends TestCase {
 
     // set from date to date
     eventQuery.setFromDateCreated(calendar);
-    predicate = tempPredicate + " and ((@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "')) " + "and (@exo:createdDate <= xs:dateTime('" + ISO8601.format(calendar) + "'))) ";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = tempPredicate + " AND (exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "'" +
+    		                        " AND exo:createdDate <= TIMESTAMP '" + ISO8601.format(calendar) + "')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
 
     // set category Scoping
     categoryIds.addAll(Arrays.asList(new String[] { "CategoryId1", "CategoryId2", "CategoryId3" }));
-    predicate += " and (fn:name()='CategoryId1' or fn:name()='CategoryId2' or fn:name()='CategoryId3')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND ((fn:name()='CategoryId1') OR (fn:name()='CategoryId2') OR (fn:name()='CategoryId3'))";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
   }
 
   public void testQuerySearchTopic() {
-    List<String> categoryIds = new ArrayList<String>();
-    String selector = "/jcr:root/forumPath//element(*,exo:topic)";
+    List<String> forumIds = new ArrayList<String>();
+    String selector = "SELECT * FROM exo:topic WHERE (jcr:path LIKE '/root/categoryHome/forumCategoryabc/forumfoo/%' " +
+    		              "AND NOT jcr:path LIKE '/root/categoryHome/forumCategoryabc/forumfoo/%/%')";
     ForumEventQuery eventQuery = new ForumEventQuery();
-    String predicate = "";
+    String predicate = "", first = "(", end = ")";
     eventQuery.setType(Utils.TOPIC);
-    eventQuery.setPath("/forumPath");
+    // get topics on only one forum
+    eventQuery.setPath("/root/categoryHome/forumCategoryabc/forumfoo");
     // not conditions
-    assertEquals(selector + predicate, eventQuery.getPathQuery(categoryIds));
+    assertEquals(selector + predicate, eventQuery.getPathQuery(forumIds));
+    assertEquals(true, eventQuery.getIsEmpty());
+    // get topics on all forums
+    eventQuery.setPath("/root/categoryHome");
+    selector = "SELECT * FROM exo:topic WHERE (jcr:path LIKE '/root/categoryHome/%')";
+    assertEquals(selector + predicate, eventQuery.getPathQuery(forumIds));
+    assertEquals(true, eventQuery.getIsEmpty());
+    
+    selector += " AND ";
 
     eventQuery.setKeyValue("text search");
     // only forum name
     eventQuery.setValueIn("title");
-    predicate = "[(jcr:contains(@exo:name, 'text search'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(exo:name, 'text search')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
     // all value of forums
     eventQuery.setValueIn("all");
-    predicate = "[(jcr:contains(., 'text search'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(*, 'text search')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
     // set User
     eventQuery.setByUser("root");
-    predicate += " and (@exo:owner='root')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:owner='root')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
-    // Set Close, only use for administrator or moderator. they same x-path
+    // Set Close, only use for administrator or moderator. they same query
     eventQuery.setUserPermission(0);
-    // if value is 'all', not new x-path
+    // if value is 'all', not new query
     eventQuery.setIsClose("all");
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
     // isClose != 'all'
     eventQuery.setIsClose("true"); // or false.
-    predicate += " and (@exo:isClosed='true')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:isClosed='true')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
-    // set Lock, if isLock = 'all', not build new x-path
+    // set Lock, if isLock = 'all', not build new query
     eventQuery.setIsLock("all");
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
     // isLock != 'all'
     eventQuery.setIsLock("false");
-    predicate += " and (@exo:isLock='false')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:isLock='false')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
     // set post count
     eventQuery.setPostCountMin("100");
-    predicate += " and (@exo:postCount>=100)";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:postCount>=100)";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
     // set view count
     eventQuery.setViewCountMin("200");
-    predicate += " and (@exo:viewCount>=200)";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:viewCount>=200)";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
     // set from date
     String tempPredicate = predicate;
     Calendar calendar = GregorianCalendar.getInstance();
     eventQuery.setFromDateCreated(calendar);
-    predicate += " and (@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "'))";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
     // set to date but not from date
     eventQuery.setFromDateCreated(null);
@@ -247,26 +271,30 @@ public class ForumEventQueryTestCase extends TestCase {
 
     // set from date to date
     eventQuery.setFromDateCreated(calendar);
-    predicate = tempPredicate + " and ((@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "')) " + "and (@exo:createdDate <= xs:dateTime('" + ISO8601.format(calendar) + "'))) ";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = tempPredicate + " AND (exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "'" +
+                                " AND exo:createdDate <= TIMESTAMP '" + ISO8601.format(calendar) + "')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
     // check can view for normal user and guest
     List<String> listOfUser = Arrays.asList(new String[] { "john", "/foo/bar", "bez:/foo/dez" });// userName, group and membership of this user.
     eventQuery.setListOfUser(listOfUser);
     eventQuery.setUserPermission(2);
-    predicate += " and (@exo:isApproved='true' and @exo:isActive='true' and @exo:isWaiting='false' and @exo:isActiveByForum='true') and ((not(@exo:canView) or @exo:canView='' or @exo:canView=' ') or @exo:canView = 'john' or @exo:canView = '/foo/bar' or @exo:canView = '*:/foo/bar' or @exo:canView = 'bez:/foo/dez' or @exo:canView = '*:/foo/dez' or @exo:owner='john')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += " AND (exo:isWaiting='false') AND (exo:isActive='true') AND (exo:isApproved='true') AND (exo:isActiveByForum='true')" +
+    		         " AND (exo:canView='' OR exo:canView=' ' OR exo:canView IS NULL OR exo:canView='john'" +
+    		         " OR exo:canView='/foo/bar' OR exo:canView='*:/foo/bar' OR exo:canView='bez:/foo/dez' OR exo:canView='*:/foo/dez' OR exo:owner='john')";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
 
     // set category Scoping
-    categoryIds.addAll(Arrays.asList(new String[] { "CategoryId1", "CategoryId2", "CategoryId3" }));
-    predicate += " and (@exo:path='CategoryId1' or @exo:path='CategoryId2' or @exo:path='CategoryId3')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    forumIds.addAll(Arrays.asList(new String[] { "CategoryId1", "CategoryId2", "CategoryId3" }));
+    predicate += " AND ((exo:path='CategoryId1') OR (exo:path='CategoryId2') OR (exo:path='CategoryId3'))";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(forumIds));
   }
 
   public void testQuerySearchPost() {
     List<String> categoryIds = new ArrayList<String>();
-    String selector = "/jcr:root/forumPath//element(*,exo:post)";
-    String postPrivate = " and (@exo:userPrivate='exoUserPri' or @exo:userPrivate='john' or @exo:userPrivate='/foo/bar' or @exo:userPrivate='bez:/foo/dez') and (@exo:isFirstPost='false')";
+    String selector = "SELECT * FROM exo:post WHERE (jcr:path LIKE '/forumPath/%') AND ";
+    String postPrivate = "(((exo:userPrivate='john') OR (exo:userPrivate='exoUserPri')) AND (exo:isFirstPost='false'))";
+    String first = "(", end = ")";
     ForumEventQuery eventQuery = new ForumEventQuery();
     String predicate = "";
     eventQuery.setType(Utils.POST);
@@ -275,42 +303,44 @@ public class ForumEventQueryTestCase extends TestCase {
     eventQuery.setListOfUser(listOfUser);
     eventQuery.setUserPermission(0);
     // not conditions
-    assertEquals(selector + predicate, eventQuery.getPathQuery(categoryIds));
+    assertEquals(selector + first + predicate + postPrivate + end, eventQuery.getPathQuery(categoryIds));
+    assertEquals(true, eventQuery.getIsEmpty());
 
     eventQuery.setKeyValue("text search");
     // only forum name
     eventQuery.setValueIn("title");
-    predicate = "[(jcr:contains(@exo:name, 'text search'))";
-    assertEquals(selector + predicate + postPrivate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(exo:name, 'text search') AND ";
+    assertEquals(selector + first + predicate + postPrivate + end, eventQuery.getPathQuery(categoryIds));
     // all value of forums
     eventQuery.setValueIn("all");
-    predicate = "[(jcr:contains(., 'text search'))";
-    assertEquals(selector + predicate + postPrivate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate = "CONTAINS(*, 'text search') AND ";
+    assertEquals(selector + first + predicate + postPrivate + end, eventQuery.getPathQuery(categoryIds));
     // set User
     eventQuery.setByUser("root");
-    predicate += " and (@exo:owner='root')";
-    assertEquals(selector + predicate + postPrivate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += "(exo:owner='root') AND ";
+    assertEquals(selector + first + predicate + postPrivate + end, eventQuery.getPathQuery(categoryIds));
 
-    String tempPredicate = predicate;
+    String keepPredicate = predicate;
     // case 1: only from date
     Calendar calendar = GregorianCalendar.getInstance();
     eventQuery.setFromDateCreated(calendar);
-    predicate += " and (@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "'))";
-    assertEquals(selector + predicate + postPrivate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += "(exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "') AND ";
+    assertEquals(selector + first + predicate + postPrivate + end, eventQuery.getPathQuery(categoryIds));
     // case 2: only to date
-    predicate = tempPredicate;
+    predicate = keepPredicate;
     eventQuery.setFromDateCreated(null);
     eventQuery.setToDateCreated(calendar);
-    predicate += " and (@exo:createdDate <= xs:dateTime('" + ISO8601.format(calendar) + "'))";
-    assertEquals(selector + predicate + postPrivate + "]", eventQuery.getPathQuery(categoryIds));
+    
+    predicate += "(exo:createdDate <= TIMESTAMP '" + ISO8601.format(calendar) + "') AND ";
+    assertEquals(selector + first + predicate + postPrivate + end, eventQuery.getPathQuery(categoryIds));
     // case 3: from date to date
-    predicate = tempPredicate;
+    predicate = keepPredicate;
     eventQuery.setFromDateCreated(calendar);
-    predicate += " and ((@exo:createdDate >= xs:dateTime('" + ISO8601.format(calendar) + "')) and (@exo:createdDate <= xs:dateTime('" + ISO8601.format(calendar) + "'))) ";
-    assertEquals(selector + predicate + postPrivate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += "(exo:createdDate >= TIMESTAMP '" + ISO8601.format(calendar) + "' AND exo:createdDate <= TIMESTAMP '" + ISO8601.format(calendar) + "') AND ";
+    assertEquals(selector + first + predicate + postPrivate + end, eventQuery.getPathQuery(categoryIds));
     // set category Scoping
     categoryIds.addAll(Arrays.asList(new String[] { "CategoryId1", "CategoryId2", "CategoryId3" }));
-    predicate += postPrivate + " and (@exo:path='CategoryId1' or @exo:path='CategoryId2' or @exo:path='CategoryId3')";
-    assertEquals(selector + predicate + "]", eventQuery.getPathQuery(categoryIds));
+    predicate += postPrivate + " AND ((exo:path='CategoryId1') OR (exo:path='CategoryId2') OR (exo:path='CategoryId3'))";
+    assertEquals(selector + first + predicate + end, eventQuery.getPathQuery(categoryIds));
   }
 }

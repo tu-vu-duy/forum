@@ -343,9 +343,9 @@ public class UISearchForm extends BaseForumForm implements UISelector {
           isClosed = "false";
         } else if (type.equals(Utils.TOPIC)) {
           isClosed = "false";
-          remain = "@exo:isActiveByForum='true'";
+          remain = "exo:isActiveByForum='true'";
         } else if (type.equals(Utils.POST))
-          remain = "@exo:isActiveByTopic='true'";
+          remain = "exo:isActiveByTopic='true'";
       }
       String topicCountMin = uiForm.getUISliderControl(FIELD_TOPICCOUNTMIN_SLIDER).getValue();
       String postCountMin = uiForm.getUISliderControl(FIELD_POSTCOUNTMIN_SLIDER).getValue();

@@ -164,13 +164,13 @@ public void testAdvancedSearch() throws Exception {
     List<ForumSearchResult> forumSearchs = forumService_.getAdvancedSearch(eventQuery, null, null); 
     assertNotNull(forumSearchs);
     assertEquals(forumSearchs.size(),1);
-    assertEquals(forumSearchs.get(0).getName(),"social");
+    assertEquals(forumSearchs.get(0).getName(),"social root");
     
     //Test search "root" in all forum
     eventQuery.setType(Utils.FORUM) ;
     forumSearchs = forumService_.getAdvancedSearch(eventQuery, null, null);
     assertEquals(forumSearchs.size(),2);
-    assertEquals(forumSearchs.get(0).getName(),"general question");
+    assertEquals(forumSearchs.get(0).getName(),"general question root");
     assertEquals(forumSearchs.get(1).getName(),"new forum");
     
     //Test search "mary" in all topic
@@ -200,7 +200,7 @@ public void testAdvancedSearch() throws Exception {
     //Test search all post of john
     eventQuery.setByUser("john");
     forumSearchs = forumService_.getAdvancedSearch(eventQuery, null, null);
-    assertEquals(forumSearchs.size(),1);
+    assertEquals(1, forumSearchs.size());
     assertEquals(forumSearchs.get(0).getName(),"second post");
     
     //Test search all forum with john as moderator
@@ -209,7 +209,7 @@ public void testAdvancedSearch() throws Exception {
     eventQuery.setModerator("john");
     forumSearchs = forumService_.getAdvancedSearch(eventQuery, null, null);
     assertEquals(forumSearchs.size(),1);
-    assertEquals(forumSearchs.get(0).getName(),"general question");
+    assertEquals(forumSearchs.get(0).getName(),"general question root");
     
     //Test search all closed topic
     eventQuery.setType(Utils.TOPIC) ;
@@ -233,7 +233,7 @@ public void testAdvancedSearch() throws Exception {
     eventQuery.setTopicCountMin("1");
     forumSearchs = forumService_.getAdvancedSearch(eventQuery, null, null);
     assertEquals(forumSearchs.size(),1);
-    assertEquals(forumSearchs.get(0).getName(),"general question");
+    assertEquals(forumSearchs.get(0).getName(),"general question root");
     
     //Test search all forum that have number of topic min = 3
     eventQuery.setTopicCountMin("3");
