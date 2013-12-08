@@ -32,26 +32,12 @@ public class PostListKey extends ScopeCacheKey {
     return true;
   }
   
-  private int getHashCode(int current, Object key) {
-    return 31 * current + (key != null ? key.hashCode() : 0);
-  }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = getHashCode(result, filter.getCategoryId());
-    result = getHashCode(result, filter.getForumId());
-    result = getHashCode(result, filter.getTopicId());
-    result = getHashCode(result, filter.getTopicPath());
-    result = getHashCode(result, filter.getIsHidden());
-    result = getHashCode(result, filter.getIsWaiting());
-    result = getHashCode(result, filter.getIsApproved());
-
-    result = getHashCode(result, filter.getUserLogin());
-    result = getHashCode(result, filter.getIP());
-    result = getHashCode(result, filter.userName());
-    result = getHashCode(result, filter.isAdmin());
-    result = getHashCode(result, filter.orderBy());
+    //
+    result = 31 * result + filter.hashCode();
     result = 31 * result + offset;
     result = 31 * result + limit;
     return result;

@@ -62,7 +62,7 @@ public class UIPageListTopicByUser extends UIContainer {
 
   private String       strOrderBy = Utils.EXO_CREATED_DATE + Utils.DESC;
 
-  private String       userName   = ForumUtils.EMPTY_STR;
+  private String       byUser   = ForumUtils.EMPTY_STR;
 
   private boolean      isUseAjax  = true;
 
@@ -87,15 +87,15 @@ public class UIPageListTopicByUser extends UIContainer {
     return isUseAjax;
   }
 
-  public void setUserName(String userName) {
-    this.userName = userName;
+  public void setByUser(String byUser) {
+    this.byUser = byUser;
   }
   
   protected List<Topic> getTopicsByUser() throws Exception {
     UIForumPageIterator forumPageIterator = getChild(UIForumPageIterator.class);
     try {
-      TopicFilter filter = new TopicFilter(userName, (getUserProfile().getUserRole() == 0), strOrderBy);
-      topicListAccess = (TopicListAccess) forumService.getPageTopicByUser(filter);
+      TopicFilter filter = new TopicFilter(byUser, (getUserProfile().getUserRole() == 0), strOrderBy);
+      topicListAccess = (TopicListAccess) forumService.getTopicsByUser(filter);
       int pageSize = (int) getUserProfile().getMaxTopicInPage();
       topicListAccess.initialize(pageSize, forumPageIterator.getPageSelected());
 

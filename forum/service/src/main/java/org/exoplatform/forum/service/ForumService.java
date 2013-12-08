@@ -308,20 +308,19 @@ public interface ForumService extends ForumServiceLegacy {
    * @throws Exception the exception
    * @LevelAPI Platform
    * 
-   * @deprecated used {@link #getPageTopicByUser(TopicFilter)}
+   * @deprecated used {@link #getTopicsByUser(TopicFilter)}
    */
   JCRPageList getPageTopicByUser(String userName, boolean isMod, String strOrderBy) throws Exception;
   
   /**
-   * Gets a list access of topics by a given userName returned as ListAccess.
+   * Gets a list access of topics by a given filter contain userName returned as ListAccess.
    * 
-   * @param userName Name of the user.
    * @param filter The condition to get posts.
    * @return The topics.
    * @throws Exception the exception
    * @LevelAPI Platform
    */
-  public ListAccess<Topic> getPageTopicByUser(TopicFilter filter) throws Exception;
+  public ListAccess<Topic> getTopicsByUser(TopicFilter filter) throws Exception;
 
   /**
    * Gets a list of topics which were created before a given date.
@@ -852,9 +851,23 @@ public interface ForumService extends ForumServiceLegacy {
    * @return The topics.
    * @throws Exception the exception
    * @LevelAPI Platform
+   * 
+   * @deprecated use {@link #getTopicsByMyTag(String, String, String)}
    */
   JCRPageList getTopicByMyTag(String userIdAndtagId, String strOrderBy) throws Exception;
 
+  /**
+   * Gets a list access of topics which were created before a given date.
+   * 
+   * @param tagId The id of tag.
+   * @param userId The userId used this tag.
+   * @param orderBy The order type for topics (ascending or descending).
+   * @return List topics.
+   * @throws Exception the exception
+   * @LevelAPI Platform
+   */
+  ListAccess<Topic> getTopicsByMyTag(String tagId, String userId, String orderBy) throws Exception;
+  
   /**
    * Saves a new tag.
    * 
@@ -1557,10 +1570,9 @@ public interface ForumService extends ForumServiceLegacy {
    * 
    * @param userId Id of the user.
    * @return The watches.
-   * @throws Exception the exception
    * @LevelAPI Platform
    */
-  List<Watch> getWatchByUser(String userId) throws Exception;
+  List<Watch> getWatchByUser(String userId);
 
   /**
    * Updates an email address of a watch for a user.

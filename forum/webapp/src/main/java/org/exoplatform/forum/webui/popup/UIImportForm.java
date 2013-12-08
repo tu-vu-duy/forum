@@ -122,7 +122,6 @@ public class UIImportForm extends BaseUIForm implements UIPopupComponent {
         forumPortlet.cancelAction();
         if (!ForumUtils.isEmpty(importForm.categoryPath)) {
           UICategory category = forumPortlet.findFirstComponentOfType(UICategory.class);
-          category.setIsEditForum(true);
           event.getRequestContext().addUIComponentToUpdateByAjax(category);
         } else {
           event.getRequestContext().addUIComponentToUpdateByAjax(forumPortlet);

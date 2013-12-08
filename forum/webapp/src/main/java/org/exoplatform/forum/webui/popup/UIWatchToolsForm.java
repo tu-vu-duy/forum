@@ -22,9 +22,7 @@ import java.util.List;
 
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.forum.ForumUtils;
-import org.exoplatform.forum.service.ForumPageList;
 import org.exoplatform.forum.service.ForumService;
-import org.exoplatform.forum.service.JCRPageList;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.forum.webui.BaseForumForm;
 import org.exoplatform.forum.webui.UICategory;
@@ -54,16 +52,15 @@ import org.exoplatform.webui.event.EventListener;
     }
 )
 public class UIWatchToolsForm extends BaseForumForm implements UIPopupComponent {
-  public final String  WATCHTOOLS_ITERATOR = "WatchToolsPageIterator";
+  public final String  WATCHTOOLS_ITERATOR  = "WatchToolsPageIterator";
+  
+  private final int PAGE_SIZE = 6;
 
   private String       path                = ForumUtils.EMPTY_STR;
 
   private String[]     emails              = new String[] {};
 
   private boolean      isTopic             = false;
-
-  @SuppressWarnings("unchecked")
-  private JCRPageList  pageList;
 
   UIForumPageIterator  pageIterator;
 
@@ -95,50 +92,48 @@ public class UIWatchToolsForm extends BaseForumForm implements UIPopupComponent 
     emails = getListEmail().toArray(new String[] {});
     return emails;
   }
+  
+  private int getMaxPage(int size){
+    int p = size / PAGE_SIZE;
+    if(size % PAGE_SIZE > 0 || p == 0) {
+      p += 1;
+    }
+    return p;
+  }
 
-  @SuppressWarnings("deprecation")
   public void setEmails(String[] emails) {
+    setEmails(Arrays.asList(emails));
+  }
+
+  public void setEmails(List<String> emails) {
     listEmail.clear();
-    listEmail.addAll(Arrays.asList(emails));
-    pageList = new ForumPageList(6, listEmail.size());
-    pageList.setPageSize(6);
+    listEmail.addAll(emails);
+    initPageIterator();
+  }
+
+  private void initPageIterator() {
+    int maxPage = getMaxPage(listEmail.size());
     pageIterator = this.getChild(UIForumPageIterator.class);
-    pageIterator.initPage(6, pageList.getCurrentPage(),
-                          pageList.getAvailable(), pageList.getAvailablePage());
-    try {
-      if (pageIterator.getInfoPage().get(3) <= 1)
-        pageIterator.setRendered(false);
-    } catch (Exception e) {
-      log.error("\nA UIComponent could not rendered: ", e);
+    pageIterator.initPage(PAGE_SIZE, 1, maxPage, getMaxPage(maxPage));
+    if (maxPage <= 1) {
+      pageIterator.setRendered(false);
     }
   }
 
   @SuppressWarnings("unchecked")
   public List<String> getListEmail() {
-    int pageSelect = pageIterator.getPageSelected();
-    List<String> list = new ArrayList<String>();
-    list.addAll(this.pageList.getPageList(pageSelect, this.listEmail));
-    if (list.isEmpty()) {
-      while (list.isEmpty() && pageSelect > 1) {
-        list.addAll(this.pageList.getPageList(--pageSelect, this.listEmail));
-        pageIterator.setSelectPage(pageSelect);
-      }
-    }
-    return list;
+    return (List<String>) pageIterator.load(listEmail);
   }
 
   public void setUnWatchEmail(String[] emails, String unwatchEmail) {
     if (emails.length == 1) {
       setEmails(emails);
     } else if (emails.length > 1) {
-      List<String> temp = new ArrayList<String>();
-      for (String em : emails) {
-        if (!em.equals(unwatchEmail)) {
-          temp.add(em);
-        }
+      List<String> emails_ = new ArrayList<String>(Arrays.asList(emails));
+      if (emails_.contains(unwatchEmail)) {
+        emails_.remove(unwatchEmail);
       }
-      String[] tempEmails = (String[]) temp.toArray(new String[0]);
-      setEmails(tempEmails);
+      setEmails(emails_);
     }
   }
 
@@ -157,15 +152,8 @@ public class UIWatchToolsForm extends BaseForumForm implements UIPopupComponent 
       try {
         String path = uiForm.path;
         forumService.removeWatch(1, path, ForumUtils.SLASH + email);
-        String[] strings = new String[(uiForm.listEmail.size() - 1)];
-        int j = 0;
-        for (String string : uiForm.listEmail) {
-          if (string.equals(email))
-            continue;
-          strings[j] = string;
-          ++j;
-        }
-        uiForm.setEmails(strings);
+        uiForm.listEmail.remove(email);
+        uiForm.initPageIterator();
         if (uiForm.getIsTopic()) {
           UITopicDetail topicDetail = forumPortlet.findFirstComponentOfType(UITopicDetail.class);
           topicDetail.setIsEditTopic(true);
@@ -175,15 +163,11 @@ public class UIWatchToolsForm extends BaseForumForm implements UIPopupComponent 
           UITopicContainer topicContainer = forumPortlet.findFirstComponentOfType(UITopicContainer.class);
           event.getRequestContext().addUIComponentToUpdateByAjax(topicContainer);
         } else {
-          UICategory uicategory = forumPortlet.findFirstComponentOfType(UICategory.class);
-          uicategory.setIsEditCategory(true);
-          event.getRequestContext().addUIComponentToUpdateByAjax(uicategory);
+          event.getRequestContext().addUIComponentToUpdateByAjax(forumPortlet.findFirstComponentOfType(UICategory.class));
         }
         event.getRequestContext().addUIComponentToUpdateByAjax(uiForm);
       } catch (Exception e) {
-        event.getRequestContext()
-             .getUIApplication()
-             .addMessage(new ApplicationMessage("UIWatchToolsForm.msg.fail-delete-email", null, ApplicationMessage.WARNING));
+        forumPortlet.addMessage(new ApplicationMessage("UIWatchToolsForm.msg.fail-delete-email", null, ApplicationMessage.WARNING));
         ((PortalRequestContext) event.getRequestContext().getParentAppRequestContext()).ignoreAJAXUpdateOnPortlets(true);        
       }
     }

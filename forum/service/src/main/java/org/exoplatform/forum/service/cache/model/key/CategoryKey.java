@@ -15,8 +15,6 @@ public class CategoryKey extends ScopeCacheKey {
     this.id = category.getId();
   }
 
-
-
   public String getId() {
     return id;
   }

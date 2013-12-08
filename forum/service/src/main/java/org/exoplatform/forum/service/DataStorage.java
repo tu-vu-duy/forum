@@ -271,9 +271,11 @@ public interface DataStorage {
   List<Tag> getMyTagInTopic(String[] tagIds) throws Exception;
   /**
    * 
-   * @deprecated use {@link #getPosts(PostFilter, int, int)
+   * @deprecated use {@link #getTopicsByMyTag(TopicFilter, int, int)}
    */
   JCRPageList getTopicByMyTag(String userIdAndtagId, String strOrderBy) throws Exception;
+  
+  List<Topic> getTopicsByMyTag(TopicFilter filter, int offset, int limit) throws Exception;
 
   void saveTag(Tag newTag) throws Exception;
 
@@ -349,7 +351,7 @@ public interface DataStorage {
 
   void updateEmailWatch(List<String> listNodeId, String newEmailAdd, String userId) throws Exception;
 
-  List<Watch> getWatchByUser(String userId) throws Exception;
+  List<Watch> getWatchByUser(String userId) ;
 
   void updateForum(String path) throws Exception;
 

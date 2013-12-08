@@ -79,10 +79,6 @@ public class UICategory extends BaseForumForm {
 
   private Category           category;
 
-  private boolean            isEditCategory  = false;
-
-  private boolean            isEditForum     = false;
-
   private boolean            useAjax         = true;
   
   private boolean            isCategorySpace = true;
@@ -132,13 +128,8 @@ public class UICategory extends BaseForumForm {
     return userProfile.getLastPostIdReadOfForum(forumId);
   }
 
-  public void update(Category category, List<Forum> forums) throws Exception {
+  public void update(Category category) throws Exception {
     this.category = category;
-    if (forums == null) {
-      this.isEditForum = true;
-    } else {
-      this.forums = forums;
-    }
     this.categoryId = category.getId();
     this.isCategorySpace = (categoryId.indexOf(ForumUtils.SPACE_GROUP_ID) > 0);
     this.getAncestorOfType(UIForumPortlet.class).getChild(UIBreadcumbs.class).setUpdataPath((categoryId));
@@ -147,16 +138,12 @@ public class UICategory extends BaseForumForm {
 
   public void updateByBreadcumbs(String categoryId) {
     this.categoryId = categoryId;
-    this.isEditCategory = true;
-    this.isEditForum = true;
     this.isCategorySpace = (categoryId.indexOf(ForumUtils.SPACE_GROUP_ID) > 0);
     getChild(UICategoryDescription.class).setCategoryId(categoryId);
   }
   
   public void updateByLink(Category category) {
     this.categoryId = category.getId();
-    this.isEditCategory = false;
-    this.isEditForum = true;
     this.category = category;
     this.isCategorySpace = (categoryId.indexOf(ForumUtils.SPACE_GROUP_ID) > 0);
     getChild(UICategoryDescription.class).setCategory(category);
@@ -171,34 +158,24 @@ public class UICategory extends BaseForumForm {
   }
 
   private Category getCategory() throws Exception {
-    if (this.isEditCategory || this.category == null) {
-      refreshCategory();
-    }
+    category = getForumService().getCategory(categoryId);
     if(category != null) {
       initForm();
     }
     return category;
   }
 
-  private Category refreshCategory() throws Exception {
-    category = getForumService().getCategory(this.categoryId);
-    return category;
-  }
-
-  private boolean isShowForum(String forumId) {
+  private boolean isShowForum(String id) {
     List<String> list = getAncestorOfType(UIForumPortlet.class).getInvisibleForums();
-    return (list.isEmpty() || (list.contains(forumId)));
+    return (list.isEmpty() || (list.contains(id)));
   }
 
   protected List<Forum> getForumList() throws Exception {
-    if (this.isEditForum) {
-      this.forums = ForumSessionUtils.getForumsOfCategory(categoryId, getUserProfile());
-      this.isEditForum = false;
-    }
+    forums = ForumSessionUtils.getForumsOfCategory(categoryId, getUserProfile());
     List<Forum> listForum = new ArrayList<Forum>();
     UICheckBoxInput checkBoxInput;
     boolean isAdmin = (getUserProfile().getUserRole() == UserProfile.ADMIN) ? true : false;
-    for (Forum forum : this.forums) {
+    for (Forum forum : forums) {
       String forumId = forum.getId();
       if(isAdmin) {
         if (getUICheckBoxInput(forumId) != null) {
@@ -214,14 +191,6 @@ public class UICategory extends BaseForumForm {
       }
     }
     return listForum;
-  }
-
-  public void setIsEditCategory(boolean isEdit) {
-    this.isEditCategory = isEdit;
-  }
-
-  public void setIsEditForum(boolean isEdit) {
-    this.isEditForum = isEdit;
   }
 
   private Forum getForum(String forumId) throws Exception {
@@ -261,7 +230,6 @@ public class UICategory extends BaseForumForm {
   static public class EditCategoryActionListener extends BaseEventListener<UICategory> {
     public void onEvent(Event<UICategory> event, UICategory uiCategory, final String objectId) throws Exception {
       UIForumPortlet forumPortlet = uiCategory.getAncestorOfType(UIForumPortlet.class);
-      uiCategory.isEditCategory = true;
       if(uiCategory.getCategory() != null) {
         UICategoryForm categoryForm = uiCategory.openPopup(UICategoryForm.class, "EditCategoryForm", 665, 380);
         categoryForm.setSpaceGroupId(forumPortlet.getSpaceGroupId());
@@ -292,7 +260,6 @@ public class UICategory extends BaseForumForm {
         forumForm.initForm(spaceGroupId);
         forumForm.setCategoryValue(uiCategory.categoryId, false);
         forumForm.setForumUpdate(false);
-        uiCategory.isEditForum = true;
       } else {
         forumPortlet.renderForumHome();
         event.getRequestContext().addUIComponentToUpdateByAjax(forumPortlet);
@@ -311,7 +278,6 @@ public class UICategory extends BaseForumForm {
         forumForm.setCategoryValue(uiCategory.categoryId, false);
         forumForm.setForumValue(forums.get(0), true);
         forumForm.setForumUpdate(false);
-        uiCategory.isEditForum = true;
       } else {
         warning("UICategory.msg.notCheck");
         return;
@@ -330,7 +296,6 @@ public class UICategory extends BaseForumForm {
             forum.setIsLock(true);
             uiCategory.getForumService().modifyForum(forum, Utils.LOCK);
           }
-          uiCategory.isEditForum = true;
         } catch (Exception e) {
           warning("UICategory.msg.fail-lock-forum", false);
           event.getSource().log.debug("Failed to lock forums", e);
@@ -353,7 +318,6 @@ public class UICategory extends BaseForumForm {
             forum.setIsLock(false);
             uiCategory.getForumService().modifyForum(forum, Utils.LOCK);
           }
-          uiCategory.isEditForum = true;
         } catch (Exception e) {
           warning("UICategory.msg.fail-unlock-forum", false);
           event.getSource().log.debug("Failed to unlock forums", e);
@@ -374,7 +338,6 @@ public class UICategory extends BaseForumForm {
             forum.setIsClosed(false);
             uiCategory.getForumService().modifyForum(forum, Utils.CLOSE);
           }
-          uiCategory.isEditForum = true;
         } catch (Exception e) {
           warning("UICategory.msg.fail-open-forum", false);
           event.getSource().log.debug("Failed to open forums", e);
@@ -394,7 +357,6 @@ public class UICategory extends BaseForumForm {
             forum.setIsClosed(true);
             uiCategory.getForumService().modifyForum(forum, Utils.CLOSE);
           }
-          uiCategory.isEditForum = true;
         } catch (Exception e) {
           warning("UICategory.msg.fail-close-forum", false);
           event.getSource().log.debug("Failed to close forums", e);
@@ -412,7 +374,6 @@ public class UICategory extends BaseForumForm {
         UIMoveForumForm moveForumForm = uiCategory.openPopup(UIMoveForumForm.class, 315, 365);
         moveForumForm.setListForum(forums, uiCategory.categoryId);
         moveForumForm.setForumUpdate(false);
-        uiCategory.isEditForum = true;
       } else {
         warning("UICategory.msg.notCheck");
       }
@@ -427,7 +388,6 @@ public class UICategory extends BaseForumForm {
           for (Forum forum : forums) {
             uiCategory.getForumService().removeForum(uiCategory.categoryId, forum.getId());
           }
-          uiCategory.isEditForum = true;
         } catch (Exception e) {
           warning("UICategory.msg.fail-remove-forum", false);
           event.getSource().log.debug("Failed to remove forums", e);
@@ -451,7 +411,6 @@ public class UICategory extends BaseForumForm {
         uiTopicContainer.setUpdateForum(uiCategory.categoryId, forum, 0);
         event.getRequestContext().addUIComponentToUpdateByAjax(forumPortlet);
       } else {
-        uiCategory.isEditForum = true;
         warning("UITopicContainer.msg.forum-deleted", false);
         event.getRequestContext().addUIComponentToUpdateByAjax(uiCategory);
       }
@@ -618,8 +577,7 @@ public class UICategory extends BaseForumForm {
 
   static public class AddWatchingActionListener extends BaseEventListener<UICategory> {
     public void onEvent(Event<UICategory> event, UICategory uiform, final String path) throws Exception {
-      isUnWatch = !uiform.addWatch(path);
-      if(!isUnWatch) uiform.isEditCategory = true;
+      isUnWatch = (uiform.addWatch(path) == false);
       event.getRequestContext().addUIComponentToUpdateByAjax(uiform);
     }
   }
@@ -628,7 +586,6 @@ public class UICategory extends BaseForumForm {
     public void onEvent(Event<UICategory> event, UICategory uiCategory, final String path) throws Exception {
       if(uiCategory.unWatch(path)) {
         isUnWatch = true;
-        uiCategory.isEditCategory = true;
       }
       event.getRequestContext().addUIComponentToUpdateByAjax(uiCategory);
     }
@@ -649,7 +606,6 @@ public class UICategory extends BaseForumForm {
 
   static public class ExportCategoryActionListener extends BaseEventListener<UICategory> {
     public void onEvent(Event<UICategory> event, UICategory uiCategory, final String path) throws Exception {
-      uiCategory.isEditCategory = true;
       Category category = uiCategory.getCategory();
       if (category == null) {
         UIForumPortlet forumPortlet = uiCategory.getAncestorOfType(UIForumPortlet.class);
@@ -658,7 +614,6 @@ public class UICategory extends BaseForumForm {
         event.getRequestContext().addUIComponentToUpdateByAjax(forumPortlet);
         return;
       }
-      uiCategory.isEditForum = true;
       if (uiCategory.getForumList().isEmpty()) {
         warning("UICategory.msg.emptyCategoryExport");
         return;
@@ -685,7 +640,7 @@ public class UICategory extends BaseForumForm {
 
   static public class WatchOptionActionListener extends BaseEventListener<UICategory> {
     public void onEvent(Event<UICategory> event, UICategory uiCategory, final String objectId) throws Exception {
-      Category category = uiCategory.refreshCategory();
+      Category category = uiCategory.getCategory();
       UIWatchToolsForm watchToolsForm = uiCategory.openPopup(UIWatchToolsForm.class, 500, 365);
       watchToolsForm.setPath(category.getPath());
       watchToolsForm.setEmails(category.getEmailNotification());

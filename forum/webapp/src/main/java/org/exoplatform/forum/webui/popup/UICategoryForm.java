@@ -322,7 +322,6 @@ public class UICategoryForm extends BaseForumForm implements UIPopupComponent, U
           forumPortlet.loadPreferences();
         }
         UICategory uiCategory = categoryContainer.getChild(UICategory.class);
-        uiCategory.setIsEditForum(true);
         uiCategory.updateByBreadcumbs(cat.getId());
         categoryContainer.updateIsRender(false);
         forumPortlet.updateIsRendered(ForumUtils.CATEGORIES);

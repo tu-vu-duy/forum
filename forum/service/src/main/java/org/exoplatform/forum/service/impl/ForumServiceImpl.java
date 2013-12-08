@@ -907,9 +907,18 @@ public class ForumServiceImpl implements ForumService, Startable {
 
   /**
    * {@inheritDoc}
+   * 
+   * @deprecated use {@link #getTopicsByMyTag(String, String, String)}
    */
   public JCRPageList getTopicByMyTag(String userIdAndtagId, String strOrderBy) throws Exception {
     return storage.getTopicByMyTag(userIdAndtagId, strOrderBy);
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  public ListAccess<Topic> getTopicsByMyTag(String tagId, String userId, String orderBy) throws Exception {
+    return new TopicListAccess(TopicListAccess.Type.BY_TAG, storage, new TopicFilter(userId, tagId, orderBy));
   }
 
   /**
@@ -1054,7 +1063,7 @@ public class ForumServiceImpl implements ForumService, Startable {
    */
   @Override
   public ListAccess<Topic> getTopicsByDate(long date, String forumPath) throws Exception {
-    return new TopicListAccess(TopicListAccess.Type.TOPICS, storage, new TopicFilter(date, forumPath));
+    return new TopicListAccess(TopicListAccess.Type.BY_DATE, storage, new TopicFilter(date, forumPath));
   }
 
   /**
@@ -1083,7 +1092,7 @@ public class ForumServiceImpl implements ForumService, Startable {
    * {@inheritDoc}
    */
   @Override
-  public ListAccess<Topic> getPageTopicByUser(TopicFilter filter) throws Exception {
+  public ListAccess<Topic> getTopicsByUser(TopicFilter filter) throws Exception {
     return new TopicListAccess(TopicListAccess.Type.BY_USER, storage, filter);
   }
 
@@ -1095,7 +1104,7 @@ public class ForumServiceImpl implements ForumService, Startable {
   }
 
   public ListAccess<Post> getPostsByUser(PostFilter filter) throws Exception {
-    return new PostListAccess(PostListAccess.Type.BY_SPLIT, storage, filter);
+    return new PostListAccess(PostListAccess.Type.BY_USER, storage, filter);
   }
 
   /**
@@ -1528,7 +1537,7 @@ public class ForumServiceImpl implements ForumService, Startable {
   /**
    * {@inheritDoc}
    */
-  public List<Watch> getWatchByUser(String userId) throws Exception {
+  public List<Watch> getWatchByUser(String userId) {
     return storage.getWatchByUser(userId);
   }
 

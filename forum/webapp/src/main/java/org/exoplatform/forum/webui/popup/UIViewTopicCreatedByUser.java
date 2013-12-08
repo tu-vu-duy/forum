@@ -44,8 +44,8 @@ public class UIViewTopicCreatedByUser extends UIForm implements UIPopupComponent
   public void deActivate() {
   }
 
-  public void setUserId(String userId) {
-    this.getChild(UIPageListTopicByUser.class).setUserName(userId);
+  public void setByUser(String byUser) {
+    getChild(UIPageListTopicByUser.class).setByUser(byUser);
   }
 
   static public class CloseActionListener extends EventListener<UIViewTopicCreatedByUser> {

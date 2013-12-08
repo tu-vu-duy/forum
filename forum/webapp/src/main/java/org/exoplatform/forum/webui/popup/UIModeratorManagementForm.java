@@ -619,9 +619,9 @@ public class UIModeratorManagementForm extends BaseForumForm implements UIPopupC
     addUIFormInput(inputSetBan);
     
     UIPageListTopicByUser pageListTopicByUser = addChild(UIPageListTopicByUser.class, null, null);
-    pageListTopicByUser.setUserName(this.editUserProfile.getUserId());
+    pageListTopicByUser.setByUser(editUserProfile.getUserId());
     UIPageListPostByUser listPostByUser = addChild(UIPageListPostByUser.class, null, null);
-    listPostByUser.setUserName(this.editUserProfile.getUserId());
+    listPostByUser.setByUser(editUserProfile.getUserId());
   }
 
   private Date getNewDate(double timeZoneOld) {

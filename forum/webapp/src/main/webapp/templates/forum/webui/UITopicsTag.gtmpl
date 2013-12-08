@@ -120,7 +120,7 @@
   						boolean isLockTopic = topic.getIsLock() ;
   						if(!isLockTopic) isLockTopic = topic.getIsClosed() ;
   						String topicId = topic.getId();
-  						long max_page = uicomponent.getSizePost(topic.getPath()) ;
+  						long max_page = uicomponent.getSizePost(topic) ;
   					 
   						String topicTitle = topic.getTopicName();
   						String topicBy = topic.getOwner();

@@ -48,7 +48,8 @@ public class PostListCountSelector extends ScopeCacheSelector<ScopeCacheKey, Obj
     }
 
     if (key instanceof PostListCountKey) {
-      return ((PostListCountKey)key).getTopicId().equals(this.topicId);
+      String id = ((PostListCountKey) key).getTopicId();
+      return id == null || id.equals(this.topicId);
     }
     
     return false;

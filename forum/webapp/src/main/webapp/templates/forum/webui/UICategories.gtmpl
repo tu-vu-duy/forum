@@ -18,6 +18,8 @@
 				"eXo.forum.UIForumPortlet.initShowUserInfo('"+uicomponent.id+"') ;",
 				"eXo.forum.UIForumPortlet.controlLeftNavigation();"
 				];
+	//
+	uicomponent.initialization();
 	
 	UserProfile userProfile = uicomponent.getUserProfile();
 	String userLogin = userProfile.getUserId() ;

@@ -439,12 +439,10 @@ public class UIForumForm extends BaseForumForm implements UIPopupComponent {
            context.addUIComponentToUpdateByAjax(uiCategories);
         } else {
           UICategory uiCategory = forumPortlet.findFirstComponentOfType(UICategory.class);
-          uiCategory.setIsEditForum(true);
           if (!uiForm.isActionBar)
             context.addUIComponentToUpdateByAjax(uiCategory);
         }
         if (uiForm.isActionBar) {
-          forumPortlet.findFirstComponentOfType(UICategory.class).setIsEditForum(true);
           context.addUIComponentToUpdateByAjax(forumPortlet);
         }
       } else {

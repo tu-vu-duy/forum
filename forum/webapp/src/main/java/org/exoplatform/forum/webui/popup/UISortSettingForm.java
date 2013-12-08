@@ -25,7 +25,6 @@ import org.exoplatform.forum.common.webui.BaseEventListener;
 import org.exoplatform.forum.service.ForumAdministration;
 import org.exoplatform.forum.service.SortSettings;
 import org.exoplatform.forum.webui.BaseForumForm;
-import org.exoplatform.forum.webui.UICategory;
 import org.exoplatform.forum.webui.UIForumPortlet;
 import org.exoplatform.forum.webui.UITopicContainer;
 import org.exoplatform.portal.application.PortalRequestContext;
@@ -132,10 +131,6 @@ public class UISortSettingForm extends BaseForumForm implements UIPopupComponent
       String forumSortByType = uiForm.getUIFormSelectBox(FIELD_FORUMSORTBYTYPE_INPUT).getValue();
       String topicSortBy = uiForm.getUIFormSelectBox(FIELD_TOPICSORTBY_INPUT).getValue();
       String topicSortByType = uiForm.getUIFormSelectBox(FIELD_TOPICSORTBYTYPE_INPUT).getValue();
-
-      if (!forumSortBy.equals(uiForm.administration.getForumSortBy()) || !forumSortByType.equals(uiForm.administration.getForumSortByType())) {
-        forumPortlet.findFirstComponentOfType(UICategory.class).setIsEditForum(true);
-      }
 
       ForumAdministration forumAdministration = uiForm.administration;
       forumAdministration.setForumSortBy(forumSortBy);

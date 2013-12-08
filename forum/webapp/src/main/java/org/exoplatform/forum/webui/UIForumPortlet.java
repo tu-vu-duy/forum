@@ -1030,7 +1030,7 @@ public class UIForumPortlet extends UIPortletApplication {
       UIPopupAction popupAction = forumPortlet.getChild(UIPopupAction.class);
       UIPopupContainer popupContainer = popupAction.createUIComponent(UIPopupContainer.class, null, null);
       UIViewTopicCreatedByUser topicCreatedByUser = popupContainer.addChild(UIViewTopicCreatedByUser.class, null, null);
-      topicCreatedByUser.setUserId(userId);
+      topicCreatedByUser.setByUser(userId);
       popupContainer.setId("ViewTopicCreatedByUser");
       popupAction.activate(popupContainer, 760, 450);
       event.getRequestContext().addUIComponentToUpdateByAjax(popupAction);

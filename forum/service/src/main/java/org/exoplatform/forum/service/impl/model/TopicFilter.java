@@ -16,12 +16,14 @@
  */
 package org.exoplatform.forum.service.impl.model;
 
-public class TopicFilter {
-  private String   categoryId = null;
-  private String   forumId = null;
-  private String   userLogin = null;
+import org.exoplatform.forum.service.Utils;
 
-  private String   orderBy = null;
+public class TopicFilter {
+  private String categoryId = null;
+  private String forumId = null;
+  private String userLogin = null;
+
+  private String orderBy = null;
 
   private String[] viewers;
   private boolean isRequireApproved = false;
@@ -36,11 +38,18 @@ public class TopicFilter {
   private long date = 0l;
   private String forumPath = null;
   
-  private String userName = null;
+  private String byUser = null;
+  private String tagId = null;
 
   public TopicFilter(String categoryId, String forumId) {
     this.categoryId = categoryId;
     this.forumId = forumId;
+  }
+
+  public TopicFilter(String userLogin, String tagId, String orderBy) {
+    this.userLogin = userLogin;
+    this.tagId = tagId;
+    this.orderBy = orderBy;
   }
 
   public TopicFilter(long date, String forumPath) {
@@ -48,8 +57,8 @@ public class TopicFilter {
     this.date = date;
   }
 
-  public TopicFilter(String userName, boolean isAdmin, String orderBy) {
-    this.userName = userName;
+  public TopicFilter(String byUser, boolean isAdmin, String orderBy) {
+    this.byUser = byUser;
     this.orderBy = orderBy;
     this.isAdmin = isAdmin;
   }
@@ -64,6 +73,9 @@ public class TopicFilter {
   }
 
   public String forumId() {
+    if (forumId == null) {
+      return Utils.getForumId(forumPath);
+    }
     return forumId;
   }
 
@@ -81,12 +93,12 @@ public class TopicFilter {
     return this;
   }
 
-  public String userName() {
-    return userName;
+  public String byUser() {
+    return byUser;
   }
 
-  public TopicFilter userName(String userName) {
-    this.userName = userName;
+  public TopicFilter byUser(String byUser) {
+    this.byUser = byUser;
     return this;
   }
 
@@ -114,6 +126,15 @@ public class TopicFilter {
 
   public TopicFilter orderBy(String orderBy) {
     this.orderBy = orderBy;
+    return this;
+  }
+
+  public String tagId() {
+    return tagId;
+  }
+  
+  public TopicFilter tagId(String tagId) {
+    this.tagId = tagId;
     return this;
   }
 
@@ -209,7 +230,7 @@ public class TopicFilter {
         isRequireApproved != f.isRequireApproved ||
         date != f.date ||
         !equals(forumPath, f.forumPath) ||
-        !equals(userName, f.userName) ||
+        !equals(byUser, f.byUser) ||
         !equals(forumId, f.forumId) ||
         !equals(userLogin, f.userLogin) ||
         !equals(isApproved, f.isApproved) ||
@@ -217,7 +238,8 @@ public class TopicFilter {
         !equals(isActive, f.isActive) ||
         !equals(isClosed, f.isClosed) ||
         !equals(isLock, f.isLock) ||
-        !equals(orderBy, f.orderBy)
+        !equals(orderBy, f.orderBy) ||
+        !equals(tagId, f.tagId)
         ) {
       return false;
     }
@@ -238,32 +260,31 @@ public class TopicFilter {
         .append(", isActive='").append(isActive).append("'")
         .append(", isClosed='").append(isClosed).append("'")
         .append(", isLock='").append(isLock).append("'")
-        .append(", userName='").append(userName).append("'")
+        .append(", byUser='").append(byUser).append("'")
+        .append(", tagId='").append(tagId).append("'")
         .append(", date='").append(date).append("'")
         .append(", forumPath='").append(forumPath).append("'")
         .append('}').toString();
   }
   
-  private int getHashCode(int current, Object key) {
-    return (key != null ? (31 * current + key.hashCode()) : 0);
-  }
-
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = getHashCode(result, categoryId);
-    result = getHashCode(result, forumId);
-    result = getHashCode(result, forumPath);
-    result = getHashCode(result, isAdmin);
-    result = getHashCode(result, isRequireApproved);
-    result = getHashCode(result, userLogin);
-    result = getHashCode(result, userName);
-    result = getHashCode(result, date);
-    result = getHashCode(result, isApproved);
-    result = getHashCode(result, isWaiting);
-    result = getHashCode(result, isActive);
-    result = getHashCode(result, isClosed);
-    result = getHashCode(result, isLock);
+    //
+    result = 31 * result + ((isAdmin == true) ? 1 : 0);
+    result = 31 * result + ((date == 0) ? 0 : String.valueOf(date).hashCode());
+    result = 31 * result + ((isRequireApproved == true) ? 1 : 0);
+    result = categoryId != null ? (31 * result + categoryId.hashCode()) : 0;
+    result = forumId != null ? (31 * result + forumId.hashCode()) : 0;
+    result = userLogin != null ? (31 * result + userLogin.hashCode()) : 0;
+    result = byUser != null ? (31 * result + byUser.hashCode()) : 0;
+    result = tagId != null ? (31 * result + tagId.hashCode()) : 0;
+    result = isApproved != null ? (31 * result + isApproved.hashCode()) : 0;
+    result = isWaiting != null ? (31 * result + isWaiting.hashCode()) : 0;
+    result = isActive != null ? (31 * result + isActive.hashCode()) : 0;
+    result = isClosed != null ? (31 * result + isClosed.hashCode()) : 0;
+    result = isLock != null ? (31 * result + isLock.hashCode()) : 0;
+
     return result;
   }
   

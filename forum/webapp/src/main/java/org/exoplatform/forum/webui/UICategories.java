@@ -58,8 +58,6 @@ import org.exoplatform.webui.event.EventListener;
 public class UICategories extends UIContainer {
   protected ForumService           forumService;
 
-  private List<Category>           categoryList      = new ArrayList<Category>();
-
   public final String              FORUM_LIST_SEARCH = "forumListSearch";
 
   private boolean                  isRenderChild     = false;
@@ -77,6 +75,21 @@ public class UICategories extends UIContainer {
   public UICategories() throws Exception {
     forumService = (ForumService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(ForumService.class);
     addChild(UIForumListSearch.class, null, null).setRendered(isRenderChild);
+  }
+  
+  protected void initialization() {
+    listWatches = forumService.getWatchByUser(getUserProfile().getUserId());
+    //
+    UIForumPortlet forumPortlet = this.getAncestorOfType(UIForumPortlet.class);
+    useAjax = forumPortlet.isUseAjax();
+    dayForumNewPost = forumPortlet.getDayForumNewPost();
+    userProfile = forumPortlet.getUserProfile();
+    if (!userProfile.getUserId().equals(UserProfile.USER_GUEST)) {
+      collapCategories = new ArrayList<String>();
+      collapCategories.addAll(Arrays.asList(userProfile.getCollapCategories()));
+    } else if (collapCategories == null) {
+      collapCategories = new ArrayList<String>();
+    }
   }
 
   public void setIsRenderChild(boolean isRenderChild) {
@@ -109,26 +122,12 @@ public class UICategories extends UIContainer {
     return forumService.getScreenName(userName);
   }
 
-  private UserProfile getUserProfile() throws Exception {
-    UIForumPortlet forumPortlet = this.getAncestorOfType(UIForumPortlet.class);
-    useAjax = forumPortlet.isUseAjax();
-    dayForumNewPost = forumPortlet.getDayForumNewPost();
-    userProfile = forumPortlet.getUserProfile();
-    if (!userProfile.getUserId().equals(UserProfile.USER_GUEST)) {
-      collapCategories = new ArrayList<String>();
-      collapCategories.addAll(Arrays.asList(userProfile.getCollapCategories()));
-    } else if (collapCategories == null) {
-      collapCategories = new ArrayList<String>();
-    }
-    return this.userProfile;
+  private UserProfile getUserProfile() {
+    return userProfile;
   }
 
   protected String getActionViewInfoUser(String linkType, String userName) {
     return getAncestorOfType(UIForumPortlet.class).getPortletLink(linkType, userName);
-  }
-
-  public void setListWatches() throws Exception {
-    listWatches = forumService.getWatchByUser(getUserProfile().getUserId());
   }
 
   protected boolean isWatching(String path) throws Exception {
@@ -165,20 +164,6 @@ public class UICategories extends UIContainer {
     return false;
   }
 
-  public List<Category> getCategorys() {
-    return this.categoryList;
-  }
-
-  public List<Category> getPrivateCategories() {
-    List<Category> list = new ArrayList<Category>();
-    for (Category cate : this.categoryList) {
-      if (cate.getUserPrivate() != null && cate.getUserPrivate().length > 0) {
-        list.add(cate);
-      }
-    }
-    return list;
-  }
-  
   protected boolean isShowCategory(String categoryId) {
     List<String> list = getAncestorOfType(UIForumPortlet.class).getInvisibleCategories();
     return (list.isEmpty() || (list.contains(categoryId)));
@@ -189,22 +174,16 @@ public class UICategories extends UIContainer {
     return (list.isEmpty() || (list.contains(forumId)));
   }
 
-  private List<Category> getCategoryList() throws Exception {
-    try {
-      categoryList = forumService.getCategories();
-    } catch (Exception e) {
-      categoryList = new ArrayList<Category>();
-    }
-    setListWatches();
+  private List<Category> getCategoryList() {
+    List<Category> categoryList = forumService.getCategories();;
     return categoryList;
   }
 
-  private List<Forum> getForumList(String categoryId) throws Exception {
-    if (isCollapCategories(categoryId))
+  protected List<Forum> getForumList(String categoryId) throws Exception {
+    if (isCollapCategories(categoryId)) {
       return new ArrayList<Forum>();
-    List<Forum> forumList = new ArrayList<Forum>();
-    forumList = ForumSessionUtils.getForumsOfCategory(categoryId, getUserProfile());
-    
+    }
+    List<Forum> forumList = ForumSessionUtils.getForumsOfCategory(categoryId, getUserProfile());
     List<Forum> listForum = new ArrayList<Forum>();
     for (Forum forum : forumList) {
       if (isShowForum(forum.getId())) {
@@ -277,11 +256,7 @@ public class UICategories extends UIContainer {
       UIForumPortlet forumPortlet = categoryContainer.getParent();
       try {
         UICategory uiCategory = categoryContainer.getChild(UICategory.class);
-        List<Forum> list = null;
-        if (!uiContainer.collapCategories.contains(categoryId)) {
-          list = uiContainer.getForumList(categoryId);
-        }
-        uiCategory.update(uiContainer.getCategory(categoryId), list);
+        uiCategory.update(uiContainer.getCategory(categoryId));
         categoryContainer.updateIsRender(false);
       } catch (Exception e) {        
         event.getRequestContext().getUIApplication().addMessage(new ApplicationMessage("UIForumPortlet.msg.catagory-deleted",

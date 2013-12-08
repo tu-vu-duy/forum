@@ -28,6 +28,7 @@ import javax.jcr.ImportUUIDBehavior;
 
 import org.apache.commons.io.FileUtils;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
+import org.exoplatform.forum.service.filter.model.ForumFilter;
 
 public class ForumServiceTestCase extends BaseForumServiceTestCase {
 
@@ -452,7 +453,9 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     forumService_.saveCategory(cat, true);
     cat = forumService_.getCategory(cat.getId());
     String pathNode = cat.getPath();
-    assertEquals("Before import data, category don't have any forum", forumService_.getForums(cat.getId(), "").size(), 0);
+    ForumFilter filter = new ForumFilter(cat.getId(), false);
+    // check before import
+    assertEquals(forumService_.getForums(filter).size(), 0);
     try {
       File file = new File(System.getProperty("user.dir") + "/src/test/resources/conf/portal/Data.xml");
       String content = FileUtils.readFileToString(file, "UTF-8");
@@ -460,7 +463,7 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(currentXMLBytes);
       // Import forum into category
       forumService_.importXML(pathNode, byteArrayInputStream, ImportUUIDBehavior.IMPORT_UUID_CREATE_NEW);
-      assertEquals("Can't import forum into category", forumService_.getForums(cat.getId(), "").size(), 1);
+      assertEquals("Can't import forum into category", forumService_.getForums(filter).size(), 1);
     } catch (IOException e) {
       log.debug("Failed to test importXML", e);
     }

@@ -28,7 +28,7 @@ public class TopicListAccess extends AbstractListAccess<Topic> {
   private Type type;
   
   public enum Type {
-    TOPICS, BY_DATE, BY_USER
+    TOPICS, BY_DATE, BY_USER, BY_TAG
   }
 
   public TopicListAccess(Type type, DataStorage  storage, TopicFilter filter) {
@@ -50,6 +50,9 @@ public class TopicListAccess extends AbstractListAccess<Topic> {
         break;
       case BY_USER:
         got = storage.getTopicsByUser(filter, index, length);
+        break;
+      case BY_TAG:
+        got = storage.getTopicsByMyTag(filter, index, length);
         break;
       default:
         break;

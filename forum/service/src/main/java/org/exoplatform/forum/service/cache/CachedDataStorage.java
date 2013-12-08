@@ -215,23 +215,30 @@ public class CachedDataStorage implements DataStorage, Startable {
   }
   
   private void clearTopicCache(String topicPath) {
-    topicPath = Utils.getSubPath(topicPath);
-    topicData.remove(new TopicKey(topicPath, true));
-    topicData.remove(new TopicKey(topicPath, false));
-    topicData.remove(new TopicKey(topicPath.toUpperCase(), false));
+    Topic topic;
+    try {
+      topic = getTopicByPath(topicPath, false);
+    } catch (Exception e) {
+      topic = new Topic();
+      topic.setId(Utils.getTopicId(topicPath));
+      topic.setPath(topicPath);
+    }
+    clearTopicCache(topic);
   }
 
   private void clearTopicCache(String categoryId, String forumId, String topicId) throws Exception {
     String topicPath = new StringBuffer(categoryId).append("/").append(forumId).append("/").append(topicId).toString();
-    clearTopicCache(getTopicByPath(topicPath, false));
+    clearTopicCache(topicPath);
   }
   
-  private void clearTopicCache(Topic topic) throws Exception {
+  private void clearTopicCache(Topic topic) {
     if (topic != null) {
-      clearTopicCache(topic.getPath());
+      String topicPath = Utils.getSubPath(topic.getPath());
+      topicData.remove(new TopicKey(topicPath, true));
+      topicData.remove(new TopicKey(topicPath, false));
+      topicData.remove(new TopicKey(topicPath.toUpperCase(), false));
       objectNameData.remove(new ObjectNameKey(topic.getId(), Utils.TOPIC));
     }
-    
   }
 
   private void clearPostCache(String categoryId, String forumId, String topicId, String postId) throws Exception {
@@ -619,12 +626,12 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   @Deprecated
   public List<Forum> getForums(final String categoryId, final String strQuery) throws Exception {
-    return getForums(new ForumFilter(categoryId, false).strQuery(strQuery));
+    return getForums(new ForumFilter(categoryId, strQuery, false));
   }
 
   @Deprecated
   public List<Forum> getForumSummaries(final String categoryId, final String strQuery) throws Exception {
-    return getForums(new ForumFilter(categoryId, true).strQuery(strQuery));
+    return getForums(new ForumFilter(categoryId, strQuery, true));
   }
 
   public List<Forum> getForums(final ForumFilter filter) {
@@ -918,7 +925,7 @@ public class CachedDataStorage implements DataStorage, Startable {
   
   public  List<Topic> getTopicsByUser(final TopicFilter filter, final int offset, final int limit) throws Exception {
     
-    TopicListKey key = new TopicListKey(filter, 0, 0);
+    TopicListKey key = new TopicListKey(filter, offset, limit);
 
     ListTopicData data = topicListFuture.get(new ServiceContext<ListTopicData>() {
       @Override
@@ -1162,6 +1169,25 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public JCRPageList getTopicByMyTag(String userIdAndtagId, String strOrderBy) throws Exception {
     return storage.getTopicByMyTag(userIdAndtagId, strOrderBy);
+  }
+  
+  public List<Topic> getTopicsByMyTag(final TopicFilter filter, final int offset, final int limit) throws Exception {
+    
+    TopicListKey key = new TopicListKey(filter, offset, limit);
+
+    ListTopicData data = topicListFuture.get(new ServiceContext<ListTopicData>() {
+      @Override
+      public ListTopicData execute() {
+        try {
+          return buildTopicInput(storage.getTopicsByMyTag(filter, offset, limit));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }, key);
+
+    return buildTopicOutput(data);
+    
   }
 
   public void saveTag(Tag newTag) throws Exception {
@@ -1484,7 +1510,7 @@ public class CachedDataStorage implements DataStorage, Startable {
   }
 
   // TODO : need range
-  public List<Watch> getWatchByUser(final String userId) throws Exception {
+  public List<Watch> getWatchByUser(final String userId) {
 
     SimpleCacheKey key = new SimpleCacheKey(null, userId);
 

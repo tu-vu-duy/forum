@@ -4,7 +4,7 @@ import org.exoplatform.forum.common.cache.model.ScopeCacheKey;
 import org.exoplatform.forum.service.Forum;
 
 public class ForumKey extends ScopeCacheKey {
-
+  private static final long serialVersionUID = 1L;
   private final String categoryId;
   private final String forumId;
 

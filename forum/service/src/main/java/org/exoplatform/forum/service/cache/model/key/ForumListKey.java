@@ -11,18 +11,6 @@ public class ForumListKey extends ScopeCacheKey {
   private final SortField sortField;
   private final Direction orderType;
   
-  public ForumListKey(String categoryId, String strQuery) {
-    filter = new ForumFilter(categoryId, strQuery, false);
-    this.sortField = null;
-    this.orderType = null;
-  }
-  
-  public ForumListKey(String categoryId, String strQuery, SortField sortField, Direction orderType) {
-    filter = new ForumFilter(categoryId, strQuery, false);
-    this.sortField = sortField;
-    this.orderType = orderType;
-  }
-  
   public ForumListKey(ForumFilter filter, SortField sortField, Direction orderType) {
     this.filter = filter;
     this.sortField = sortField;

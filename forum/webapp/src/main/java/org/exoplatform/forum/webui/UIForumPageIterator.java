@@ -111,6 +111,28 @@ public class UIForumPageIterator extends UIContainer {
   public int getPageSelected() {
     return this.page;
   }
+  
+  //
+  public List<?> load(List<?> list) {
+    int pageSelect = getPageSelected();
+    if (pageSelect > availablePage) {
+      pageSelect = availablePage;
+    } else if (pageSelect < 1) {
+      pageSelect = 1;
+    }
+    setSelectPage(pageSelect);
+    //
+    int fromIndex = (pageSelect - 1) * pageSize;
+    int toIndex = pageSelect * pageSize;
+    if (toIndex > list.size()) {
+      toIndex = list.size();
+      if (fromIndex == 0) {
+        return list;
+      }
+    }
+
+    return list.subList(fromIndex, toIndex);
+  }
 
   static public class GoPageActionListener extends EventListener<UIForumPageIterator> {
     public void execute(Event<UIForumPageIterator> event) throws Exception {

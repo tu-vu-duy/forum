@@ -16,8 +16,9 @@
  */
 package org.exoplatform.forum.service.impl.model;
 
-public class PostFilter {
+import org.exoplatform.forum.service.Utils;
 
+public class PostFilter {
   private String categoryId = null;
   private String forumId = null;
   private String topicId = null; 
@@ -31,7 +32,7 @@ public class PostFilter {
   private String ip = null;
   private String orderBy = null;
   
-  private String userName = null;
+  private String byUser = null;
   private boolean isAdmin = false;
   private boolean isSplit = false;
 
@@ -55,8 +56,8 @@ public class PostFilter {
     this.isSplit = isSplit;
   }
 
-  public PostFilter(String userName, String userLogin, boolean isAdmin, String orderBy) {
-    this.userName = userName;
+  public PostFilter(String byUser, String userLogin, boolean isAdmin, String orderBy) {
+    this.byUser = byUser;
     this.userLogin = userLogin;
     this.isAdmin = isAdmin;
     this.orderBy = orderBy;
@@ -78,6 +79,9 @@ public class PostFilter {
     return forumId;
   }
   public String getTopicId() {
+    if (topicId == null) {
+      return Utils.getTopicId(topicPath);
+    }
     return topicId;
   }
   public String getIsApproved() {
@@ -106,12 +110,12 @@ public class PostFilter {
     return this;
   }
   
-  public String userName() {
-    return userName;
+  public String byUser() {
+    return byUser;
   }
 
-  public PostFilter userName(String userName) {
-    this.userName = userName;
+  public PostFilter byUser(String byUser) {
+    this.byUser = byUser;
     return this;
   }
 
@@ -161,7 +165,7 @@ public class PostFilter {
         !equals(isApproved, f.isApproved) ||
         !equals(userLogin, f.userLogin) ||
         !equals(ip, f.ip) ||
-        !equals(userName, f.userName) ||
+        !equals(byUser, f.byUser) ||
         !equals(orderBy, f.orderBy)
         ) {
       return false;
@@ -169,6 +173,7 @@ public class PostFilter {
 
     return true;
   }
+
   @Override
   public String toString() {
     return new StringBuilder("PostFilter{")
@@ -183,10 +188,28 @@ public class PostFilter {
         .append(", userLogin='").append(userLogin).append("'")
         .append(", topicPath='").append(topicPath ).append("'")
         .append(", ip='").append(ip).append("'")
-        .append(", userName='").append(userName).append("'")
+        .append(", userName='").append(byUser).append("'")
         .append(", orderBy='").append(orderBy).append("'")
         .append('}').toString();
   }
-
   
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    
+    result = 31 * result + ((isAdmin == true) ? 1 : 0);
+    result = 31 * result + ((isSplit == true) ? 1 : 0);
+    result = 31 * result + (categoryId != null ? categoryId.hashCode() : 0);
+    result = 31 * result + (forumId != null ? forumId.hashCode() : 0);
+    result = 31 * result + (topicId != null ? topicId.hashCode() : 0);
+    result = 31 * result + (topicPath != null ? topicPath.hashCode() : 0);
+    result = 31 * result + (isApproved != null ? isApproved.hashCode() : 0);
+    result = 31 * result + (isWaiting != null ? isWaiting.hashCode() : 0);
+    result = 31 * result + (isHidden != null ? isHidden.hashCode() : 0);
+    result = 31 * result + (userLogin != null ? userLogin.hashCode() : 0);
+    result = 31 * result + (byUser != null ? byUser.hashCode() : 0);
+    result = 31 * result + (orderBy != null ? orderBy.hashCode() : 0);
+    result = 31 * result + (ip != null ? ip.hashCode() : 0);
+    return result;
+  }
 }

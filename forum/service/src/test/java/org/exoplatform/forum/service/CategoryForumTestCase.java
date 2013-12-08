@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
 import org.exoplatform.forum.service.filter.model.CategoryFilter;
+import org.exoplatform.forum.service.filter.model.ForumFilter;
 
 public class CategoryForumTestCase extends BaseForumServiceTestCase {
 
@@ -106,7 +107,8 @@ public class CategoryForumTestCase extends BaseForumServiceTestCase {
     for (int i = 0; i < 5; i++) {
       forumService_.saveForum(cat.getId(), createdForum(), true);
     }
-    forums.addAll(forumService_.getForums(catId, ""));
+    ForumFilter filter = new ForumFilter(catId, true);
+    forums.addAll(forumService_.getForums(filter));
 
     // check size of list forum
     assertEquals("List forums size not equals 6", forums.size(), 6);
@@ -174,7 +176,7 @@ public class CategoryForumTestCase extends BaseForumServiceTestCase {
     }
 
     // check remove
-    forums = forumService_.getForumSummaries(catId, "");
+    forums = forumService_.getForums(new ForumFilter(catId, true));
     assertEquals("List forums can not equals 0", forums.size(), 0);
   }
   

@@ -159,22 +159,17 @@ public class ForumFilter {
     return true;
   }
 
-  private int hashCode(int current, Object o) {
-    if (o != null) {
-      return 31 * current + o.toString().hashCode();
-    }
-    return current;
-  }
-
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = hashCode(result, categoryId);
-    result = hashCode(result, forumId);
-    result = hashCode(result, strQuery);
-    result = hashCode(result, isPublic);
-    result = hashCode(result, userId);
-    result = hashCode(result, String.valueOf(summary));
+
+    result = 31 * result + (isPublic == true ? 1 : 0);
+    result = 31 * result + (summary == true ? 1 : 0);
+    result = 31 * result + (categoryId != null ? categoryId.hashCode() : 0);
+    result = 31 * result + (forumId != null ? forumId.hashCode() : 0);
+    result = 31 * result + (strQuery != null ? strQuery.hashCode() : 0);
+    result = 31 * result + (userId != null ? userId.hashCode() : 0);
+
     result = 31 * result + offset;
     result = 31 * result + limit;
     return result;

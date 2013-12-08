@@ -1477,7 +1477,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
   static public class ViewThreadByUserActionListener extends BaseEventListener<UITopicDetail> {
     public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String userId) throws Exception {
       UIViewTopicCreatedByUser topicCreatedByUser = topicDetail.openPopup(UIViewTopicCreatedByUser.class, 760, 450);
-      topicCreatedByUser.setUserId(userId);
+      topicCreatedByUser.setByUser(userId);
     }
   }
   private String getTitle(String title, WebuiRequestContext context) {

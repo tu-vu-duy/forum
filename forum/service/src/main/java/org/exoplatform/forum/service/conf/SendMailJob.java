@@ -21,9 +21,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.exoplatform.forum.common.CommonUtils;
-import org.exoplatform.job.MultiTenancyJob;
 import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.forum.service.SendMessageInfo;
+import org.exoplatform.job.MultiTenancyJob;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.mail.MailService;

@@ -44,7 +44,7 @@ public class UIViewPostedByUser extends UIForm implements UIPopupComponent {
   }
 
   public void setUserProfile(String userId) {
-    this.getChild(UIPageListPostByUser.class).setUserName(userId);
+    this.getChild(UIPageListPostByUser.class).setByUser(userId);
   }
 
   static public class CloseActionListener extends EventListener<UIViewPostedByUser> {

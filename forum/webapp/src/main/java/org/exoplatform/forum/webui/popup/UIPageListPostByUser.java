@@ -59,7 +59,7 @@ import org.exoplatform.webui.event.EventListener;
 public class UIPageListPostByUser extends UIContainer {
   private ForumService forumService;
 
-  private String       userName           = ForumUtils.EMPTY_STR;
+  private String       byUser           = ForumUtils.EMPTY_STR;
 
   private String       strOrderBy         = Utils.EXO_CREATED_DATE + Utils.DESC;
 
@@ -69,7 +69,7 @@ public class UIPageListPostByUser extends UIContainer {
 
   public UIPageListPostByUser() throws Exception {
     forumService = CommonsUtils.getService(ForumService.class);
-    this.userName = null;
+    byUser = null;
     addChild(UIForumPageIterator.class, null, "PageListPostByUser");
   }
 
@@ -83,8 +83,8 @@ public class UIPageListPostByUser extends UIContainer {
     return forumPortlet.getUserProfile();
   }
 
-  public void setUserName(String userId) {
-    this.userName = userId;
+  public void setByUser(String byUser) {
+    this.byUser = byUser;
     strOrderBy = Utils.EXO_CREATED_DATE.concat(Utils.DESC);
   }
 
@@ -94,7 +94,7 @@ public class UIPageListPostByUser extends UIContainer {
     try {
       UserProfile userProfile = getUserProfile();
       boolean isAdmin = (userProfile.getUserRole() < 2) ? true : false;
-      PostFilter filter = new PostFilter(userName, userProfile.getUserId(), isAdmin, strOrderBy);
+      PostFilter filter = new PostFilter(byUser, userProfile.getUserId(), isAdmin, strOrderBy);
 
       PostListAccess postListAccess = (PostListAccess) forumService.getPostsByUser(filter);
 
@@ -130,17 +130,14 @@ public class UIPageListPostByUser extends UIContainer {
       UIPageListPostByUser uiForm = event.getSource();
       String postId = event.getRequestContext().getRequestParameter(OBJECTID);
       Post post = uiForm.getPostById(postId);
+      UIForumPortlet forumPortlet = uiForm.getAncestorOfType(UIForumPortlet.class);
       if (post == null) {
-        event.getRequestContext().getUIApplication().addMessage(new ApplicationMessage("UIShowBookMarkForm.msg.link-not-found",
-                                                                                       null,
-                                                                                       ApplicationMessage.WARNING));
+        forumPortlet.addMessage(new ApplicationMessage("UIShowBookMarkForm.msg.link-not-found",
+                                                       null, ApplicationMessage.WARNING));
         return;
       }
       boolean isRead = true;
-      String[] id = post.getPath().split(ForumUtils.SLASH);
-      int l = id.length;
-      String categoryId = id[l - 4], forumId = id[l - 3], topicId = id[l - 2];
-      UIForumPortlet forumPortlet = uiForm.getAncestorOfType(UIForumPortlet.class);
+      String categoryId = post.getCategoryId(), forumId = post.getForumId(), topicId = post.getTopicId();
       Forum forum = uiForm.forumService.getForum(categoryId, forumId);
       Topic topic = uiForm.forumService.getTopic(categoryId, forumId, topicId, ForumUtils.EMPTY_STR);
       if (forumPortlet.getUserProfile().getUserRole() > 0) {
@@ -156,9 +153,8 @@ public class UIPageListPostByUser extends UIContainer {
         viewPost.setActionForm(new String[] { "Close", "OpenTopicLink" });
         event.getRequestContext().addUIComponentToUpdateByAjax(popupAction);
       } else {
-        event.getRequestContext().getUIApplication().addMessage(new ApplicationMessage("UIForumPortlet.msg.do-not-permission",
-                                                                                       null,
-                                                                                       ApplicationMessage.WARNING));
+        forumPortlet.addMessage(new ApplicationMessage("UIForumPortlet.msg.do-not-permission",
+                                                        null, ApplicationMessage.WARNING));
         return;
       }
     }

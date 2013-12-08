@@ -26,7 +26,6 @@ import javax.jcr.Session;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.jcr.SessionManager;
-import org.exoplatform.forum.service.impl.JCRDataStorage;
 
 public class TopicTestCase extends BaseForumServiceTestCase {
 

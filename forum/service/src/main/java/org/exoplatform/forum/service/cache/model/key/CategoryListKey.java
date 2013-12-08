@@ -3,7 +3,7 @@ package org.exoplatform.forum.service.cache.model.key;
 import org.exoplatform.forum.common.cache.model.ScopeCacheKey;
 
 public class CategoryListKey extends ScopeCacheKey {
-
+  private static final long serialVersionUID = 1L;
   private final String foo;
 
   public CategoryListKey(String foo) {

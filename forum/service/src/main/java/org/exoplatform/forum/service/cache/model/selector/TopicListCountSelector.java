@@ -41,7 +41,8 @@ public class TopicListCountSelector extends ScopeCacheSelector<ScopeCacheKey, Ob
     }
 
     if (key instanceof TopicListCountKey) {
-      return ((TopicListCountKey)key).getForumId().equals(this.forumId);
+      String id = ((TopicListCountKey) key).getForumId();
+      return id == null || id.equals(this.forumId);
     }
     
     return false;
