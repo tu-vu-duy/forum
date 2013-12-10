@@ -26,6 +26,7 @@ import javax.jcr.Session;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.jcr.SessionManager;
+import org.exoplatform.forum.service.impl.JCRDataStorage;
 
 public class TopicTestCase extends BaseForumServiceTestCase {
 
@@ -75,14 +76,14 @@ public class TopicTestCase extends BaseForumServiceTestCase {
     topica.setIsSticky(true);
     topica.setTopicName("topic 8");
     forumService_.saveTopic(cat.getId(), forum.getId(), topica, false, false, new MessageBuilder());
-    assertEquals("This topic name not is 'topic 8'", "topic 8", forumService_.getTopic(cat.getId(), forum.getId(), topic.getId(), "").getTopicName());
+    assertEquals("This topic name not is 'topic 8'", "topic 8", forumService_.getTopic(cat.getId(), forum.getId(), topica.getId(), "").getTopicName());
 
     // modifyTopic
     topica.setIsLock(true);
     list.clear();
     list.add(topica);
     forumService_.modifyTopic(list, 2);
-    topica = forumService_.getTopic(cat.getId(), forum.getId(), topic.getId(), "");
+    topica = forumService_.getTopic(cat.getId(), forum.getId(), topica.getId(), "");
     assertEquals("This topic is open.", topica.getIsLock(), true);
     // get PageList Topic
     JCRPageList pagelist = forumService_.getPageTopic(cat.getId(), forum.getId(), "", "");
@@ -122,7 +123,7 @@ public class TopicTestCase extends BaseForumServiceTestCase {
     updateLastPostDateOfTopic(listTopic, 2);
     // get topics by last post days. Example with 1 day.
     listTopic = forumService_.getAllTopicsOld(1, forum.getPath());
-    assertEquals("Failed to run auto prune. List topic has size not equals 5.", listTopic.size(), 5);
+    assertEquals("Failed to run auto prune. List topic has size not equals 5.", 5, listTopic.size());
     
     // run autoPrune
     PruneSetting pSetting = forumService_.getPruneSetting(forum.getPath());

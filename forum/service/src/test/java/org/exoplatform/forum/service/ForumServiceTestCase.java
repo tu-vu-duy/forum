@@ -58,9 +58,42 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
   }
 
   public void testForumStatic() throws Exception {
-    ForumStatistic forumStatistic = new ForumStatistic();
+    //
+    resetAllUserProfile();
+    
+    ForumStatistic forumStatistic = forumService_.getForumStatistic();
+    assertNotNull(forumStatistic);
+    assertEquals(8, forumStatistic.getMembersCount());
+    
+    forumStatistic.setPostCount(20);
+    forumStatistic.setTopicCount(10);
     forumService_.saveForumStatistic(forumStatistic);
-    assertNotNull(forumService_.getForumStatistic());
+
+    forumStatistic = forumService_.getForumStatistic();
+    assertEquals(10, forumStatistic.getTopicCount());
+    assertEquals(20, forumStatistic.getPostCount());
+    // reset
+    forumService_.saveForumStatistic(new ForumStatistic());
+    // make one topic
+    initDefaultData();
+    // create 10 topics and 10 posts for each topic. On each topic contain one post is first post.
+    for (int i = 0; i < 10; i++) {
+      forumService_.saveTopic(categoryId, forumId, createdTopic(USER_DEMO), true, false, new MessageBuilder());
+      forumService_.savePost(categoryId, forumId, topicId, createdPost(), true, new MessageBuilder());
+    }
+    forumStatistic = forumService_.getForumStatistic();
+    // we have 11 topics and 21 posts.
+    assertEquals(11, forumStatistic.getTopicCount());
+    assertEquals(21, forumStatistic.getPostCount());
+    
+    UserProfile profile = forumService_.getUserInfo(USER_ROOT);
+    
+    assertEquals(1, profile.getTotalTopic());
+    assertEquals(11, profile.getTotalPost());
+    
+    profile = forumService_.getUserInfo(USER_DEMO);
+    assertEquals(10, profile.getTotalTopic());
+    assertEquals(10, profile.getTotalPost());
   }
 
   public void testForumAdministration() throws Exception {
@@ -236,32 +269,57 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     assertEquals(bookMarks.size(), 2);
   }
 
+  private List<Tag> getTagsByTopic(Topic topic, String userName) throws Exception {
+    List<String> listTagId = new ArrayList<String>();
+    String[] tagIds = topic.getTagId();
+    String[] temp;
+    for (int i = 0; i < tagIds.length; i++) {
+      temp = tagIds[i].split(":");
+      if (temp[0].equals(userName)) {
+        listTagId.add(temp[1]);
+      }
+    }
+
+    return forumService_.getMyTagInTopic(listTagId.toArray(new String[listTagId.size()]));
+  }
+
   public void testTag() throws Exception {
     // set Data
     initDefaultData();
-    Tag tag = createTag("Tag1");
-    Tag tag2 = createTag("Tag2");
-    Tag tag3 = createTag("Tag3");
-
-    // add tag
     List<Tag> tags = new ArrayList<Tag>();
-    tags.add(tag);
-    tags.add(tag2);
-    tags.add(tag3);
+    int size = 5;
+    for (int i = 0; i < size; i++) {
+      Tag tag = createTag("tag" + i, USER_ROOT);
+      tags.add(tag);
+    }
+
     Topic topic = forumService_.getTopic(categoryId, forumId, topicId, "");
     forumService_.addTag(tags, USER_ROOT, topic.getPath());
-    // get Tags name in topic by root.
-    // List<String> list =
-    // forumService_.getTagNameInTopic(USER_ROOT+","+topicId);
+    
+    // get tags in topic by user root
+    topic = forumService_.getTopic(categoryId, forumId, topicId, "");
+    assertEquals(size, topic.getTagId().length);
+
+    List<Tag> tags_ = getTagsByTopic(topic, USER_ROOT);
+    assertEquals(size, tags_.size());
+    
+    //test get other tags on topic
+    for (int i = 10; i < 16; i++) {
+      Tag tag = createTag("tag" + i, USER_ROOT);
+      tags.add(tag);
+    }
+    forumService_.addTag(tags, USER_DEMO, topic.getPath());
+    //
+    List<String> list = forumService_.getTagNameInTopic(USER_ROOT+","+topicId);
+    
+    assertEquals(5, list.size());
 
     // Test get tag
-    String id = Utils.TAG + tag.getName();
-    tag = forumService_.getTag(id);
-    assertNotNull(tag);
+    String id = Utils.TAG + tags.get(0).getName();
+    assertNotNull(forumService_.getTag(id));
 
     // Get all tag
-    // assertEquals("All tags size is not 3", 3,
-    // forumService_.getAllTags().size());
+     assertEquals(11, forumService_.getAllTags().size());
 
   }
 
@@ -374,6 +432,19 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     assertEquals(USER_ROOT, ArrayToString(forumService_.getCategory(category.getId()).getUserPrivate()));
     assertEquals(USER_ROOT, ArrayToString(forumService_.getForum(category.getId(), forum.getId()).getModerators()));
     assertEquals(USER_ROOT, ArrayToString(forumService_.getTopic(category.getId(), forum.getId(), topic.getId(), null).getCanView()));
+    
+  //update forum moderator
+    profile = createdUserProfile("mary");
+    profile.setUserRole(UserProfile.USER);
+    profile.setUserTitle("User");
+    profile.setModerateForums(new String[] { "" });
+    profile.setModerateCategory(new String[] { "" });
+    forumService_.saveUserProfile(profile, false, false);
+    
+    groupUser = new String[] {"mary"};
+    forum.setModerators(groupUser);
+    forumService_.saveForum(category.getId(), forum, false);
+    assertEquals(UserProfile.MODERATOR, forumService_.getUserInfo("mary").getUserRole());
   }
 
   public void testImportXML() throws Exception {

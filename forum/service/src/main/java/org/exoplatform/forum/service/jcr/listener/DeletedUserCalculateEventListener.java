@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see<http://www.gnu.org/licenses/>.
  */
-package org.exoplatform.forum.service;
+package org.exoplatform.forum.service.jcr.listener;
 
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
@@ -22,19 +22,18 @@ import javax.jcr.observation.EventListener;
 
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
-public class CalculateModeratorEventListener implements EventListener {
-  private String path_;
+public class DeletedUserCalculateEventListener implements EventListener {
+  private Log    LOG = ExoLogger.getLogger(DeletedUserCalculateEventListener.class);
 
   private String workspace_;
 
   private String repository_;
 
-  private Log    log = ExoLogger.getLogger(CalculateModeratorEventListener.class);
-
-  public CalculateModeratorEventListener() throws Exception {
+  public DeletedUserCalculateEventListener() throws Exception {
   }
 
   public String getSrcWorkspace() {
@@ -45,43 +44,20 @@ public class CalculateModeratorEventListener implements EventListener {
     return repository_;
   }
 
-  public String getPath() {
-    return path_;
-  }
-
-  public void setPath(String path) {
-    path_ = path;
-  }
-
   public void onEvent(EventIterator evIter) {
-
     try {
       ExoContainer container = ExoContainerContext.getCurrentContainer();
       ForumService forumService = (ForumService) container.getComponentInstanceOfType(ForumService.class);
       while (evIter.hasNext()) {
         Event ev = evIter.nextEvent();
-        if (ev.getType() == Event.PROPERTY_ADDED) {
-          String evPath = ev.getPath();
-          if (evPath.substring(evPath.lastIndexOf("/") + 1).equals("exo:moderators")) {
-            forumService.calculateModerator(path_, true);
-          }
-          // exo:moderators
-        } else if (ev.getType() == Event.PROPERTY_CHANGED) {
-          String evPath = ev.getPath();
-          if (evPath.substring(evPath.lastIndexOf("/") + 1).equals("exo:moderators")) {
-            forumService.calculateModerator(path_, false);
-          }
-          // exo:moderators, tempModerators
-        } else if (ev.getType() == Event.PROPERTY_REMOVED) {
-          String evPath = ev.getPath();
-          if (evPath.substring(evPath.lastIndexOf("/") + 1).equals("exo:moderators")) {
-            forumService.calculateModerator(path_, false);
-          }
-          // exo:moderators, tempModerators
+        if (ev.getType() == Event.NODE_ADDED || ev.getType() == Event.NODE_REMOVED) {
+          String userName = ev.getPath().substring(ev.getPath().lastIndexOf("/") + 1);
+          forumService.calculateDeletedUser(userName);
+          break;
         }
       }
     } catch (Exception e) {
-      log.warn("Failed to calculate moderators");
+      LOG.error("Add event for calculateDeletedUser is fall", e);
     }
   }
 }

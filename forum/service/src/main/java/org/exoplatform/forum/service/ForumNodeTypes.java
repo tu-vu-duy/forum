@@ -225,6 +225,8 @@ public interface ForumNodeTypes {
 
   public static final String EXO_FORUM                      = "exo:forum";
 
+  public final static String EXO_FORUM_USER_PROFILE         = "exo:forumUserProfile";
+  
   public static final String EXO_FORUM_CATEGORY             = "exo:forumCategory";
 
   public static final String EXO_IS_AUTO_WATCH_MY_TOPICS    = "exo:isAutoWatchMyTopics";
@@ -349,14 +351,22 @@ public interface ForumNodeTypes {
 
   public static final String JCR_SCORE                      = "jcr:score";
 
+  public static final String JCR_PATH                       = "jcr:path";
+
   public static final String REP_EXCERPT                    = "rep:excerpt()";
   
   public static final String REP_EXCERPT_PATTERN            = "rep:excerpt(%s)";
 
   public static final String NT_RESOURCE                    = "nt:resource";
-
+  
+  public static final String MIXIN_REFERENCEABLE_TYPE       = "mix:referenceable";
+  
   public static final String ASCENDING                      = " ascending";
 
   public static final String DESCENDING                     = " descending";
+
+  public static final String ASC                            = " ASC";
+
+  public static final String DESC                           = " DESC";
 
 }

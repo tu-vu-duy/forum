@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see<http://www.gnu.org/licenses/>.
  */
-package org.exoplatform.forum.service.conf;
+package org.exoplatform.forum.service.jcr.listener;
 
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
@@ -26,16 +26,16 @@ import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
-public class CategoryEventListener implements EventListener {
+public class CalculateModeratorEventListener implements EventListener {
+  private String path_;
+
   private String workspace_;
 
   private String repository_;
 
-  private Log    log = ExoLogger.getLogger(CategoryEventListener.class);
+  private Log    log = ExoLogger.getLogger(CalculateModeratorEventListener.class);
 
-  public CategoryEventListener(String ws, String repo) throws Exception {
-    workspace_ = ws;
-    repository_ = repo;
+  public CalculateModeratorEventListener() throws Exception {
   }
 
   public String getSrcWorkspace() {
@@ -46,22 +46,39 @@ public class CategoryEventListener implements EventListener {
     return repository_;
   }
 
+  public String getPath() {
+    return path_;
+  }
+
+  public void setPath(String path) {
+    path_ = path;
+  }
+
   public void onEvent(EventIterator evIter) {
+
     try {
       ExoContainer container = ExoContainerContext.getCurrentContainer();
       ForumService forumService = (ForumService) container.getComponentInstanceOfType(ForumService.class);
       while (evIter.hasNext()) {
         Event ev = evIter.nextEvent();
         if (ev.getType() == Event.NODE_ADDED) {
-          forumService.registerListenerForCategory(ev.getPath());
+          String evPath = ev.getPath();
+          forumService.calculateModerator(evPath, true);
+          // exo:moderators
+        } else if (ev.getType() == Event.PROPERTY_CHANGED) {
+          String evPath = ev.getPath();
+          if (evPath.substring(evPath.lastIndexOf("/") + 1).equals("exo:moderators")) {
+            forumService.calculateModerator(evPath.substring(0, evPath.lastIndexOf("/") + 1), false);
+          }
+          // exo:moderators, tempModerators
+        } else if (ev.getType() == Event.NODE_REMOVED) {
+          String evPath = ev.getPath();
+            forumService.calculateModerator(evPath, false);
+          // exo:moderators, tempModerators
         }
       }
     } catch (Exception e) {
-      log.error("Can not init a Category event listener: ", e);
+      log.warn("Failed to calculate moderators");
     }
-  }
-
-  public void removeEvent(EventIterator evIter) {
-    evIter.remove();
   }
 }

@@ -24,12 +24,15 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -97,6 +100,8 @@ public class CommonUtils {
   public static final String         FROM_KEY     = "gatein.email.smtp.from";
 
   private static final String        SPECIAL_CHARACTOR_FORSERACH_REGEX = "[^\\pL\\pM\\p{Nd}\\p{Nl}\\p{Pc}[\\p{InEnclosedAlphanumerics}&&\\p{So}]\\?\\*%0-9]";
+  
+  private static final String        SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX = "[^\\pL\\pM\\p{Nd}\\p{Nl}\\p{Pc}[\\p{InEnclosedAlphanumerics}&&\\p{So}]0-9]";
   
   private static final String        SPECIAL_CHARACTOR_REGEX = "[^\\pL\\pM\\p{Nd}\\p{Nl}\\p{Pc}[\\p{InEnclosedAlphanumerics}&&\\p{So}]\\ %0-9]";
 
@@ -323,6 +328,49 @@ public class CommonUtils {
     String result = input.replaceAll(SPECIAL_CHARACTOR_FORSERACH_REGEX, " ");
     result = result.replaceAll("\\s+", " ");
     return result.trim();
+  }
+  
+  public static String removeSpecialCharacterForUnifiedSearch(String input) {
+    if (isEmpty(input)) {
+      return input;
+    }
+    StringBuilder builder = new StringBuilder();
+    String[] tab = input.split(" ");
+    for (String s : tab){
+      if (isEmpty(s)) continue;
+      String searchTerm = s.split("~")[0];
+      searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
+      builder.append(searchTerm).append(" ");
+    }
+    return builder.toString().trim();
+  }
+  
+  public static String processUnifiedSearchSearchCondition(String input) {
+    if (isEmpty(input) || input.indexOf("~") < 0 || input.indexOf("\\~") > 0) {
+      return input;
+    }
+    StringBuilder builder = new StringBuilder();
+    String[] tab = input.split(" ");
+    for (String s : tab){
+      if (isEmpty(s)) continue;
+      String searchTerm = s.split("~")[0];
+      String similarity = s.split("~").length > 1 ? s.split("~")[1] : "0.5";
+      searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
+      builder.append(searchTerm).append("~").append(similarity).append(" ");
+    }
+    return builder.toString().trim();
+  }
+  
+  public static String processLikeCondition(String input) {
+    StringBuilder builder = new StringBuilder();
+    String[] tab = input.split(" ");
+    for (String s : tab){
+      if (isEmpty(s)) continue;
+      String searchTerm = s.split("~")[0];
+      searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
+      builder.append(PERCENT_STR).append(searchTerm).append(PERCENT_STR).append(" ");
+    }
+    return builder.toString().trim();
   }
 
   /**
@@ -612,5 +660,5 @@ public class CommonUtils {
     SessionProviderService sessionProviderService = getComponent(SessionProviderService.class);
     return sessionProviderService.getSystemSessionProvider(null);
   }
-
+  
 }

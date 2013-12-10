@@ -22,12 +22,15 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.NodeIterator;
 
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.forum.service.filter.model.CategoryFilter;
+import org.exoplatform.forum.service.filter.model.ForumFilter;
 import org.exoplatform.forum.service.impl.model.PostFilter;
+import org.exoplatform.forum.service.impl.model.TopicFilter;
 import org.exoplatform.services.organization.User;
 
 /**
@@ -167,11 +170,37 @@ public interface ForumService extends ForumServiceLegacy {
    * @return Forums.
    * @throws Exception the exception
    * @LevelAPI Platform
+   *
+   * @deprecated use {@link #getForums(ForumFilter)}
    */
   List<Forum> getForums(String categoryId, String strQuery) throws Exception;
 
   /**
-   * Gets a list of category filters by a forum name and username.
+   * Gets summaries of Forums.
+   * 
+   * @param categoryId Id of the category.
+   * @param strQuery The statement to query forums.
+   * @return The list of forums.
+   * @throws Exception the exception
+   * @LevelAPI Platform
+   * 
+   * @deprecated use {@link #getForums(ForumFilter)}
+   */
+  List<Forum> getForumSummaries(String categoryId, String strQuery) throws Exception;
+
+  /**
+   * Gets a list forums by filter.
+   * 
+   * @param userName Name of the user.
+   * @param filter The condition to get forums.
+   * @return The forums.
+   * @throws Exception the exception
+   * @LevelAPI Platform
+   */
+  List<Forum> getForums(ForumFilter filter);
+
+  /**
+   * Gets a list of category filters by a forum name and userName.
    * 
    * @param filterKey The key to search for a forum.
    * @param userName Name of the user.
@@ -276,8 +305,21 @@ public interface ForumService extends ForumServiceLegacy {
    * @return Topics.
    * @throws Exception the exception
    * @LevelAPI Platform
+   * 
+   * @deprecated used {@link #getPageTopicByUser(TopicFilter)}
    */
   JCRPageList getPageTopicByUser(String userName, boolean isMod, String strOrderBy) throws Exception;
+  
+  /**
+   * Gets a list access of topics by a given userName returned as ListAccess.
+   * 
+   * @param userName Name of the user.
+   * @param filter The condition to get posts.
+   * @return The topics.
+   * @throws Exception the exception
+   * @LevelAPI Platform
+   */
+  public ListAccess<Topic> getPageTopicByUser(TopicFilter filter) throws Exception;
 
   /**
    * Gets a list of topics which were created before a given date.
@@ -287,8 +329,21 @@ public interface ForumService extends ForumServiceLegacy {
    * @return Topics.
    * @throws Exception the exception
    * @LevelAPI Platform
+   * 
+   * @deprecated used {@link #getTopicsByDate(long, String)}
    */
   JCRPageList getPageTopicOld(long date, String forumPatch) throws Exception;
+  
+  /**
+   * Gets a list access of topics which were created before a given date.
+   * 
+   * @param date The given date.
+   * @param forumPatch Path to the forum which contains topics.
+   * @return Topics.
+   * @throws Exception the exception
+   * @LevelAPI Platform
+   */
+  ListAccess<Topic> getTopicsByDate(long date, String forumPath) throws Exception;
 
   /**
    * Gets a list of topics which were created before a given date.
@@ -320,6 +375,7 @@ public interface ForumService extends ForumServiceLegacy {
    * @return A lis of topics.
    * @throws Exception the exception
    * @LevelAPI Platform
+   * 
    */
   List<Topic> getTopics(String categoryId, String forumId) throws Exception;
 
@@ -335,7 +391,16 @@ public interface ForumService extends ForumServiceLegacy {
    * @LevelAPI Platform
    */
   Topic getTopic(String categoryId, String forumId, String topicId, String userRead) throws Exception;
-
+  
+  /**
+   * Gets posts which are returned as ListAccess.
+   * @param filter The condition to get posts.
+   * @return The posts.
+   * @throws Exception
+   * @since 2.2.11
+   */
+  ListAccess<Topic> getTopics(TopicFilter filter) throws Exception;
+  
   /**
    * Counts the number of topic viewers.
    * 
@@ -1424,24 +1489,6 @@ public interface ForumService extends ForumServiceLegacy {
   JCRPageList getListPostsByIP(String ip, String strOrderBy) throws Exception;
 
   /**
-   * Registers a listener for a category.
-   * 
-   * @param categoryId Id of the category.
-   * @throws Exception the exception
-   * @LevelAPI Platform
-   */
-  void registerListenerForCategory(String categoryId) throws Exception;
-
-  /**
-   * Removes a listener from a category.
-   * 
-   * @param path Path to the category.
-   * @throws Exception the exception
-   * @LevelAPI Platform
-   */
-  void unRegisterListenerForCategory(String path) throws Exception;
-
-  /**
    * Gets an avatar by a given username.
    * 
    * @param userName Id of the user.
@@ -1559,17 +1606,6 @@ public interface ForumService extends ForumServiceLegacy {
    * @LevelAPI Platform
    */
   LazyPageList<Topic> getTopicList(String categoryId, String forumId, String string, String strOrderBy, int pageSize) throws Exception;
-
-  /**
-   * Gets summaries of Forums.
-   * 
-   * @param categoryId Id of the category.
-   * @param strOrderBy The returned forums are shown by the ascending or descending order.
-   * @return The list of forums.
-   * @throws Exception the exception
-   * @LevelAPI Platform
-   */
-  List<Forum> getForumSummaries(String categoryId, String strQuery) throws Exception;
 
   /**
    * Updates the user profile information.
@@ -1745,5 +1781,5 @@ public interface ForumService extends ForumServiceLegacy {
    * @since 4.0
    */
   public String getCommentIdForOwnerPath(String ownerPath);
-  
+
 }
