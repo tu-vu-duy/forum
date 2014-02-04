@@ -18,15 +18,17 @@ package org.exoplatform.forum.service;
 
 import java.io.Serializable;
 
-import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 public class CacheUserProfile {
+  private static final Log LOG = ExoLogger.getLogger(CacheUserProfile.class);
 
-  private static ExoCache<Serializable, UserProfile> getCache() {
-    CacheService cacheService = (CacheService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(CacheService.class);
-    return cacheService.getCacheInstance("forum.UserProfiles");
+  private static ExoCache<Serializable, UserProfile> getCache() throws Exception {
+    return CommonsUtils.getService(CacheService.class).getCacheInstance("forum.UserProfiles");
   }
 
   /**
@@ -35,9 +37,13 @@ public class CacheUserProfile {
    * @param userProfile
    */
   public static void storeInCache(String userName, UserProfile userProfile) {
-    ExoCache<Serializable, UserProfile> cache = getCache();
-    Serializable cacheKey = getCacheKey(userName);
-    cache.put(cacheKey, userProfile);
+    try {
+      ExoCache<Serializable, UserProfile> cache = getCache();
+      Serializable cacheKey = getCacheKey(userName);
+      cache.put(cacheKey, userProfile);
+    } catch (Exception e) {
+      LOG.warn("Failed to storage UserProfile to eXoCache", e);
+    }
   }
 
   /**
@@ -45,17 +51,27 @@ public class CacheUserProfile {
    * @param userName
    */
   public static void removeInCache(String userName) {
-    ExoCache<Serializable, UserProfile> cache = getCache();
-    Serializable cacheKey = getCacheKey(userName);
-    cache.remove(cacheKey);
+    ExoCache<Serializable, UserProfile> cache;
+    try {
+      cache = getCache();
+      Serializable cacheKey = getCacheKey(userName);
+      cache.remove(cacheKey);
+    } catch (Exception e) {
+      LOG.warn("Failed to remove UserProfile to eXoCache: " + userName);
+    }
   }
 
   /**
    * Remove all UserProfile storage in cache
    */
-  public static void clearCache(){
-    ExoCache<Serializable, UserProfile> cache = getCache();
-    cache.clearCache();
+  public static void clearCache() {
+    ExoCache<Serializable, UserProfile> cache;
+    try {
+      cache = getCache();
+      cache.clearCache();
+    } catch (Exception e) {
+      LOG.warn("Failed to clear all UserProfile cached.");
+    }
   }
 
   /**
@@ -66,9 +82,14 @@ public class CacheUserProfile {
   public static UserProfile getFromCache(String userName) {
     if (Utils.isEmpty(userName) || UserProfile.USER_GUEST.equals(userName))
       return null;
-    ExoCache<Serializable, UserProfile> cache = getCache();
-    Serializable cacheKey = getCacheKey(userName);
-    return cache.get(cacheKey);
+    try {
+      ExoCache<Serializable, UserProfile> cache = getCache();
+      Serializable cacheKey = getCacheKey(userName);
+      return cache.get(cacheKey);
+    } catch (Exception e) {
+      LOG.warn("Failed to get UserProfile to eXoCache: " + userName);
+      return null;
+    }
   }
 
   private static Serializable getCacheKey(String userName) {

@@ -1829,4 +1829,9 @@ public class CachedDataStorage implements DataStorage, Startable {
     ).build();
   }
 
+  @Override
+  public void saveUserPrivateOfCategory(String categoryId, String priInfo) {
+    storage.saveUserPrivateOfCategory(categoryId, priInfo);
+  }
+
 }
