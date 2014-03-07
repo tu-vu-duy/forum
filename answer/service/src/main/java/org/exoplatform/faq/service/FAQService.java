@@ -1101,10 +1101,21 @@ public interface FAQService extends FAQServiceLegacy {
   public Comment[] getComments(String questionId) throws Exception;
   
   /**
+   * Updates information of answers related to a disabled user.
+   * 
+   * @param userName Name of the disabled user.
+   * @throws Exception
+   * @LevelAPI Platform
+   * @since 4.1.x
+   */
+  public void processDisabledUser(String userName) throws Exception;
+
+  /**
    * Updates information of answers related to a deleted user.
    * 
    * @param userName Name of the deleted user.
    * @throws Exception
+   * @LevelAPI Platform
    */
   public void calculateDeletedUser(String userName) throws Exception;
   

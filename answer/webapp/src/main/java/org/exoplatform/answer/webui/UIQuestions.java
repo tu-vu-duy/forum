@@ -66,6 +66,7 @@ import org.exoplatform.forum.service.Topic;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
@@ -880,7 +881,7 @@ public class UIQuestions extends UIContainer {
       UIQuestions question = event.getSource();
       String userId = event.getRequestContext().getRequestParameter(OBJECTID);
       userId = CommonUtils.decodeSpecialCharToHTMLnumber(userId);
-      User user = UserHelper.getUserByUserId(userId);
+      User user = UserHelper.getUserHandler().findUserByName(userId, UserStatus.BOTH);
       if (user != null) {
         UIAnswersPortlet portlet = question.getAncestorOfType(UIAnswersPortlet.class);
         UIPopupAction popupAction = portlet.getChild(UIPopupAction.class);

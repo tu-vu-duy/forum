@@ -16,7 +16,7 @@
  */
 package org.exoplatform.faq.service.conf;
 
-import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.faq.service.FAQService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -27,12 +27,6 @@ public class FAQUserListener extends UserEventListener {
 
   private static Log log = ExoLogger.getLogger(FAQUserListener.class);
 
-  FAQService         faqService;
-
-  public FAQUserListener() throws Exception {
-    faqService = (FAQService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(FAQService.class);
-  }
-
   @Override
   public void postSave(User user, boolean isNew) throws Exception {
   }
@@ -41,9 +35,21 @@ public class FAQUserListener extends UserEventListener {
   public void postDelete(User user) throws Exception {
     try {
       log.info("\n\n Run listener delete user, user kill: " + user.getUserName());
-      faqService.calculateDeletedUser(user.getUserName());
+      CommonsUtils.getService(FAQService.class).calculateDeletedUser(user.getUserName());
     } catch (Exception e) {
       log.warn("failed to remove member : ", e);
     }
   }
+
+  @Override
+  public void postSetEnabled(User user) throws Exception {
+    if (!user.isEnabled()) {
+      postSetDisabled(user);
+    }
+  }
+
+  private void postSetDisabled(User user) throws Exception {
+    CommonsUtils.getService(FAQService.class).processDisabledUser(user.getUserName());
+  }
+
 }

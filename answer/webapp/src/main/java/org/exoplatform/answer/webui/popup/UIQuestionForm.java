@@ -241,10 +241,10 @@ public class UIQuestionForm extends BaseUIFAQForm implements UIPopupComponent {
     inputEmailAddress = new UIFormStringInput(EMAIL_ADDRESS, EMAIL_ADDRESS, email_);
     inputQuestionContent = new UIFormStringInput(QUESTION_CONTENT, QUESTION_CONTENT, null);
     selectLanguage = new UIFormSelectBox(ALL_LANGUAGES, ALL_LANGUAGES, listSystemLanguages);
-    if (!FAQUtils.isFieldEmpty(getEditLanguage())) {
+    if (!CommonUtils.isEmpty(getEditLanguage())) {
       selectLanguage.setValue(getEditLanguage());
       selectLanguage.setSelectedValues(new String[] { getEditLanguage() });
-    } else if (!FAQUtils.isFieldEmpty(defaultLanguage_)) {
+    } else if (!CommonUtils.isEmpty(defaultLanguage_)) {
       selectLanguage.setValue(defaultLanguage_);
       selectLanguage.setSelectedValues(new String[] { defaultLanguage_ });
     }
@@ -517,14 +517,17 @@ public class UIQuestionForm extends BaseUIFAQForm implements UIPopupComponent {
           return;
         }
         author = CommonUtils.encodeSpecialCharInTitle(author);
-        if (emailAddress == null || emailAddress.trim().length() < 1 || !FAQUtils.isValidEmailAddresses(emailAddress)) {
+        if (CommonUtils.isEmpty(emailAddress)) {
+          emailAddress = "";
+        }
+        if (!FAQUtils.isValidEmailAddresses(emailAddress)) {
           warning("UIQuestionForm.msg.email-address-invalid");
           return;
         }
         String language = questionForm.selectLanguage.getValue();
-        language = FAQUtils.isFieldEmpty(language) ? questionForm.defaultLanguage_ : language;
+        language = CommonUtils.isEmpty(language) ? questionForm.defaultLanguage_ : language;
         // Duy Tu: Check require question content not empty.
-        if (FAQUtils.isFieldEmpty(questionContent)) {
+        if (CommonUtils.isEmpty(questionContent)) {
           if (language.equals(questionForm.defaultLanguage_)) {
             warning("UIQuestionForm.msg.default-question-null");
           } else {
@@ -597,7 +600,7 @@ public class UIQuestionForm extends BaseUIFAQForm implements UIPopupComponent {
         UIAnswersPortlet portlet = questionForm.getAncestorOfType(UIAnswersPortlet.class);
         UIQuestions questions = portlet.getChild(UIAnswersContainer.class).getChild(UIQuestions.class);
         // Create link by Vu Duy Tu.
-        if (FAQUtils.isFieldEmpty(question.getLink())) {
+        if (CommonUtils.isEmpty(question.getLink())) {
           question.setLink(FAQUtils.getQuestionURI(question.getId(), false));
         }
 

@@ -49,8 +49,8 @@ import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.resources.LocaleConfig;
 import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.security.ConversationState;
@@ -190,7 +190,7 @@ public class FAQUtils {
       ConversationState state = ConversationState.getCurrent();
       User user = (User) state.getAttribute(CacheUserProfileFilter.USER_PROFILE);
       if (user == null) {
-        user = UserHelper.getOrganizationService().getUserHandler().findUserByName(UserHelper.getCurrentUser());
+        user = UserHelper.getUserHandler().findUserByName(UserHelper.getCurrentUser());
       }
       return user;
     } catch (Exception e) {
@@ -207,11 +207,12 @@ public class FAQUtils {
     if (userName == null) {
       return getCurrentUserObject().getEmail();
     } else {
-      OrganizationService organizationService = (OrganizationService) PortalContainer.getComponent(OrganizationService.class);
-      User user = organizationService.getUserHandler().findUserByName(userName);
-      String email = user.getEmail();
-      return email;
+      User user = UserHelper.getUserHandler().findUserByName(userName, UserStatus.BOTH);
+      if (user != null) {
+        return user.getEmail();
+      }
     }
+    return "";
   }
 
   /**
@@ -224,8 +225,7 @@ public class FAQUtils {
       if (userName == null) {
         return getUserFullName(getCurrentUserObject());
       }
-      OrganizationService organizationService = (OrganizationService) PortalContainer.getComponent(OrganizationService.class);
-      User user = organizationService.getUserHandler().findUserByName(userName);
+      User user = UserHelper.getUserHandler().findUserByName(userName, UserStatus.BOTH);
       return getUserFullName(user);
     } catch (Exception e) {
       return getScreenName(userName, "");

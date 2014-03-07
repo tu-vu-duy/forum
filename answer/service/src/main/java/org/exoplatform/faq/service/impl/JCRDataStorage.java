@@ -62,6 +62,7 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.query.Row;
 import javax.jcr.query.RowIterator;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.utils.ActivityTypeUtils;
 import org.exoplatform.container.component.ComponentPlugin;
@@ -3754,6 +3755,105 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
       question.save();
     } catch (Exception e) {
       log.error("Failed to update question relatives: ", e);
+    }
+  }
+
+  /**
+   * Remove value of property
+   * 
+   * @param node The node want to update
+   * @param property The property change
+   * @param removeValue The value will remove
+   * @return
+   * @throws Exception
+   */
+  private int removeValueProperty(Node node, String property, String removeValue) throws Exception {
+    String[] values = new PropertyReader(node).strings(property, new String[] {});
+    int index = ArrayUtils.indexOf(values, removeValue);
+    if (index >= 0) {
+      node.setProperty(property, (String[]) ArrayUtils.remove(values, index));
+    }
+    return index;
+  }
+
+  /**
+   * Update watched properties of categories/forums/topics, that disabled user watched.
+   * 
+   * @param watchedNode
+   * @param userName
+   */
+  private void updateWatchedProperty(Node watchedNode, String userName) {
+    try {
+      int index = removeValueProperty(watchedNode, EXO_USER_WATCHING, userName);
+      if (index >= 0) {
+        String[] emails = new PropertyReader(watchedNode).strings(EXO_EMAIL_WATCHING, new String[] {});
+        watchedNode.setProperty(EXO_EMAIL_WATCHING, (String[]) ArrayUtils.remove(emails, index));
+      }
+    } catch (Exception e) {
+      logDebug("Failed to get email watching by user deleted.", e);
+    }
+  }
+
+  @Override
+  public void processDisabledUser(String userName) throws Exception {
+    SessionProvider sProvider = CommonUtils.createSystemProvider();
+    if (!CommonUtils.isEmpty(userName)) {
+      processWatched(sProvider, userName);
+      //
+      processEmailQuestion(sProvider, userName);
+    }
+  }
+  
+  /**
+   * Process remove userName and email, that watched by disabled user
+   * @param sProvider
+   * @param userName
+   * @throws Exception
+   */
+  private void processWatched(SessionProvider sProvider, String userName) throws Exception {
+    try {
+      Session session = sessionManager.getSession(sProvider);
+      StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ").append(EXO_FAQ_WATCHING);
+      sqlQuery.append(" WHERE ").append(EXO_USER_WATCHING).append("='").append(userName).append("'");
+
+      QueryManager qm = session.getWorkspace().getQueryManager();
+      Query query = qm.createQuery(sqlQuery.toString(), Query.SQL);
+      NodeIterator iter = query.execute().getNodes();
+      while (iter.hasNext()) {
+        Node watchedNode = iter.nextNode();
+        updateWatchedProperty(watchedNode, userName);
+      }
+      session.save();
+    } catch (Exception e) {
+      logDebug(String.format("Updated watched user %s is unsuccessfully.", userName), e);
+    }
+  }
+
+  /**
+   * Process remove email on question, that disabled user is owner.
+   * @param sProvider
+   * @param userName
+   * @throws Exception
+   */
+  private void processEmailQuestion(SessionProvider sProvider, String userName) throws Exception {
+    try {
+      Session session = sessionManager.getSession(sProvider);
+      QueryManager qm = session.getWorkspace().getQueryManager();
+
+      // remove question email of exo:faqQuestion
+      StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ").append(EXO_FAQ_QUESTION);
+      sqlQuery.append(" WHERE ").append(EXO_AUTHOR).append("='").append(userName).append("'");
+
+      Query query = qm.createQuery(sqlQuery.toString(), Query.SQL);
+      NodeIterator iter = query.execute().getNodes();
+      while (iter.hasNext()) {
+        Node questionNode = iter.nextNode();
+        questionNode.setProperty(EXO_EMAIL, StringUtils.EMPTY);
+      }
+      //
+      session.save();
+    } catch (Exception e) {
+      logDebug(String.format("Updated email question of user %s is unsuccessfully.", userName), e);
     }
   }
 

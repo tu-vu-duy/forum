@@ -223,7 +223,16 @@ public interface DataStorage {
 
   void updateQuestionRelatives(String questionPath, String[] relatives) throws Exception;
 
-  public void calculateDeletedUser(String userName) throws Exception;
+  /**
+   * Updates information of answers related to a disabled user.
+   * 
+   * @param userName Name of the disabled user.
+   * @throws Exception
+   * @since 4.1.x
+   */
+  void processDisabledUser(String userName) throws Exception;
+
+  void calculateDeletedUser(String userName) throws Exception;
   
   void saveActivityIdForQuestion(String ownerPath, String activityId);
 

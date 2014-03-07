@@ -1328,7 +1328,11 @@ public class FAQServiceImpl implements FAQService, Startable {
   public void removeListenerPlugin(AnswerEventListener listener) throws Exception {
     listeners_.remove(listener);
   }
-  
+
+  public void processDisabledUser(String userName) throws Exception {
+    jcrData_.processDisabledUser(userName);
+  }
+
   public void calculateDeletedUser(String userName) throws Exception {
     jcrData_.calculateDeletedUser(userName);
   }

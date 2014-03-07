@@ -42,8 +42,10 @@ import org.exoplatform.faq.service.ObjectSearchResult;
 import org.exoplatform.faq.service.Question;
 import org.exoplatform.faq.service.QuestionLanguage;
 import org.exoplatform.faq.service.Utils;
+import org.exoplatform.faq.service.Watch;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.NotifyInfo;
+import org.exoplatform.services.organization.OrganizationService;
 
 @SuppressWarnings("unused")
 public class FAQServiceTestCase extends FAQServiceBaseTestCase {
@@ -588,8 +590,8 @@ public class FAQServiceTestCase extends FAQServiceBaseTestCase {
 
   public void testGetPendingMessages() throws Exception {
     Question question = faqService_.getQuestionById(categoryId1 + "/" + Utils.QUESTION_HOME + "/" + questionId1);
-    question.setEmail("dttempmail@gmail.com");
-    question.setEmailsWatch(new String[] { "duytucntt@gmail.com, tu.duy@exoplatform.com" });
+    question.setEmail("exotest@plf.com");
+    question.setEmailsWatch(new String[] { "exotest2@platform.com, mailtest@platform.com" });
     question.setUsersWatch(new String[] { "root, demo" });
     Answer answer = createAnswer(USER_ROOT, "Answer Content");
     question.setAnswers(new Answer[] { answer });
@@ -603,7 +605,69 @@ public class FAQServiceTestCase extends FAQServiceBaseTestCase {
       NotifyInfo notifyInfo = iterator.next();
       emails = notifyInfo.getEmailAddresses();
     }
-    assertEquals(emails.toString(), "[dttempmail@gmail.com, duytucntt@gmail.com, tu.duy@exoplatform.com]");
+    assertEquals(emails.toString(), "[exotest@plf.com, exotest2@platform.com, mailtest@platform.com]");
+  }
+
+  public void testCallDisableUserListener() throws Exception {
+    OrganizationService organizationService = getService(OrganizationService.class);
+    // add watch
+    Watch watch = new Watch();
+    watch.setEmails("demo@plf.com");
+    watch.setUser(USER_DEMO);
+    faqService_.addWatchCategory(categoryId1, watch);
+    // check value watched
+    List<Watch> watchs = faqService_.getWatchByCategory(categoryId1);
+    assertEquals(1, watchs.size());
+    // call listener to disabled user
+    organizationService.getUserHandler().setEnabled(USER_DEMO, false, true);
+    // check value watched again
+    watchs = faqService_.getWatchByCategory(categoryId1);
+    assertEquals(0, watchs.size());
+  }
+
+  public void testCallEnableUserListener() throws Exception {
+    OrganizationService organizationService = getService(OrganizationService.class);
+    // call listener to disabled user
+    organizationService.getUserHandler().setEnabled(USER_DEMO, false, true);
+    // call listener to enable user
+    organizationService.getUserHandler().setEnabled(USER_DEMO, true, true);
+    // add watch
+    Watch watch = new Watch();
+    watch.setEmails("demo@plf.com");
+    watch.setUser(USER_DEMO);
+    faqService_.addWatchCategory(categoryId1, watch);
+    // check value watched
+    List<Watch> watchs = faqService_.getWatchByCategory(categoryId1);
+    assertEquals(1, watchs.size());
+  }
+
+  public void testProcessDisabledUser() throws Exception {
+    Watch watch = new Watch();
+    watch.setEmails("demo@plf.com");
+    watch.setUser(USER_DEMO);
+    faqService_.addWatchCategory(categoryId1, watch);
+    //
+    List<Watch> watchs = faqService_.getWatchByCategory(categoryId1);
+    assertEquals(1, watchs.size());
+    assertEquals(USER_DEMO, watchs.get(0).getUser());
+    assertEquals("demo@plf.com", watchs.get(0).getEmails());
+    //
+    Question question = createQuestion(categoryId1);
+    question.setEmail("demo@plf.com");
+    question.setAuthor(USER_DEMO);
+    faqService_.saveQuestion(question, true, faqSetting_);
+
+    question = faqService_.getQuestionById(categoryId1 + "/" + Utils.QUESTION_HOME + "/" + question.getId());
+    assertEquals("demo@plf.com", question.getEmail());
+    
+    // run disabled user
+    faqService_.processDisabledUser(USER_DEMO);
+    // remove watched
+    watchs = faqService_.getWatchByCategory(categoryId1);
+    assertEquals(0, watchs.size());
+    // remove email of author is disabled 
+    question = faqService_.getQuestionById(categoryId1 + "/" + Utils.QUESTION_HOME + "/" + question.getId());
+    assertEquals("", question.getEmail());
   }
 
 }

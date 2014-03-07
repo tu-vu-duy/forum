@@ -42,7 +42,7 @@
 									<label class="control-label" for="<%=field.getId()%>"><%=uicomponent.getLabel(field.getName()) %>:</label>
 									<div class="controls">
 											<% uiform.renderField(field) %>
-											<%if(field.getName().equals("Author") || field.getName().equals("EmailAddress") || field.getName().equals("QuestionTitle")) {%> * <%}%>
+											<%if(field.getName().equals("Author") || field.getName().equals("QuestionTitle")) {%> * <%}%>
 									</div>
 							<%} else {%>
 									<div class="controls-full"><% uiform.renderField(field) %></div>
