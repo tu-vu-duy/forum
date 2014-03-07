@@ -62,16 +62,11 @@ import org.exoplatform.forum.webui.popup.UIPageListPostHidden;
 import org.exoplatform.forum.webui.popup.UIPageListPostUnApprove;
 import org.exoplatform.forum.webui.popup.UIPollForm;
 import org.exoplatform.forum.webui.popup.UIPostForm;
-import org.exoplatform.forum.webui.popup.UIPrivateMessageForm;
 import org.exoplatform.forum.webui.popup.UIRatingForm;
 import org.exoplatform.forum.webui.popup.UISplitTopicForm;
 import org.exoplatform.forum.webui.popup.UITopicForm;
 import org.exoplatform.forum.webui.popup.UIViewPost;
-import org.exoplatform.forum.webui.popup.UIViewPostedByUser;
-import org.exoplatform.forum.webui.popup.UIViewTopicCreatedByUser;
-import org.exoplatform.forum.webui.popup.UIViewUserProfile;
 import org.exoplatform.forum.webui.popup.UIWatchToolsForm;
-import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
@@ -79,7 +74,6 @@ import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
 import org.exoplatform.webui.cssfile.CssClassUtils;
 import org.exoplatform.webui.event.Event;
-import org.exoplatform.webui.exception.MessageException;
 import org.exoplatform.webui.form.UIFormStringInput;
 import org.exoplatform.webui.form.UIFormTextAreaInput;
 import org.exoplatform.webui.form.input.UICheckBoxInput;
@@ -128,11 +122,7 @@ import org.exoplatform.webui.form.input.UICheckBoxInput;
       @EventConfig(listeners = UITopicDetail.QuickReplyActionListener.class),
       @EventConfig(listeners = UITopicDetail.PreviewReplyActionListener.class),
       
-      @EventConfig(listeners = UITopicDetail.ViewPostedByUserActionListener.class ), 
-      @EventConfig(listeners = UITopicDetail.ViewPublicUserInfoActionListener.class ) ,
-      @EventConfig(listeners = UITopicDetail.ViewThreadByUserActionListener.class ),
       @EventConfig(listeners = UITopicDetail.WatchOptionActionListener.class ),
-      @EventConfig(listeners = UITopicDetail.PrivateMessageActionListener.class ),
       @EventConfig(listeners = UITopicDetail.DownloadAttachActionListener.class ),
       @EventConfig(listeners = UIForumKeepStickPageIterator.GoPageActionListener.class),
       @EventConfig(listeners = UITopicDetail.AdvancedSearchActionListener.class),
@@ -612,6 +602,24 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     } catch (Exception e) {
       log.debug("Failed to init topic page: " + e.getMessage(), e);
     }
+  }
+
+  protected List<String> getActionsEachPost(UserProfile owner, boolean isFirstPost) {
+    List<String> actions = new ArrayList<String>();
+    if(userProfile.getUserRole() < 3 ) {
+      if(!userProfile.getUserId().equals(owner.getUserId())) {
+        actions.add("Quote");
+        if(!owner.isDisabled()){
+          actions.add("PrivatePost");
+        }
+      }
+      if (!isFirstPost && (actions.isEmpty() || isModerator())) {
+        actions.add("Delete");
+        actions.add("Edit");
+      }
+    }
+    //
+    return actions;
   }
 
   protected boolean getIsModeratePost() {
@@ -1453,48 +1461,6 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     }
   }
 
-  static public class ViewPublicUserInfoActionListener extends BaseEventListener<UITopicDetail> {
-    public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String userId) throws Exception {
-      UIViewUserProfile viewUserProfile = topicDetail.openPopup(UIViewUserProfile.class, 670, 400);
-      UserProfile selectProfile = topicDetail.getUserInfo(userId);
-      try {
-        selectProfile = topicDetail.getForumService().getUserInformations(selectProfile);
-      } catch (Exception e) {}
-      viewUserProfile.setUserProfileViewer(selectProfile);
-    }
-  }
-
-  static public class PrivateMessageActionListener extends BaseEventListener<UITopicDetail> {
-    public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String userId) throws Exception {
-      if (topicDetail.userProfile.getIsBanned()) {
-        throwWarning("UITopicDetail.msg.userIsBannedCanNotSendMail");
-      }
-      int t = userId.indexOf(Utils.DELETED);
-      if (t > 0) {
-        String[] args = new String[] { userId.substring(0, t) };
-        throw new MessageException(new ApplicationMessage("UITopicDetail.msg.userIsDeleted", args, ApplicationMessage.WARNING));
-      }
-      UIPrivateMessageForm messageForm = topicDetail.openPopup(UIPrivateMessageForm.class, 720, 550);
-      messageForm.setFullMessage(false);
-      messageForm.setUserProfile(topicDetail.userProfile);
-      messageForm.setSendtoField(userId);
-    }
-  }
-
-  static public class ViewPostedByUserActionListener extends BaseEventListener<UITopicDetail> {
-    public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String objectId) throws Exception {
-      String userId = event.getRequestContext().getRequestParameter(OBJECTID);
-      UIViewPostedByUser viewPostedByUser = topicDetail.openPopup(UIViewPostedByUser.class, 760, 370);
-      viewPostedByUser.setUserProfile(userId);
-    }
-  }
-
-  static public class ViewThreadByUserActionListener extends BaseEventListener<UITopicDetail> {
-    public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String userId) throws Exception {
-      UIViewTopicCreatedByUser topicCreatedByUser = topicDetail.openPopup(UIViewTopicCreatedByUser.class, 760, 450);
-      topicCreatedByUser.setUserId(userId);
-    }
-  }
   private String getTitle(String title, WebuiRequestContext context) {
     String strRe = context.getApplicationResourceBundle().getString("UIPostForm.label.ReUser")+": ";
     while (title.indexOf(strRe.trim()) == 0) {
@@ -1772,21 +1738,17 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
   }
   
   protected String getMenuUser(UserProfile userInfo) throws Exception {
-    String editByScreeName = userInfo.getScreenName();
+    UIForumPortlet forumPortlet = getAncestorOfType(UIForumPortlet.class);
     StringBuilder builder = new StringBuilder("<ul class=\"dropdown-menu uiUserMenuInfo dropdownArrowTop\">");
-
-    String[] menuViewInfos = new String[] { "ViewPublicUserInfo", "PrivateMessage", "ViewPostedByUser", "ViewThreadByUser" };
+    //
+    String[] menuViewInfos = ForumUtils.getUserActionsMenu(getUserProfile().getUserRole(), userInfo.getUserId());
+    //
     for (int i = 0; i < menuViewInfos.length; i++) {
       String viewAction = menuViewInfos[i];
-      if ((getUserProfile().getUserRole() >= 3 || userInfo.getUserRole() >= 3) && viewAction.equals("PrivateMessage")) {
-        continue;
-      }
-      String itemLabelView = WebUIUtils.getLabel(null, "UITopicDetail.action." + viewAction);
-      if (!viewAction.equals("ViewPublicUserInfo") && !viewAction.equals("PrivateMessage")) {
-        itemLabelView = itemLabelView + " " + editByScreeName;
-      }
+      String action = forumPortlet.getPortletLink(viewAction, userInfo.getUserId());
+      String itemLabelView = WebUIUtils.getLabel(null, "UITopicDetail.action." + viewAction).replace("{0}", userInfo.getScreenName());
 
-      builder.append("<li onclick=\"").append(event(viewAction, userInfo.getUserId())).append("\">")
+      builder.append("<li onclick=\"").append(action).append("\">")
              .append("  <a href=\"javaScript:void(0)\">").append(itemLabelView).append("</a>")
              .append("</li>");
     }
