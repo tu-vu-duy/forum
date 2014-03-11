@@ -51,7 +51,7 @@
     <!-- GateIn Project Dependencies -->
     <org.gatein.common.version>2.2.0.Beta01</org.gatein.common.version>
     <org.gatein.wci.version>2.4.0.Beta01</org.gatein.wci.version>
-    <org.gatein.portal.version>3.7.0.Alpha02-SNAPSHOT</org.gatein.portal.version>
+    <org.gatein.portal.version>3.7.0.Beta01</org.gatein.portal.version>
     <!-- Platform Project Dependencies -->
     <org.exoplatform.commons.version>4.1.x-commons-upgrade-gatein-3.7.x-SNAPSHOT</org.exoplatform.commons.version>
     <org.exoplatform.social.version>4.1.x-soc-upgrade-gatein-3.7.x-SNAPSHOT</org.exoplatform.social.version>
