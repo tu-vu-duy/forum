@@ -25,6 +25,7 @@ import org.exoplatform.commons.utils.SerializablePageList;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -53,6 +54,7 @@ public class UIUserSelect extends UIUserSelector {
   
   public UIUserSelect() throws Exception {
     super();
+    setStatusFilter(UserStatus.ENABLED);
   }
 
   @Override
@@ -60,7 +62,7 @@ public class UIUserSelect extends UIUserSelector {
     String keyword = getUIStringInput(FIELD_KEYWORD).getValue();
     if (CommonUtils.isEmpty(keyword) && !CommonUtils.isEmpty(spaceGroupId) && uiIterator_ != null) {
       OrganizationService service = getApplicationComponent(OrganizationService.class);
-      ListAccess<User> listAccess = service.getUserHandler().findUsersByGroupId(spaceGroupId);
+      ListAccess<User> listAccess = service.getUserHandler().findUsersByGroupId(spaceGroupId, getStatusFilter());
       List<User> results = Arrays.asList(listAccess.load(0, listAccess.getSize()));
       uiIterator_.setPageList(new SerializablePageList<User>(new ListAccessImpl<User>(User.class, results), 10));
     }
