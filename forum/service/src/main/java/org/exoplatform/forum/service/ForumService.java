@@ -1145,7 +1145,9 @@ public interface ForumService extends ForumServiceLegacy {
   /**
    * Adds a watch.
    * 
-   * @param watchType Type of watch (RSS or Email).
+   * @param watchType Type of watch
+   *        + It is 1: watch the email notification
+   *        + It is -1: watch the RSS
    * @param path Path to the watched object.
    * @param values Content of the email notification.
    * @param currentUser Information about the current user.
@@ -1642,6 +1644,17 @@ public interface ForumService extends ForumServiceLegacy {
    * @LevelAPI Platform
    */
   public void updateLoggedinUsers() throws Exception;
+
+  /**
+   * Process when a user update information disabled or enabled.
+   * 
+   * @param userName The userName of user.
+   * @param email The email of user.
+   * @param isEnabled The status of user
+   * @LevelAPI Platform
+   * @since 4.1.x
+   */
+  void processEnabledUser(String userName, String email, boolean isEnabled);
 
   /**
    * Updates statistics when a user is deleted.
