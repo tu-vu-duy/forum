@@ -28,6 +28,7 @@ import javax.jcr.ImportUUIDBehavior;
 
 import org.apache.commons.io.FileUtils;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
+import org.exoplatform.services.organization.OrganizationService;
 
 public class ForumServiceTestCase extends BaseForumServiceTestCase {
 
@@ -327,16 +328,24 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     // set Data
     initDefaultData();
     // addWatch
-    String topicPath = categoryId + "/" + forumId;
+    String forumPath = categoryId + "/" + forumId;
     List<String> values = new ArrayList<String>();
-    values.add("duytucntt@gmail.com");
-    forumService_.addWatch(1, topicPath, values, "root");
+    values.add("exo@exoplf.com");
+    forumService_.addWatch(1, forumPath, values, "root");
     // watch by user
     List<Watch> watchs = forumService_.getWatchByUser("root");
     assertEquals(watchs.get(0).getEmail(), values.get(0));
-    forumService_.removeWatch(1, topicPath, "/" + values.get(0));
+    // remove watched
+    forumService_.removeWatch(1, forumPath, "/" + values.get(0));
     watchs = forumService_.getWatchByUser("root");
     assertEquals(watchs.size(), 0);
+    // add watch for category
+    forumService_.addWatch(1, categoryId, values, USER_DEMO);
+    //
+    assertEquals(1, forumService_.getCategory(categoryId).getEmailNotification().length);
+    // remove watched
+    forumService_.removeWatch(1, categoryId, "/" + values.get(0));
+    assertEquals(0, forumService_.getCategory(categoryId).getEmailNotification().length);
   }
 
   public void testIpBan() throws Exception {
@@ -389,14 +398,14 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     // set group in categories/forums/topics
     String groupId = "/platform/users";
     String groupName = "users";
-    UserProfile profile = createdUserProfile(USER_DEMO);
+    UserProfile profile = createdUserProfile(USER_JOHN);
     profile.setUserRole(UserProfile.USER);
     profile.setUserTitle("User");
     profile.setModerateForums(new String[] { "" });
     profile.setModerateCategory(new String[] { "" });
     forumService_.saveUserProfile(profile, false, false);
-    forumService_.saveUserModerator(USER_DEMO, new ArrayList<String>(), false);
-    assertEquals(UserProfile.USER, forumService_.getUserInfo(USER_DEMO).getUserRole());
+    forumService_.saveUserModerator(USER_JOHN, new ArrayList<String>(), false);
+    assertEquals(UserProfile.USER, forumService_.getUserInfo(USER_JOHN).getUserRole());
 
     String[] groupUser = new String[] { groupId, USER_ROOT };
     Category category = createCategory(getId(Utils.CATEGORY));
@@ -412,11 +421,10 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     forum.setPoster(groupUser);
     forum.setModerators(groupUser);
     forumService_.saveForum(category.getId(), forum, true);
-    // the user demo in group "/platform/users" is moderator of forum, checking
-    // it
-    assertEquals(UserProfile.MODERATOR, forumService_.getUserInfo(USER_DEMO).getUserRole());
+    // the user demo in group "/platform/users" is moderator of forum, checking it
+    assertEquals(UserProfile.MODERATOR, forumService_.getUserInfo(USER_JOHN).getUserRole());
 
-    Topic topic = createdTopic(USER_DEMO);
+    Topic topic = createdTopic(USER_JOHN);
     topic.setCanView(groupUser);
     topic.setCanPost(groupUser);
     forumService_.saveTopic(category.getId(), forum.getId(), topic, true, false, new MessageBuilder());
@@ -428,7 +436,7 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     // deleted group in system
     forumService_.calculateDeletedGroup(groupId, groupName);
     // checking again data
-    assertEquals(UserProfile.USER, forumService_.getUserInfo(USER_DEMO).getUserRole());
+    assertEquals(UserProfile.USER, forumService_.getUserInfo(USER_JOHN).getUserRole());
     assertEquals(USER_ROOT, ArrayToString(forumService_.getCategory(category.getId()).getUserPrivate()));
     assertEquals(USER_ROOT, ArrayToString(forumService_.getForum(category.getId(), forum.getId()).getModerators()));
     assertEquals(USER_ROOT, ArrayToString(forumService_.getTopic(category.getId(), forum.getId(), topic.getId(), null).getCanView()));
@@ -445,6 +453,85 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     forum.setModerators(groupUser);
     forumService_.saveForum(category.getId(), forum, false);
     assertEquals(UserProfile.MODERATOR, forumService_.getUserInfo("mary").getUserRole());
+  }
+  
+  public void testCallDisableUserListener() throws Exception {
+    OrganizationService organizationService = getService(OrganizationService.class);
+    //
+    initDefaultData();
+    // add watch email for demo
+    List<String> emailsDemo = Arrays.asList("demo@test.com");
+    String path = forumService_.getForum(categoryId, forumId).getPath();
+    forumService_.addWatch(1, path, emailsDemo, USER_DEMO);
+    // check value watched
+    assertEquals(1, forumService_.getForum(categoryId, forumId).getEmailNotification().length);
+    // Call user listener to disable user
+    organizationService.getUserHandler().setEnabled(USER_DEMO, false, true);
+    // check value watch
+    assertEquals(0, forumService_.getForum(categoryId, forumId).getEmailNotification().length);
+  }
+
+  public void testCallEnableUserListener() throws Exception {
+    OrganizationService organizationService = getService(OrganizationService.class);
+    //
+    initDefaultData();
+    // add watch email for demo
+    List<String> emailsDemo = Arrays.asList("demo@test.com");
+    String path = forumService_.getForum(categoryId, forumId).getPath();
+    // Call user listener to disable user
+    organizationService.getUserHandler().setEnabled(USER_DEMO, false, true);
+
+    // Enable user
+    organizationService.getUserHandler().setEnabled(USER_DEMO, true, true);
+    // Add watch again
+    forumService_.addWatch(1, path, emailsDemo, USER_DEMO);
+    // check value watched
+    assertEquals(1, forumService_.getForum(categoryId, forumId).getEmailNotification().length);
+    // Call enable again
+    organizationService.getUserHandler().setEnabled(USER_DEMO, true, true);
+    //  check value watched again
+    assertEquals(1, forumService_.getForum(categoryId, forumId).getEmailNotification().length);
+  }
+  
+  public void testProcessDisabledUser() throws Exception {
+    //
+    initDefaultData();
+    // add watch email for demo
+    List<String> emailsDemo = Arrays.asList("demo@test.com");
+    String path = forumService_.getCategory(categoryId).getPath();
+    forumService_.addWatch(1, path, emailsDemo, USER_DEMO);
+    forumService_.saveCategory(forumService_.getCategory(categoryId), false);
+    //
+    path = forumService_.getForum(categoryId, forumId).getPath();
+    forumService_.addWatch(1, path, emailsDemo, USER_DEMO);
+    //
+    path = forumService_.getTopic(categoryId, forumId, topicId, null).getPath();
+    forumService_.addWatch(1, path, emailsDemo, USER_DEMO);
+    // add mails notification on forum
+    Forum forum = forumService_.getForum(categoryId, forumId);
+    forum.setNotifyWhenAddTopic(new String[]{"demo@exoplatform.com", "test2@gmail.com"});
+    forum.setNotifyWhenAddPost(new String[]{"demo@exoplatform.com", "test3@gmail.com"});
+    forumService_.saveForum(categoryId, forum, false);
+    // before disabled
+    assertEquals(1, forumService_.getCategory(categoryId).getEmailNotification().length);
+    assertEquals(1, forumService_.getForum(categoryId, forumId).getEmailNotification().length);
+    assertEquals(1, forumService_.getTopic(categoryId, forumId, topicId, null).getEmailNotification().length);
+    //
+    forum = forumService_.getForum(categoryId, forumId);
+    assertEquals(2, forum.getNotifyWhenAddTopic().length);
+    assertEquals(2, forum.getNotifyWhenAddPost().length);
+    
+    //run disabled user.
+    forumService_.processEnabledUser(USER_DEMO, "demo@exoplatform.com", false);
+
+    // after disabled
+    assertEquals(0, forumService_.getCategory(categoryId).getEmailNotification().length);
+    assertEquals(0, forumService_.getForum(categoryId, forumId).getEmailNotification().length);
+    assertEquals(0, forumService_.getTopic(categoryId, forumId, topicId, null).getEmailNotification().length);
+    //
+    forum = forumService_.getForum(categoryId, forumId);
+    assertEquals(1, forum.getNotifyWhenAddTopic().length);
+    assertEquals(1, forum.getNotifyWhenAddPost().length);
   }
 
   public void testImportXML() throws Exception {

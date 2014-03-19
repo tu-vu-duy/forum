@@ -101,6 +101,7 @@ public class CachedDataStorage implements DataStorage, Startable {
   private static final String SCREEN_NAME_KEY = "screenName";
   private static final String FORUM_CAN_VIEW_KEY = "userCanView";
   private static final String PROFILE_KEY = "profile";
+  private static final String WATCH_TYPE = "watchType";
 
   private DataStorage storage;
   private CacheService service;
@@ -284,18 +285,17 @@ public class CachedDataStorage implements DataStorage, Startable {
   }
   
   private void clearWatchingItemCache(String watchingItemPath) throws Exception {
-    String categoryId = watchingItemPath.contains("/") ? watchingItemPath.substring(0, watchingItemPath.indexOf("/")) : watchingItemPath;
-    String forumId = watchingItemPath.contains("/" + Utils.FORUM) ? watchingItemPath.substring(watchingItemPath.indexOf("/" + Utils.FORUM) + 1) : null;
-    forumId = (!Utils.isEmpty(forumId) && forumId.contains("/")) ? forumId.substring(0, forumId.indexOf("/")) : forumId;
-    String topicId = watchingItemPath.contains(Utils.TOPIC) ? watchingItemPath.substring(watchingItemPath.indexOf(Utils.TOPIC)) : null;
-    
+    String categoryId = Utils.getCategoryId(watchingItemPath);
+    String forumId = Utils.getForumId(watchingItemPath);
+    String topicPath = Utils.getTopicPath(watchingItemPath);
+
     // Clear watching item data
-    if (!Utils.isEmpty(topicId)) {
-      clearTopicCache(categoryId + "/" + forumId + "/" + topicId);
+    if (!Utils.isEmpty(topicPath)) {
+      clearTopicCache(topicPath);
     } else if (!Utils.isEmpty(forumId)) {
-      forumData.remove(new ForumKey(categoryId, forumId));
-    } else {
-      categoryData.remove(new CategoryKey(categoryId));
+      clearForumCache(categoryId, forumId, false);
+    } else if (!Utils.isEmpty(categoryId)) {
+      clearCategoryCache(categoryId);
     }
   }
 
@@ -590,13 +590,10 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public void saveCategory(Category category, boolean isNew) throws Exception {
     storage.saveCategory(category, isNew);
-    categoryData.put(new CategoryKey(category), new CategoryData(category));
     categoryList.select(new ScopeCacheSelector<CategoryListKey, ListCategoryData>());
     clearLinkListCache();
     clearObjectCache(category, isNew);
-    if (isNew == false) {
-      clearCategoryCache(category);
-    }
+    clearCategoryCache(category);
   }
 
   public void saveModOfCategory(List<String> moderatorCate, String userId, boolean isAdd) {
@@ -1428,19 +1425,19 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public void addWatch(int watchType, String path, List<String> values, String currentUser) throws Exception {
     storage.addWatch(watchType, path, values, currentUser);
-    watchListData.remove(new SimpleCacheKey(null, currentUser));
+    watchListData.remove(new SimpleCacheKey(WATCH_TYPE, currentUser));
     clearWatchingItemCache(path);
   }
 
   public void removeWatch(int watchType, String path, String values) throws Exception {
     storage.removeWatch(watchType, path, values);
-    watchListData.select(new ScopeCacheSelector());
+    watchListData.select(new ScopeCacheSelector<SimpleCacheKey, ListWatchData>());
     clearWatchingItemCache(path);
   }
 
   public void updateEmailWatch(List<String> listNodeId, String newEmailAdd, String userId) throws Exception {
     storage.updateEmailWatch(listNodeId, newEmailAdd, userId);
-    watchListData.remove(new SimpleCacheKey(null, userId));
+    watchListData.remove(new SimpleCacheKey(WATCH_TYPE, userId));
     for (String id : listNodeId) {
       if (id.contains(Utils.CATEGORY)) {
         categoryData.remove(new CategoryKey(id));
@@ -1456,7 +1453,7 @@ public class CachedDataStorage implements DataStorage, Startable {
   // TODO : need range
   public List<Watch> getWatchByUser(final String userId) throws Exception {
 
-    SimpleCacheKey key = new SimpleCacheKey(null, userId);
+    SimpleCacheKey key = new SimpleCacheKey(WATCH_TYPE, userId);
 
     return buildWatchOutput(watchListDataFuture.get(
       new ServiceContext<ListWatchData>() {

@@ -26,7 +26,6 @@ import java.util.Random;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.RepositoryException;
 
 import org.exoplatform.commons.testing.BaseExoTestCase;
 import org.exoplatform.component.test.ConfigurationUnit;
@@ -150,7 +149,7 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
     userProfile.setUserId(userName);
     userProfile.setUserRole((long) 0);
     userProfile.setUserTitle(Utils.ADMIN);
-    userProfile.setEmail("duytucntt@gmail.com");
+    userProfile.setEmail(userName + "@exoplf.com");
     userProfile.setJoinedDate(new Date());
     userProfile.setTimeZone(7.0);
     userProfile.setSignature("signature");

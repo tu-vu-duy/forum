@@ -28,15 +28,13 @@ import java.util.Map;
 
 import javax.jcr.Value;
 
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.container.RootContainer;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.jcr.KSDataLocation;
 import org.exoplatform.forum.service.SortSettings.Direction;
 import org.exoplatform.forum.service.SortSettings.SortField;
 import org.exoplatform.forum.service.filter.model.CategoryFilter;
-import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.Group;
@@ -653,8 +651,7 @@ public class Utils implements ForumNodeTypes {
   public static List<String> getGroupSpaceOfUser(String userId) {
     List<String> groupId = new ArrayList<String>();
     try {
-      @SuppressWarnings("unchecked")
-      Collection<Group> groups = UserHelper.getOrganizationService().getGroupHandler().findGroupsOfUser(userId);
+      Collection<Group> groups = UserHelper.getGroupHandler().findGroupsOfUser(userId);
       for (Group group : groups) {
         if (group.getId().indexOf(CommonUtils.SLASH + CATEGORY_SPACE) >= 0) {
           groupId.add(group.getGroupName());
@@ -756,18 +753,10 @@ public class Utils implements ForumNodeTypes {
    */  
   static public String getCurrentTenantName() {
     try {
-      RepositoryService repositoryService = (RepositoryService) PortalContainer.getInstance()
-                                                                               .getComponentInstanceOfType(RepositoryService.class);
-      if (repositoryService == null) {
-        repositoryService = (RepositoryService) RootContainer.getInstance()
-                                                             .getPortalContainer(PortalContainer.getCurrentPortalContainerName())
-                                                             .getComponentInstanceOfType(RepositoryService.class);
-      }
-      return repositoryService.getCurrentRepository().getConfiguration().getName();
+      return CommonsUtils.getRepository().getConfiguration().getName();
     } catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Can not get current repository", e.getMessage());
-      }
+      LOG.warn("Can not get current repository");
+      LOG.debug(e.getMessage(), e);
     }
     return DEFAULT_TENANT_NAME;
   }
@@ -811,6 +800,10 @@ public class Utils implements ForumNodeTypes {
    * @since 2.3.0
    */
   public static String getForumId(String path) {
+    String categoryId = getCategoryId(path);
+    if (!isEmpty(categoryId)) {
+      path = path.substring(path.lastIndexOf(categoryId) + categoryId.length());
+    }
     return getIdByType(path, FORUM);
   }
 
@@ -821,7 +814,7 @@ public class Utils implements ForumNodeTypes {
    * @since 2.3.0
    */
   public static String getForumPath(String path) {
-    if (!Utils.isEmpty(path) && path.lastIndexOf(Utils.FORUM) != -1) {
+    if (!isEmpty(path) && !isEmpty(getForumId(path))) {
       return path.substring(0, path.lastIndexOf(Utils.FORUM) + getForumId(path).length());
     }
     return null;
