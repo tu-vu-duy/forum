@@ -152,8 +152,6 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
 
   private String                     IdLastPost              = "false";
 
-  private UserProfile                userProfile             = null;
-
   private String                     userName                = " ";
 
   private boolean                    isModeratePost          = false;
@@ -252,14 +250,6 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     return ForumUtils.EMPTY_STR;
   }
 
-  public UserProfile getUserProfile() {
-    return userProfile;
-  }
-
-  public void setUserProfile(UserProfile userProfile) throws Exception {
-    this.userProfile = userProfile;
-  }
-
   public boolean getHasEnableIPLogging() {
     return enableIPLogging;
   }
@@ -297,8 +287,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     isShowRule = forumPortlet.isShowRules();
     enableIPLogging = forumPortlet.isEnableIPLogging();
     forumPortlet.updateAccessTopic(topicId);
-    userProfile = forumPortlet.getUserProfile();
-    userName = userProfile.getUserId();
+    userName = getUserProfile().getUserId();
     cleanCheckedList();
     forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath((categoryId + ForumUtils.SLASH + forumId + ForumUtils.SLASH + topicId));
     this.isUseAjax = forumPortlet.isUseAjax();
@@ -325,8 +314,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     forumPortlet.updateAccessTopic(topicId);
     forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath((categoryId + ForumUtils.SLASH + forumId + ForumUtils.SLASH + topicId));
     this.isUseAjax = forumPortlet.isUseAjax();
-    userProfile = forumPortlet.getUserProfile();
-    userName = userProfile.getUserId();
+    userName = getUserProfile().getUserId();
     setRenderInfoPorlet();
   }
 
@@ -340,7 +328,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     /**
      * Set permission for current user login.    
     */
-    isMod = (userProfile.getUserRole() == UserProfile.ADMIN) || (ForumServiceUtils.hasPermission(forum.getModerators(), userName));
+    isMod = (getUserProfile().getUserRole() == UserProfile.ADMIN) || (ForumServiceUtils.hasPermission(forum.getModerators(), userName));
     if (topic != null) {
       canCreateTopic = getCanCreateTopic();
       isCanPost = isCanPostReply();
@@ -415,7 +403,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     boolean canCreateTopic = true;
     boolean isCheck = true;
     List<String> ipBaneds = forum.getBanIP();
-    if (ipBaneds != null && ipBaneds.contains(getRemoteIP()) || userProfile.getIsBanned()) {
+    if (ipBaneds != null && ipBaneds.contains(getRemoteIP()) || getUserProfile().getIsBanned()) {
       canCreateTopic = false;
       isCheck = false;
     }
@@ -443,19 +431,26 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     this.forum = forum;
   }
 
-  private boolean isCanPostReply() throws Exception {
-    if (userProfile.getUserRole() == 3)
+  public boolean isCanPostReply() throws Exception {
+    
+    boolean isCanReply = (forum != null && !forum.getIsClosed() && !forum.getIsLock() &&
+                           topic != null && !topic.getIsClosed() && !topic.getIsLock() &&
+                           getUserProfile().getUserRole() != UserProfile.GUEST && !userProfile.isDisabled());
+    if(!isCanReply) {
       return false;
-    if (forum.getIsClosed() || forum.getIsLock() || topic.getIsClosed() || topic.getIsLock())
-      return false;
-    if (userProfile.getIsBanned())
-      return false;
-    if (isMod)
+    }
+    //
+    if(isMod) {
       return true;
-    if (isIPBaned(getRemoteIP()))
+    }
+    //
+    isCanReply = (!userProfile.getIsBanned() && !isIPBaned(getRemoteIP()) &&
+                  !topic.getIsActive() && !topic.getIsActiveByForum() && topic.getIsWaiting()) ||
+                  (forum.getIsModerateTopic() && !topic.getIsApproved());
+    //
+    if(!isCanReply) {
       return false;
-    if (!topic.getIsActive() || !topic.getIsActiveByForum() || topic.getIsWaiting())
-      return false;
+    }
     try {
       List<String> listUser = new ArrayList<String>();
       listUser = ForumUtils.addArrayToList(listUser, topic.getCanPost());
@@ -466,7 +461,8 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
         return ForumServiceUtils.hasPermission(listUser.toArray(new String[listUser.size()]), userName);
       }
     } catch (Exception e) {
-      log.error("Check can reply is fall, exception: ", e);
+      log.warn("Check can reply topic is unsuccessfully.");
+      log.debug(e.getMessage(), e);
     }
     return true;
   }
@@ -594,7 +590,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
       
       this.postListAccess = (PostListAccess) getForumService().getPosts(new PostFilter(this.categoryId, this.forumId, topicId, isApprove, isHidden, isWaiting, userName));
 
-      int pageSize = (int)this.userProfile.getMaxPostInPage();
+      int pageSize = (int)getUserProfile().getMaxPostInPage();
       postListAccess.initialize(pageSize, pageSelect);
       if (IdPostView.equals("lastpost")) {
         this.pageSelect = postListAccess.getTotalPages();
@@ -606,7 +602,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
 
   protected List<String> getActionsEachPost(UserProfile owner, boolean isFirstPost) {
     List<String> actions = new ArrayList<String>();
-    if(userProfile.getUserRole() < 3 ) {
+    if(getUserProfile().getUserRole() < 3 ) {
       if(!userProfile.getUserId().equals(owner.getUserId())) {
         actions.add("Quote");
         if(!owner.isDisabled()){
@@ -646,7 +642,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
   protected List<Post> getPostPageList() throws Exception {
     Post[] posts = null;
     
-    int pageSize = (int)this.userProfile.getMaxPostInPage();
+    int pageSize = (int)getUserProfile().getMaxPostInPage();
     try {
       try {
         if (!ForumUtils.isEmpty(lastPostId)) {
@@ -740,7 +736,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
 
   public void setPostRules(boolean isNull) throws Exception {
     UIPostRules postRules = getChild(UIPostRules.class);
-    postRules.setUserProfile(this.userProfile);
+    postRules.setUserProfile(getUserProfile());
     if (!isNull) {
       if (this.forum.getIsClosed() || this.forum.getIsLock()) {
         postRules.setLock(true);

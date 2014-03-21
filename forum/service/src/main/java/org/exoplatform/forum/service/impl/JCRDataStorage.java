@@ -3258,7 +3258,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ").append(EXO_POST);
     sqlQuery.append(" WHERE ")
             .append(Utils.getSQLQueryByProperty("", EXO_IS_FIRST_POST, "false"))
-            .append(Utils.getSQLQueryByProperty("", EXO_OWNER, filter.userName()));
+            .append(Utils.getSQLQueryByProperty("AND", EXO_OWNER, filter.userName()));
 
     if (filter.isAdmin() == false) {
       sqlQuery.append(Utils.getSQLQueryByProperty("AND", EXO_IS_APPROVED, "true"))
