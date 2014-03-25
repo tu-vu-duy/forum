@@ -38,6 +38,7 @@ import javax.portlet.PortletPreferences;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.download.DownloadService;
 import org.exoplatform.forum.bbcode.core.ExtendedBBCodeProvider;
@@ -50,6 +51,7 @@ import org.exoplatform.forum.service.ForumAttachment;
 import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.forum.service.MessageBuilder;
 import org.exoplatform.forum.service.Post;
+import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.portal.webui.util.Util;
@@ -126,14 +128,18 @@ public class ForumUtils {
     return link.toString();
   }
 
-  public static String createdForumLink(String type, String id, boolean isPrivate) throws Exception {    
-    String containerName = ((ExoContainerContext) ExoContainerContext.getCurrentContainer()
-                           .getComponentInstanceOfType(ExoContainerContext.class)).getPortalContainerName();
-    String pageNodeSelected = Util.getUIPortal().getSelectedUserNode().getURI();
+  public static String createdForumLink(String type, String id, boolean isPrivate) throws Exception {
     PortalRequestContext portalContext = Util.getPortalRequestContext();
     String fullUrl = ((HttpServletRequest) portalContext.getRequest()).getRequestURL().toString();
-    String host = fullUrl.substring(0, fullUrl.indexOf(containerName) -1);
-    return buildLink((host + portalContext.getPortalURI()), containerName , pageNodeSelected, type, id, isPrivate);
+    String host = fullUrl.substring(0, fullUrl.indexOf(SLASH, 8));
+    return new StringBuffer(host).append(createdSubForumLink(type, id, isPrivate)).toString();
+  }
+
+  public static String createdSubForumLink(String type, String id, boolean isPrivate) throws Exception {    
+    String containerName = CommonsUtils.getService(ExoContainerContext.class).getPortalContainerName();
+    String pageNodeSelected = Util.getUIPortal().getSelectedUserNode().getURI();
+    PortalRequestContext portalContext = Util.getPortalRequestContext();
+    return buildLink(portalContext.getPortalURI(), containerName , pageNodeSelected, type, id, isPrivate);
   }
 
   public static String buildLink(String portalURI, String containerName, String selectedNode, String type, String id, boolean isPrivate){
@@ -423,13 +429,8 @@ public class ForumUtils {
   public static String[] arraysMerge(String[] strs1, String[] strs2) {
     if(isArrayEmpty(strs1)) return strs2;
     if(isArrayEmpty(strs2)) return strs1;
-    Set<String> set = new HashSet<String>();
-    for (int i = 0; i < strs1.length; i++) {
-      set.add(strs1[i]);
-    }
-    for (int i = 0; i < strs2.length; i++) {
-      set.add(strs2[i]);
-    }
+    Set<String> set = new HashSet<String>(Arrays.asList(strs1));
+    set.addAll(Arrays.asList(strs2));
     return set.toArray(new String[set.size()]);
   }
   
@@ -559,8 +560,10 @@ public class ForumUtils {
     List<String> invisibleCategories = sPreference.getInvisibleCategories();
 
     if (!invisibleCategories.isEmpty()) {
-      listForumId = invisibleForums.toString().replace('[' + EMPTY_STR, EMPTY_STR).replace(']' + EMPTY_STR, EMPTY_STR).replaceAll(" ", EMPTY_STR);
       listCategoryId = invisibleCategories.toString().replace('[' + EMPTY_STR, EMPTY_STR).replace(']' + EMPTY_STR, EMPTY_STR).replaceAll(" ", EMPTY_STR);
+    }
+    if(!invisibleForums.isEmpty()){
+    	listForumId = invisibleForums.toString().replace('[' + EMPTY_STR, EMPTY_STR).replace(']' + EMPTY_STR, EMPTY_STR).replaceAll(" ", EMPTY_STR);
     }
 
     portletPref.setValue("isShowIconsLegend", sPreference.isShowIconsLegend() + EMPTY_STR);
@@ -627,5 +630,19 @@ public class ForumUtils {
   
   static public RequireJS addScripts(String module, String alias, String... scripts) {
     return WebUIUtils.addScripts(module, alias, scripts);
+  }
+  
+
+  public static UserProfile getDeletedUserProfile(ForumService forumService, String userName) {
+    UserProfile profile;
+    try {
+      profile = forumService.getQuickProfile(userName + Utils.DELETED);
+    } catch (Exception e) {
+      profile = new UserProfile();
+      profile.setUserId(userName);
+      profile.setScreenName("<s>" + userName + "</s>");
+      profile.setUserTitle(UserProfile.USER_REMOVED);
+    }
+    return profile;
   }
 }

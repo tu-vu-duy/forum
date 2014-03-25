@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -54,7 +55,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.Workspace;
 import javax.jcr.observation.Event;
-import javax.jcr.observation.EventListener;
 import javax.jcr.observation.ObservationManager;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
@@ -64,7 +64,6 @@ import javax.jcr.query.RowIterator;
 
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.utils.ActivityTypeUtils;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.faq.service.Answer;
 import org.exoplatform.faq.service.Cate;
@@ -120,8 +119,6 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
   protected Map<String, String>   serverConfig_        = new HashMap<String, String>();
 
   private Map<String, NotifyInfo> messagesInfoMap_     = new HashMap<String, NotifyInfo>();
-
-  private Map<String, EventListener> listeners         = new HashMap<String, EventListener>();
 
   final Queue<NotifyInfo>         pendingMessagesQueue = new ConcurrentLinkedQueue<NotifyInfo>();
 
@@ -306,16 +303,13 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
     return result.getNodes();
   }
 
-  public void reInitQuestionNodeListeners() throws Exception {
+  public void initQuestionNodeListeners() throws Exception {
     SessionProvider sProvider = SessionProvider.createSystemProvider();
     try {
-      NodeIterator iter = getQuestionsIterator(sProvider);
-      if (iter == null)
-        return;
-      while (iter.hasNext()) {
-        Node quesNode = iter.nextNode();
-        registerQuestionNodeListener(quesNode);
-      }
+      ObservationManager observation = sessionManager.getSession(sProvider).getWorkspace().getObservationManager();
+      QuestionNodeListener listener = new QuestionNodeListener();
+      String[] properties = new String[] {EXO_ANSWER, EXO_FAQ_QUESTION, EXO_FAQ_LANGUAGE};
+      observation.addEventListener(listener, Event.NODE_ADDED | Event.NODE_REMOVED | Event.PROPERTY_ADDED | Event.PROPERTY_CHANGED, "/", true, null, properties, false);
     } catch (Exception e) {
       log.error("Failed to get question iterator: ", e);
     } finally {
@@ -947,7 +941,6 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
       saveQuestion(questionNode, question, isAddNew, sProvider, faqSetting);
       if (questionNode.isNew()) {
         questionNode.getSession().save();
-        registerQuestionNodeListener(questionNode);
       } else
         questionNode.save();
 
@@ -1303,6 +1296,31 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
     }
     return null;
   }
+  
+  @Override
+  public List<String> getAllActivityIdsByCatetory(String categoryId) throws Exception {
+    List<String> activityIds = new ArrayList<String>();
+    SessionProvider sProvider = CommonUtils.createSystemProvider();
+    try {
+      Node categoryNode = getCategoryNode(sProvider, categoryId);
+      QueryManager qm = categoryNode.getSession().getWorkspace().getQueryManager();
+      StringBuffer queryString = new StringBuffer(JCR_ROOT);
+      queryString.append(categoryNode.getPath()).append("//element(*,exo:faqQuestion)");
+      Query query = qm.createQuery(queryString.toString(), Query.XPATH);
+      NodeIterator result = query.execute().getNodes();
+      
+      while (result.hasNext()) {
+        Node questionNode = result.nextNode();
+        String activityId = ActivityTypeUtils.getActivityId(questionNode);
+        if (CommonUtils.isEmpty(activityId) == false) {
+          activityIds.add(activityId);
+        }
+      }
+    } catch (Exception e) {
+      log.debug("Failed to get all activity ids through category: ", e);
+    }
+    return activityIds;
+  }
 
   @Override
   public QuestionPageList getQuestionsByListCatetory(List<String> listCategoryId, boolean isNotYetAnswer) throws Exception {
@@ -1429,8 +1447,6 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
           updateDatas(questionNode, catId, true);
           updateDatas(questionNode, catId, false);
           questionNode.save();
-          unregisterQuestionNodeListener(getQuestionNodeById(id));
-          registerQuestionNodeListener(questionNode);
           try {
             sendNotifyMoveQuestion(destCateNode, questionNode, catId, questionLink, faqSetting);
           } catch (Exception e) {
@@ -2980,17 +2996,22 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
     try {
       Node category = getFAQServiceHome(sProvider).getNode(path);
       while (category.isNodeType(EXO_FAQ_CATEGORY)) {
-        if (category.hasProperty(EXO_NAME)) {
-          list.add(category.getProperty(EXO_NAME).getString());
-        } else {
+        if (category.getName().equals(Utils.CATEGORY_HOME) || category.hasProperty(EXO_NAME) == false) {
           list.add(category.getName());
+        } else {
+          list.add(category.getProperty(EXO_NAME).getString());
         }
         category = category.getParent();
       }
-      for (int i = list.size() - 1; i >= 0; i--) {
-        if (i != list.size() - 1)
+      Collections.reverse(list);
+      Iterator<String> iter = list.iterator();
+      boolean hasNext = iter.hasNext();
+      while (hasNext) {
+        names.append(iter.next());
+        hasNext = iter.hasNext();
+        if (hasNext) {
           names.append(" > ");
-        names.append(list.get(i));
+        }
       }
     } catch (Exception e) {
       log.error("Failed to get parent categories name", e);
@@ -3161,7 +3182,6 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
         while (iter.hasNext()) {
           Node node = iter.nextNode();
           reUpdateNumberOfPublicAnswers(node);
-          registerQuestionNodeListener(node);
         }
       }
     return true;
@@ -3435,10 +3455,11 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
       List<String> pathName = new ArrayList<String>();
       String categoryName;
       while (node.isNodeType(EXO_FAQ_CATEGORY)) {
-        if (node.hasProperty(EXO_NAME))
+        if (node.hasProperty(EXO_NAME)) {
           categoryName = node.getProperty(EXO_NAME).getString();
-        else
+        } else {
           categoryName = node.getName();
+        }
         pathName.add(categoryName);
         node = node.getParent();
       }
@@ -3449,7 +3470,22 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
       // declare category info
       if (categoryNode.hasNodes()) {
         List<SubCategoryInfo> subList = new ArrayList<SubCategoryInfo>();
-        NodeIterator subIter = categoryNode.getNodes();
+        
+        List<String> listOfUser = UserHelper.getAllGroupAndMembershipOfUser(null);
+        StringBuilder strQuery = new StringBuilder();
+        
+        strQuery.append(JCR_ROOT).append(categoryNode.getPath()).append("/element(*,").append(EXO_FAQ_CATEGORY).append(")[")
+        
+        .append("(").append(Utils.buildXpathHasProperty(EXO_USER_PRIVATE))
+        .append(" or ").append(Utils.buildQueryListOfUser(EXO_USER_PRIVATE, listOfUser)).append(")")
+        .append(" or (").append(Utils.buildQueryListOfUser(EXO_MODERATORS, listOfUser)).append(")")
+        .append("]");
+        
+        QueryManager qm = categoryNode.getSession().getWorkspace().getQueryManager();
+        Query query = qm.createQuery(strQuery.toString(), Query.XPATH);
+        QueryResult result = query.execute();
+        
+        NodeIterator subIter = result.getNodes();
         Node sub;
         SubCategoryInfo subCat;
         while (subIter.hasNext()) {
@@ -3472,32 +3508,6 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
       return null;
     }
     return categoryInfo;
-  }
-
-  private void registerQuestionNodeListener(Node questionNode) {
-    try {
-      ObservationManager observation = questionNode.getSession().getWorkspace().getObservationManager();
-      QuestionNodeListener listener = new QuestionNodeListener();
-      String questionPath = questionNode.getPath();
-      observation.addEventListener(listener, Event.NODE_ADDED | Event.NODE_REMOVED | Event.PROPERTY_ADDED | Event.PROPERTY_CHANGED, questionPath, true, null, null, false);
-      listeners.put(questionPath, listener);
-    } catch (Exception e) {
-      log.error("can not add listener to question node", e);
-    }
-
-  }
-  
-  private void unregisterQuestionNodeListener(Node questionNode) {
-    try {
-      String questionPath = questionNode.getPath();
-      if (listeners.containsKey(questionPath)) {
-        ObservationManager observation = questionNode.getSession().getWorkspace().getObservationManager();
-        observation.removeEventListener((QuestionNodeListener) listeners.get(questionPath));
-        listeners.remove(questionPath);
-      }
-    } catch (Exception e) {
-      log.error("can not remove listener from question node", e);
-    }
   }
 
   public void reCalculateInfoOfQuestion(String absPathOfProp) throws Exception {
@@ -3702,10 +3712,21 @@ public class JCRDataStorage implements DataStorage, FAQNodeTypes {
           questionInfo.setDetail(question.getProperty(EXO_NAME).getString());
           questionInfo.setId(question.getName());
           if (question.hasNode(Utils.ANSWER_HOME)) {
-            List<String> answers = new ArrayList<String>();
+            List<Answer> answers = new ArrayList<Answer>();
             NodeIterator ansIter = getNodeIteratorAnswerAccess(question.getNode(Utils.ANSWER_HOME));
+            Answer answer;
+            Node node;
+            PropertyReader reader;
             while (ansIter.hasNext()) {
-              answers.add(ansIter.nextNode().getProperty(EXO_RESPONSES).getString());
+              node = ansIter.nextNode();
+              reader = new PropertyReader(node);
+              answer = new Answer();
+              answer.setId(node.getName());
+              answer.setDateResponse(reader.date(EXO_DATE_RESPONSE));
+              answer.setResponseBy(reader.string(EXO_RESPONSE_BY));
+              answer.setResponses(reader.string(EXO_RESPONSES));
+              answer.setMarkVotes(reader.l(EXO_MARK_VOTES));
+              answers.add(answer);
             }
             questionInfo.setAnswers(answers);
           }

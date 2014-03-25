@@ -17,6 +17,7 @@
 package org.exoplatform.forum.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -26,6 +27,8 @@ import javax.jcr.Session;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.jcr.SessionManager;
+import org.exoplatform.forum.service.impl.model.TopicFilter;
+import org.exoplatform.forum.service.impl.model.TopicListAccess;
 
 public class TopicTestCase extends BaseForumServiceTestCase {
 
@@ -75,14 +78,14 @@ public class TopicTestCase extends BaseForumServiceTestCase {
     topica.setIsSticky(true);
     topica.setTopicName("topic 8");
     forumService_.saveTopic(cat.getId(), forum.getId(), topica, false, false, new MessageBuilder());
-    assertEquals("This topic name not is 'topic 8'", "topic 8", forumService_.getTopic(cat.getId(), forum.getId(), topic.getId(), "").getTopicName());
+    assertEquals("This topic name not is 'topic 8'", "topic 8", forumService_.getTopic(cat.getId(), forum.getId(), topica.getId(), "").getTopicName());
 
     // modifyTopic
     topica.setIsLock(true);
     list.clear();
     list.add(topica);
     forumService_.modifyTopic(list, 2);
-    topica = forumService_.getTopic(cat.getId(), forum.getId(), topic.getId(), "");
+    topica = forumService_.getTopic(cat.getId(), forum.getId(), topica.getId(), "");
     assertEquals("This topic is open.", topica.getIsLock(), true);
     // get PageList Topic
     JCRPageList pagelist = forumService_.getPageTopic(cat.getId(), forum.getId(), "", "");
@@ -122,7 +125,7 @@ public class TopicTestCase extends BaseForumServiceTestCase {
     updateLastPostDateOfTopic(listTopic, 2);
     // get topics by last post days. Example with 1 day.
     listTopic = forumService_.getAllTopicsOld(1, forum.getPath());
-    assertEquals("Failed to run auto prune. List topic has size not equals 5.", listTopic.size(), 5);
+    assertEquals("Failed to run auto prune. List topic has size not equals 5.", 5, listTopic.size());
     
     // run autoPrune
     PruneSetting pSetting = forumService_.getPruneSetting(forum.getPath());
@@ -177,6 +180,73 @@ public class TopicTestCase extends BaseForumServiceTestCase {
     assertEquals("Topics in forum failed to remove. List topic has size more than 1.", topics2.size(), 1);
     assertEquals(1, forumService_.getForum(cat.getId(), forum.getId()).getTopicCount());
   }
+  
+  public void testTopicListAccessWithPostCountOrder() throws Exception {
+    // initialize default data (1 category, 1 forum and 1 topic)
+    initDefaultData();
+
+    List<Topic> topics = new ArrayList<Topic>();
+    
+    Topic topic;
+    for (int i = 0; i < 9; i++) {
+      topic = createdTopic(USER_ROOT);
+      topic.setTopicType("Topic_test_" + i);
+      topics.add(topic);
+      forumService_.saveTopic(categoryId, forumId, topic, true, false, new MessageBuilder());
+    }
+    
+    //add position 1 with 2 posts
+    Post post = createdPost();
+    forumService_.savePost(categoryId, forumId, topics.get(1).getId(), post, true, new MessageBuilder());
+    post = createdPost();
+    forumService_.savePost(categoryId, forumId, topics.get(1).getId(), post, true, new MessageBuilder());
+    
+    //add position 2 with 1 posts
+    post = createdPost();
+    forumService_.savePost(categoryId, forumId, topics.get(2).getId(), post, true, new MessageBuilder());
+
+    TopicFilter filter = new TopicFilter(categoryId, forumId);
+    filter.orderBy("postCount DESC");
+    filter.isAdmin(true);
+    TopicListAccess listAccess = (TopicListAccess) forumService_.getTopics(filter);
+
+    assertEquals(10, listAccess.getSize());
+    Topic[] got = listAccess.load(0, 10);
+    assertEquals(2, got[0].getPostCount());
+    assertEquals(1, got[1].getPostCount());
+  }
+  
+  public void testTopicListAccessWithVoteRating() throws Exception {
+    // initialize default data (1 category, 1 forum and 1 topic)
+    initDefaultData();
+
+    List<Topic> topics = new ArrayList<Topic>();
+    
+    Topic topic;
+    for (int i = 0; i < 9; i++) {
+      topic = createdTopic(USER_ROOT);
+      topic.setTopicType("Topic_test_" + i);
+      topics.add(topic);
+      forumService_.saveTopic(categoryId, forumId, topic, true, false, new MessageBuilder());
+    }
+
+    TopicFilter filter = new TopicFilter(categoryId, forumId);
+    filter.orderBy("voteRating DESC");
+    filter.isAdmin(true);
+    TopicListAccess listAccess = (TopicListAccess) forumService_.getTopics(filter);
+    //
+    topics.get(5).setVoteRating(2.5);
+    forumService_.saveTopic(categoryId, forumId, topics.get(5), false, false, new MessageBuilder());
+    //
+    topics.get(4).setVoteRating(1.5);
+    forumService_.saveTopic(categoryId, forumId, topics.get(4), false, false, new MessageBuilder());
+   
+    Topic[] got = listAccess.load(0, 8);
+
+    assertEquals(2.5, got[0].getVoteRating());
+    assertEquals(1.5, got[1].getVoteRating());
+  }
+  
 
   private void updateLastPostDateOfTopic(List<Topic> listTopic, int day) throws Exception {
     SessionManager  manager = dataLocation.getSessionManager();

@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.jcr.KSDataLocation;
 
 public class Utils {
@@ -194,7 +195,22 @@ public class Utils {
     }
     return queryString.toString();
   }
-  
+
+  /**
+   * Build Xpath query for check has property existing.
+   * @param String property is the property of node
+   * @return String
+   */
+  public static String buildXpathHasProperty(String property) {
+    StringBuilder builder = new StringBuilder();
+    if (CommonUtils.isEmpty(property) == false) {
+      builder.append("(not(@").append(property).append(") or @")
+             .append(property).append("='' or @")
+             .append(property).append("=' ')");
+    }
+    return builder.toString();
+  }
+
   public static String buildQueryListOfUser(String property, List<String> listOfUser) {
     StringBuilder query = new StringBuilder();
     for (String expr : listOfUser) {
@@ -210,5 +226,26 @@ public class Utils {
       }
     }
     return query.toString();
+  }
+  
+  /**
+   * Gets the Question point. It's the sum of all its answer's mark votes
+   * @param question the question object
+   * @return sum of all answer's mark votes of provided question.
+   * @since 4.1.0
+   */
+  public static int getQuestionPoint(Question question) {
+    //
+    if (question.getAnswers() == null) return 0;
+
+    //
+    int questionPoint = 0;
+    for (Answer answer : question.getAnswers()) {
+      if (answer != null) {
+        questionPoint += answer.getMarkVotes();
+      }
+    }
+
+    return questionPoint;
   }
 }

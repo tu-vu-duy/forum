@@ -58,7 +58,6 @@ import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
 import org.exoplatform.forum.common.webui.WebUIUtils;
-import org.exoplatform.forum.common.webui.cssfile.CssClassUtils;
 import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumService;
 import org.exoplatform.forum.service.MessageBuilder;
@@ -73,6 +72,7 @@ import org.exoplatform.webui.application.portlet.PortletRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.UIContainer;
+import org.exoplatform.webui.cssfile.CssClassUtils;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.utils.TimeConvertUtils;
@@ -445,7 +445,7 @@ public class UIQuestions extends UIContainer {
     return languageMap.keySet().toArray(new String[] {});
   }
 
-  protected String getAvatarUrl(String userId) throws Exception {
+  protected String getAvatarUrl(String userId) {
     return FAQUtils.getUserAvatar(userId);
   }
 
@@ -794,7 +794,7 @@ public class UIQuestions extends UIContainer {
       uiQuestions.backPath_ = "";
       uiQuestions.viewingQuestionId_ = questionId;
       uiQuestions.updateLanguageMap();
-      context.addUIComponentToUpdateByAjax(uiQuestions);
+      context.addUIComponentToUpdateByAjax(uiQuestions.getAncestorOfType(UIAnswersPortlet.class));
     }
   }
 
@@ -879,6 +879,7 @@ public class UIQuestions extends UIContainer {
     public void execute(Event<UIQuestions> event) throws Exception {
       UIQuestions question = event.getSource();
       String userId = event.getRequestContext().getRequestParameter(OBJECTID);
+      userId = CommonUtils.decodeSpecialCharToHTMLnumber(userId);
       User user = UserHelper.getUserByUserId(userId);
       if (user != null) {
         UIAnswersPortlet portlet = question.getAncestorOfType(UIAnswersPortlet.class);
@@ -1022,7 +1023,6 @@ public class UIQuestions extends UIContainer {
           answer.setResponseBy(comment.getCommentBy());
           answer.setFullName(comment.getFullName());
           answer.setDateResponse(comment.getDateComment());
-          answer.setMarksVoteAnswer(0);
           answer.setUsersVoteAnswer(null);
           answer.setActivateAnswers(true);
           answer.setApprovedAnswers(true);

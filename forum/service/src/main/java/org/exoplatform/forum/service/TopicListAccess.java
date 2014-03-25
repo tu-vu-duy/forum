@@ -40,6 +40,7 @@ import org.exoplatform.services.jcr.impl.core.query.lucene.QueryResultImpl;
  */
 public class TopicListAccess extends JCRListAccess<Topic> {
   String topicQuery;
+  private int size = -1;
 
   /**
    * 
@@ -52,10 +53,14 @@ public class TopicListAccess extends JCRListAccess<Topic> {
 
   @Override
   protected int getSize(Session session) throws Exception {
-    QueryManager qm = session.getWorkspace().getQueryManager();
-    QueryImpl query = (QueryImpl) qm.createQuery(topicQuery, Query.XPATH);
-    QueryResultImpl result = (QueryResultImpl) query.execute();
-    return result.getTotalSize();
+    if (size == -1) {
+      QueryManager qm = session.getWorkspace().getQueryManager();
+      QueryImpl query = (QueryImpl) qm.createQuery(topicQuery, Query.XPATH);
+      QueryResultImpl result = (QueryResultImpl) query.execute();
+      size = result.getTotalSize();
+    }
+    
+    return this.size;
   }
 
   @Override
@@ -64,7 +69,7 @@ public class TopicListAccess extends JCRListAccess<Topic> {
     QueryImpl query = (QueryImpl) qm.createQuery(topicQuery, Query.XPATH);
     query.setCaseInsensitiveOrder(true);
     query.setOffset(index);
-    query.setLimit(index + length);
+    query.setLimit(length);
     QueryResult result = query.execute();
     List<Topic> topicList = new ArrayList<Topic>();
     NodeIterator iter = result.getNodes();

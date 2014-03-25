@@ -7,14 +7,14 @@
 	<div class="row-fluid">
 		<div class="span6">
 			<div class="uiBox selectGroup noRounded">
-				<h5 class="title"><%=_ctx.appRes(uicomponent.id+".label.selectGroup")%></h5>
+				<h6 class="title"><%=_ctx.appRes(uicomponent.id+".label.selectGroup")%></h6>
 				<%uicomponent.renderChild(UITree.class);%>
 			</div>
 		</div>
 		
 		<div class="span6">
 			<div class="uiBox noRounded childGoup">
-				<h5 class="title">
+				<h6 class="title">
 				<%if(uicomponent.isSelectUser()){%>
 					<%=_ctx.appRes(uicomponent.id+".label.selectUser")%>
 				<%}%>
@@ -24,7 +24,7 @@
 				  <%if(uicomponent.isSelectGroup()){%>
 					<%=_ctx.appRes(uicomponent.id+".label.selectGroup")%>
 				  <%}%>
-				</h5>
+				</h6>
 				
 				<div class="uiContentBox">
 					<ul>
@@ -46,7 +46,7 @@
 								} 
 				  %>
 						<li>
-							<a href="<%=uicomponent.event('SelectMembership',key)%>"><i class="uiIconMiniArrowRight uiIconLightGray"></i> $user</a>
+							<a href="javascript:void(0);" onclick="<%=uicomponent.event('SelectMembership',key)%>"><i class="uiIconMiniArrowRight uiIconLightGray"></i> $user</a>
 						</li>
 				  <%}
 				  } else if (uicomponent.isSelectGroup()){
@@ -54,7 +54,7 @@
 						  key = "/" + user ;   
 				  %>
 						<li>
-							<a href="<%=uicomponent.event('SelectMembership',key)%>"><i class="uiIconMiniArrowRight uiIconLightGray"></i> $user</a>
+							<a href="javascript:void(0);" onclick="<%=uicomponent.event('SelectMembership',key)%>"><i class="uiIconMiniArrowRight uiIconLightGray"></i> $user</a>
 						</li>
 				  <%}
 

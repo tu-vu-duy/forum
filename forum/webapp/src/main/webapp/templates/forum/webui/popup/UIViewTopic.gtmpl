@@ -1,8 +1,7 @@
 <%
 	import org.exoplatform.forum.service.UserProfile;
-    import org.exoplatform.forum.service.Topic ;
+  import org.exoplatform.forum.service.Topic ;
 	import org.exoplatform.forum.webui.UIForumPageIterator;	
-	import org.exoplatform.forum.service.Post;
 	import org.exoplatform.forum.common.user.CommonContact;
 	import org.exoplatform.forum.ForumUtils;
 	import org.exoplatform.forum.TimeConvertUtils;
@@ -14,7 +13,6 @@
             "eXo.forum.UIForumPortlet.ReloadImage();"
             ];
   ForumUtils.addScripts(null, null, scripts);
-  ForumUtils.addScripts("Syntaxhighlighter", null, "eXo.dp.SyntaxHighlighter.HighlightAll('code');");
 
 	uicomponent.initPage() ;
 	Topic topic = uicomponent.getTopic();
@@ -36,7 +34,7 @@
 
   <div class="uiBox containerTopicDetail">
     <div style="padding: 10px; position:relative;">
-		<div class="divTable">
+			<div class="divTable">
 <!-- Start ContentContainer -->
     <%
     
@@ -102,45 +100,44 @@
         else alert = " " ;
     %>
     
-		<div class="contentTopicDetail clearfix divRow" id="$postId">
-  <!-- Start MemberContainer -->
-			<div class="memberContainer divCell">
+			<div class="contentTopicDetail clearfix divRow" id="$postId">
+	  <!-- Start MemberContainer -->
+				<div class="memberContainer divCell">
 			  
 			<%  String userSmile = "uiIconForumColorOffline";
-				String titleSmile = "Offline" ;
+				String titleSmile = _ctx.appRes("UIForumPortlet.label.Offline").replace("{0}", owner) ;
 				if(uicomponent.isOnline(owner)) {
 				   userSmile = "uiIconForumColorOnline";
-				   titleSmile = "Online";
+				   titleSmile = _ctx.appRes("UIForumPortlet.label.Online").replace("{0}", owner);
 				}
 			%>
-				
-				<span class="textTitleProfile">
-					<i class="$userSmile"></i>$viewScreenName
-				</span>
-				<div class="rank"><%=userInfo.getUserTitle();%></div>
+					<span class="textTitleProfile">
+						<i class="$userSmile" rel="tooltip" data-placement="bottom" title="$titleSmile"></i>$viewScreenName
+					</span>
+					<div class="rank"><%=userInfo.getUserTitle();%></div>
 				<% boolean isDisplayAvatar = userInfo.getIsDisplayAvatar(); 
 				  if(isDisplayAvatar) {
 				%>
-				<div class="avatarXLarge">
-					<img src="<%=uiform.getAvatarUrl(post.getOwner());%>" class="ImgAvatar" alt="<%=_ctx.appRes("UIForumUserSettingForm.label.Avatar");%>"/>
-				</div>
+					<div class="avatarXLarge">
+						<img src="<%=uiform.getAvatarUrl(post.getOwner());%>" class="ImgAvatar" alt="<%=_ctx.appRes("UIForumUserSettingForm.label.Avatar");%>"/>
+					</div>
 				<% } %>
 				
-				<div class="infoMember">
-					<div><%=_ctx.appRes("UITopicDetail.label.JoinDate");%>: $joinDate</div>
+					<div class="infoMember">
+						<div><%=_ctx.appRes("UITopicDetail.label.JoinDate");%>: $joinDate</div>
 				  <% long totalPost = userInfo.getTotalPost();
 					if(totalPost > 0) {
 					   Date lastPostOfUser = userInfo.getLastPostDate() ;
 					   String lastPostDateOfUser = TimeConvertUtils.convertXTimeAgo(lastPostOfUser, shortDateTimeFormat, setTime) ;
 				  %>
-					<div><%=_ctx.appRes("UITopicDetail.label.Posts");%>: $totalPost</div>
-					<div><%=_ctx.appRes("UITopicDetail.label.LastPost");%>: $lastPostDateOfUser</div>
+						<div><%=_ctx.appRes("UITopicDetail.label.Posts");%>: $totalPost</div>
+						<div><%=_ctx.appRes("UITopicDetail.label.LastPost");%>: $lastPostDateOfUser</div>
 				  <% } else {%>
-					<div><strong>$viewScreenName</strong><%=_ctx.appRes("UITopicDetail.label.hasNoPost");%></div>
+						<div><strong>$viewScreenName</strong><%=_ctx.appRes("UITopicDetail.label.hasNoPost");%></div>
 				  <% } 
 				   if(!ForumUtils.isEmpty(location)) {
 				  %>
-					<div><%=_ctx.appRes("UITopicDetail.label.Location");%>: $location</div>
+						<div><%=_ctx.appRes("UITopicDetail.label.Location");%>: $location</div>
 				  <%} 
 					Date lastLogin = userInfo.getLastLoginDate();
 					String lastLoginUser = "" ;
@@ -148,10 +145,10 @@
 					  lastLoginUser = TimeConvertUtils.convertXTimeAgo(lastLogin, shortDateTimeFormat, setTime) ;
 					}
 				  %>
-					<div><%=_ctx.appRes("UITopicDetail.label.LastLogin");%>: $lastLoginUser</div>
+						<div><%=_ctx.appRes("UITopicDetail.label.LastLogin");%>: $lastLoginUser</div>
+					</div>
 				</div>
-			</div>
-  <!-- End MemberContainer -->
+  	<!-- End MemberContainer -->
   <!-- Start PostViewContainer -->
 			<div class="postViewContainer divCell">
 			  
@@ -162,22 +159,22 @@
 					</div>
 				</div>
 			  
-			<div class="postContentContainer">
+				<div class="postContentContainer">
 			<% 
-			boolean hasAttachment = false ;
-			if(attachments != null && attachments.size() > 0) hasAttachment = true;
-			if(isDisplayAvatar && !hasAttachment) { 
-			%>  
-			  <div class="postContent">
-			<% } else { %>
-			  <div class="postContentNote">
-			<% } %>
-				<div id="$idMessage" class="containerQuote">$message</div>
+				boolean hasAttachment = false ;
+				if(attachments != null && attachments.size() > 0) hasAttachment = true;
+				String clazz = "postContentNote";
+				if(isDisplayAvatar && !hasAttachment) { 
+				  	clazz="postContent";
+				}
+			%>
+		  	<div class="$clazz">
+					<div id="$idMessage" class="containerQuote">$message</div>
 			  </div>
 			
 			<!--- Start Attachment   -->
 			  
-			 <% if(hasAttachment) {%>
+			<% if(hasAttachment) {%>
 			<div class="attachmentContainer">
 				<div class="attachmentTitle"><i class="uiIconAttach uiIconLightGray"></i><%=_ctx.appRes("UITopicDetail.label.Attachments");%>:</div>
 				
@@ -247,7 +244,6 @@
 			</div>
 			<% } %>
 			
-			
 			<!--- End Attachment   -->
 			  
 			  <%if(userInfo.getIsDisplaySignature() && userInfo.getSignature() != null && userInfo.getSignature().length() > 0) {
@@ -259,23 +255,17 @@
 			  <%} %>
 			</div>
 				  <%  
-				if(!ForumUtils.isEmpty(editBy)) {
-					UserProfile userEditByInfo = uicomponent.getUserInfo(editBy) ;
-					String editByScreeName = (userEditByInfo != null ? userEditByInfo.getScreenName() : editBy) ;
-			        String editDate = TimeConvertUtils.convertXTimeAgo(post.getModifiedDate(), longDateFormat, setTime);
+					if(!ForumUtils.isEmpty(editBy)) {
 				  %>
 				<div class="footPost clearfix">
 					<div class="txtLastEdit">
-						  <%=_ctx.appRes("UITopicDetail.label.LastEditedBy");%> <span class="textTitleProfile">$editByScreeName</span>
-						  <%=_ctx.appRes("UITopicDetail.label.on");%> $editDate
-						  <%
+						<%
+						  print("<div>" + uicomponent.getLastEditedBy(editBy, post.getModifiedDate()) + "</div>");
 							String reason = post.getEditReason() ;
 							if(!ForumUtils.isEmpty(reason)) { 
-							  reason = _ctx.appRes("UIPostForm.label.editReason") + ": "+reason ;
-						  %>
-						  <br/>
-						  $reason
-						  <% } %>
+							  print("<div>" + _ctx.appRes("UIPostForm.label.editReason") + ": " +reason + "</div>") ;
+						  } 
+						%>
 					</div>
 				</div>
 				<% } %>
@@ -310,8 +300,8 @@
 	
 <%uiform.end()%>
 
-
 </div>
+<%=org.exoplatform.forum.common.webui.WebUIUtils.addScriptSyntaxhighlighter()%>
 
 <div class="uiAction uiActionBorder">
 

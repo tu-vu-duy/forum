@@ -33,13 +33,13 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.forum.ForumSessionUtils;
 import org.exoplatform.forum.ForumUtils;
+import org.exoplatform.forum.TimeConvertUtils;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.TransformHTML;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.user.CommonContact;
 import org.exoplatform.forum.common.webui.BaseEventListener;
 import org.exoplatform.forum.common.webui.WebUIUtils;
-import org.exoplatform.forum.common.webui.cssfile.CssClassUtils;
 import org.exoplatform.forum.info.ForumParameter;
 import org.exoplatform.forum.rendering.RenderHelper;
 import org.exoplatform.forum.rendering.RenderingException;
@@ -77,6 +77,7 @@ import org.exoplatform.webui.application.portlet.PortletRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
+import org.exoplatform.webui.cssfile.CssClassUtils;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.exception.MessageException;
 import org.exoplatform.webui.form.UIFormStringInput;
@@ -634,8 +635,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
     return temp;
   }
 
-  @SuppressWarnings("unchecked")
-  public List<Post> getPostPageList() throws Exception {
+  protected List<Post> getPostPageList() throws Exception {
     Post[] posts = null;
     
     int pageSize = (int)this.userProfile.getMaxPostInPage();
@@ -660,7 +660,8 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
       this.pageSelect = postListAccess.getCurrentPage();
 
       maxPage = postListAccess.getTotalPages();
-      
+      //update last post view in user profile in load method
+      //more detail in JCRDataStorage#getPosts() method
       posts = postListAccess.load(pageSelect);
       this.pageSelect = postListAccess.getCurrentPage();
       
@@ -680,6 +681,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
         }
         this.IdLastPost = post.getId();
       }
+      
       if (!lastPoistIdSave.equals(IdLastPost)) {
         lastPoistIdSave = IdLastPost;
         userProfile.addLastPostIdReadOfForum(forumId, topicId + ForumUtils.SLASH + IdLastPost);
@@ -750,14 +752,16 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
       postRules.setCanAddPost(!isNull);
     }
   }
-
+  
   public UserProfile getUserInfo(String userName) throws Exception {
     if (!mapUserProfile.containsKey(userName)) {
+      UserProfile profile;
       try {
-        mapUserProfile.put(userName, getForumService().getQuickProfile(userName));
+        profile = getForumService().getQuickProfile(userName);
       } catch (Exception e) {
-        log.warn("Failed load user info: " + e.getMessage(), e);
+        profile = ForumUtils.getDeletedUserProfile(getForumService(), userName);
       }
+      mapUserProfile.put(userName, profile);
     }
     return mapUserProfile.get(userName);
   }
@@ -793,28 +797,8 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
   static public class RatingTopicActionListener extends BaseEventListener<UITopicDetail> {
     public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String objectId) throws Exception {
       try {
-        String userName = topicDetail.getUserProfile().getUserId();
-        String[] userVoteRating = topicDetail.topic.getUserVoteRating();
-        boolean error = false;
-        double userRateValue = 0.0;
-        String user = "";
-        for (String string : userVoteRating) {
-          double tmp = 0.0;
-          if (string.indexOf(":") > 0) {
-            String[] votes = string.split(":");
-            user = votes[0];
-            tmp = Double.parseDouble(votes[1]);
-          } else {
-            user = string;
-            tmp = topicDetail.topic.getVoteRating();
-          }
-          if (user.equalsIgnoreCase(userName)) {
-            error = true;
-            userRateValue = tmp;
-          }
-        }
         UIRatingForm ratingForm = topicDetail.openPopup(UIRatingForm.class, 320, 0);
-        ratingForm.updateRating(topicDetail.topic, error, userRateValue);
+        ratingForm.updateRating(topicDetail.topic);
         topicDetail.isEditTopic = true;
       } catch (Exception e) {
         warning("UIForumPortlet.msg.topicEmpty", false);
@@ -1472,12 +1456,11 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
   static public class ViewPublicUserInfoActionListener extends BaseEventListener<UITopicDetail> {
     public void onEvent(Event<UITopicDetail> event, UITopicDetail topicDetail, final String userId) throws Exception {
       UIViewUserProfile viewUserProfile = topicDetail.openPopup(UIViewUserProfile.class, 670, 400);
+      UserProfile selectProfile = topicDetail.getUserInfo(userId);
       try {
-        UserProfile selectProfile = topicDetail.getForumService().getUserInformations(topicDetail.mapUserProfile.get(userId));
-        viewUserProfile.setUserProfileViewer(selectProfile);
-      } catch (Exception e) {
-        topicDetail.log.warn("Failed to get User info: " + e.getMessage(), e);
-      }
+        selectProfile = topicDetail.getForumService().getUserInformations(selectProfile);
+      } catch (Exception e) {}
+      viewUserProfile.setUserProfileViewer(selectProfile);
     }
   }
 
@@ -1671,7 +1654,6 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
       forumPortlet.updateIsRendered(ForumUtils.FIELD_SEARCHFORUM_LABEL);
       forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath(ForumUtils.FIELD_EXOFORUM_LABEL);
       UISearchForm searchForm = forumPortlet.getChild(UISearchForm.class);
-      searchForm.setUserProfile(forumPortlet.getUserProfile());
       searchForm.setPath(topicDetail.topic.getPath());
       searchForm.setSelectType(Utils.POST);
       searchForm.setSearchOptionsObjectType(Utils.POST);
@@ -1725,7 +1707,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
       if (topicDetail.getTopic() != null) {
         StringBuffer buffer = new StringBuffer().append(topicDetail.categoryId).append(ForumUtils.SLASH)
                               .append(topicDetail.forumId).append(ForumUtils.SLASH).append(topicDetail.topicId);
-        if(topicDetail.addWatch(buffer.toString(), topicDetail.userProfile)) {
+        if(topicDetail.addWatch(buffer.toString())) {
           topicDetail.isEditTopic = true;
           refresh();
         }
@@ -1742,7 +1724,7 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
         topicDetail.isEditTopic = true;
         StringBuffer buffer = new StringBuffer().append(topicDetail.categoryId).append(ForumUtils.SLASH)
                               .append(topicDetail.forumId).append(ForumUtils.SLASH).append(topicDetail.topicId);
-        if(topicDetail.unWatch(buffer.toString(), topicDetail.userProfile)) {
+        if(topicDetail.unWatch(buffer.toString())) {
           topicDetail.isEditTopic = true;
           refresh();
         }
@@ -1766,6 +1748,50 @@ public class UITopicDetail extends UIForumKeepStickPageIterator {
       post.setMessage(TransformHTML.enCodeViewSignature(post.getMessage()));
     }
     return renderHelper.renderPost(post);
+  }
+
+  protected String getLastEditedBy(String userId, Date modifiedDate) throws Exception {
+    UserProfile userEditByInfo = getUserInfo(userId);
+    String editByScreeName = userEditByInfo.getScreenName();
+    //
+    StringBuilder builder = new StringBuilder("<div class=\"dropdown uiUserInfo\">");
+    builder.append("<a href=\"javascript:void(0);\" class=\"txtEditBy\">").append(editByScreeName).append("</a>")
+           .append(getMenuUser(userEditByInfo))
+           .append("</div>");
+    
+    if (TimeConvertUtils.getGreenwichMeanTime().getTimeInMillis() - modifiedDate.getTime() > 60000) {
+      String longDateFormat = getUserProfile().getLongDateFormat() + ", " + userProfile.getTimeFormat();
+      long setTime = (long) (userProfile.getTimeZone() * 3600000);
+      String editDate = TimeConvertUtils.convertXTimeAgo(modifiedDate, longDateFormat, setTime);
+      String editByLabel = WebUIUtils.getLabel(getId(), "LastEditedOnDate");
+      return editByLabel.replace("{0}", builder.toString()).replace("{1}", editDate);
+    }
+    //
+    String editByLabel = WebUIUtils.getLabel(getId(), "LastEditedJustNow");
+    return editByLabel.replace("{0}", builder.toString());
+  }
+  
+  protected String getMenuUser(UserProfile userInfo) throws Exception {
+    String editByScreeName = userInfo.getScreenName();
+    StringBuilder builder = new StringBuilder("<ul class=\"dropdown-menu uiUserMenuInfo dropdownArrowTop\">");
+
+    String[] menuViewInfos = new String[] { "ViewPublicUserInfo", "PrivateMessage", "ViewPostedByUser", "ViewThreadByUser" };
+    for (int i = 0; i < menuViewInfos.length; i++) {
+      String viewAction = menuViewInfos[i];
+      if ((getUserProfile().getUserRole() >= 3 || userInfo.getUserRole() >= 3) && viewAction.equals("PrivateMessage")) {
+        continue;
+      }
+      String itemLabelView = WebUIUtils.getLabel(null, "UITopicDetail.action." + viewAction);
+      if (!viewAction.equals("ViewPublicUserInfo") && !viewAction.equals("PrivateMessage")) {
+        itemLabelView = itemLabelView + " " + editByScreeName;
+      }
+
+      builder.append("<li onclick=\"").append(event(viewAction, userInfo.getUserId())).append("\">")
+             .append("  <a href=\"javaScript:void(0)\">").append(itemLabelView).append("</a>")
+             .append("</li>");
+    }
+    builder.append("</ul>");
+    return builder.toString();
   }
 
 }

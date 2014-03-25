@@ -66,8 +66,11 @@ import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.forum.service.Watch;
 import org.exoplatform.forum.service.filter.model.CategoryFilter;
+import org.exoplatform.forum.service.filter.model.ForumFilter;
 import org.exoplatform.forum.service.impl.model.PostFilter;
 import org.exoplatform.forum.service.impl.model.PostListAccess;
+import org.exoplatform.forum.service.impl.model.TopicFilter;
+import org.exoplatform.forum.service.impl.model.TopicListAccess;
 import org.exoplatform.management.annotations.ManagedBy;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -158,14 +161,6 @@ public class ForumServiceImpl implements ForumService, Startable {
       storage.evaluateActiveUsers("");
     } catch (Exception e) {
       log.error("Error while calculating active users: " + e.getMessage());
-    }
-
-    // init Calculate Moderators listeners
-    try {
-      log.info("initializing Calculate Moderators listeners...");
-      storage.addCalculateModeratorEventListener();
-    } catch (Exception e) {
-      log.error("Error while initializing Moderators listeners: " + e.getMessage());
     }
 
     // initialize auto prune schedules
@@ -327,10 +322,10 @@ public class ForumServiceImpl implements ForumService, Startable {
    * {@inheritDoc}
    */
   public Category removeCategory(String categoryId) throws Exception {
-    List<Forum> listForums = getForums(categoryId, null);
+    List<Forum> listForums = storage.getForums(new ForumFilter(categoryId, true));
     for (Forum forum : listForums) {
       String forumId = forum.getId();
-      List<Topic> listTopics = getTopics(categoryId, forumId);
+      List<Topic> listTopics = storage.getTopics(categoryId, forumId);
       for (Topic topic : listTopics) {
         String topicId = topic.getId();
         String topicActivityId = storage.getActivityIdForOwner(categoryId.concat("/").concat(forumId).concat("/").concat(topicId));
@@ -362,7 +357,7 @@ public class ForumServiceImpl implements ForumService, Startable {
    */
   public void modifyForum(Forum forum, int type) throws Exception {
     storage.modifyForum(forum, type);
-    List<Topic> topics = getTopics(forum.getCategoryId(), forum.getId());
+    List<Topic> topics = storage.getTopics(forum.getCategoryId(), forum.getId());
     for (ForumEventLifeCycle f : listeners_) {
       try {
         f.updateTopics(topics, forum.getIsLock());
@@ -412,6 +407,7 @@ public class ForumServiceImpl implements ForumService, Startable {
 
   /**
    * {@inheritDoc}
+   * @deprecated {@link #getForums(ForumFilter)}
    */
   public List<Forum> getForums(String categoryId, String strQuery) throws Exception {
     return storage.getForums(categoryId, strQuery);
@@ -419,9 +415,17 @@ public class ForumServiceImpl implements ForumService, Startable {
 
   /**
    * {@inheritDoc}
+   * @deprecated {@link #getForums(ForumFilter)}
    */
   public List<Forum> getForumSummaries(String categoryId, String strQuery) throws Exception {
     return storage.getForumSummaries(categoryId, strQuery);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public List<Forum> getForums(final ForumFilter filter) {
+    return storage.getForums(filter);
   }
 
   /**
@@ -607,7 +611,7 @@ public class ForumServiceImpl implements ForumService, Startable {
   }
 
   /**
-   * {@inheritDoc}
+   * @deprecated use {@link ForumServiceImpl#getTopics(TopicFilter);
    */
   public LazyPageList<Topic> getTopicList(String categoryId, String forumId, String strQuery, String strOrderBy, int pageSize) throws Exception {
     return storage.getTopicList(categoryId, forumId, strQuery, strOrderBy, pageSize);
@@ -620,11 +624,14 @@ public class ForumServiceImpl implements ForumService, Startable {
     return storage.getPageTopic(categoryId, forumId, strQuery, strOrderBy);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Override
   public List<Topic> getTopics(String categoryId, String forumId) throws Exception {
     return storage.getTopics(categoryId, forumId);
+  }
+
+  @Override
+  public ListAccess<Topic> getTopics(TopicFilter filter) throws Exception {
+    return new TopicListAccess(TopicListAccess.Type.TOPICS, storage, filter);
   }
 
   /**
@@ -693,7 +700,7 @@ public class ForumServiceImpl implements ForumService, Startable {
   }
 
   /**
-   * {@inheritDoc}
+   * @deprecated use {@link ForumServiceImpl#getPosts(PostFilter filter);
    */
   public JCRPageList getPosts(String categoryId, String forumId, String topicId, String isApproved, String isHidden, String strQuery, String userLogin) throws Exception {
     return storage.getPosts(categoryId, forumId, topicId, isApproved, isHidden, strQuery, userLogin);
@@ -710,7 +717,8 @@ public class ForumServiceImpl implements ForumService, Startable {
    * {@inheritDoc}
    */
   public long getAvailablePost(String categoryId, String forumId, String topicId, String isApproved, String isHidden, String userLogin) throws Exception {
-    return storage.getAvailablePost(categoryId, forumId, topicId, isApproved, isHidden, userLogin);
+    PostFilter filter = new PostFilter(categoryId, forumId, topicId, isApproved, isHidden, isHidden, userLogin);
+    return Long.valueOf(storage.getPostsCount(filter));
   }
 
   /**
@@ -858,27 +866,6 @@ public class ForumServiceImpl implements ForumService, Startable {
     return storage.getDataLocation().getForumHomeLocation();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  /*
-   * public Poll getPoll(String categoryId, String forumId, String topicId) throws Exception { return storage.getPoll(categoryId, forumId, topicId) ; }
-   *//**
-     * {@inheritDoc}
-     */
-  /*
-   * public Poll removePoll(String categoryId, String forumId, String topicId) throws Exception { return storage.removePoll(categoryId, forumId, topicId); }
-   *//**
-     * {@inheritDoc}
-     */
-  /*
-   * public void savePoll(String categoryId, String forumId, String topicId, Poll poll, boolean isNew, boolean isVote) throws Exception { storage.savePoll(categoryId, forumId, topicId, poll, isNew, isVote) ; }
-   *//**
-     * {@inheritDoc}
-     */
-  /*
-   * public void setClosedPoll(String categoryId, String forumId, String topicId, Poll poll) throws Exception { storage.setClosedPoll(categoryId, forumId, topicId, poll) ; }
-   */
   /**
    * {@inheritDoc}
    */
@@ -1058,10 +1045,19 @@ public class ForumServiceImpl implements ForumService, Startable {
   }
 
   /**
-   * {@inheritDoc}
+   * 
+   * @deprecated use {@link #getTopicsByDate(long, String)}
    */
   public JCRPageList getPageTopicOld(long date, String forumPatch) throws Exception {
     return storage.getPageTopicOld(date, forumPatch);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public ListAccess<Topic> getTopicsByDate(long date, String forumPath) throws Exception {
+    return new TopicListAccess(TopicListAccess.Type.TOPICS, storage, new TopicFilter(date, forumPath));
   }
 
   /**
@@ -1079,10 +1075,19 @@ public class ForumServiceImpl implements ForumService, Startable {
   }
 
   /**
-   * {@inheritDoc}
+   * 
+   * @deprecated use {@link #getTopicsByUser(TopicFilter, int, int)}
    */
   public JCRPageList getPageTopicByUser(String userName, boolean isMod, String strOrderBy) throws Exception {
     return storage.getPageTopicByUser(userName, isMod, strOrderBy);
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public ListAccess<Topic> getPageTopicByUser(TopicFilter filter) throws Exception {
+    return new TopicListAccess(TopicListAccess.Type.TOPICS, storage, filter);
   }
 
   /**
@@ -1193,7 +1198,7 @@ public class ForumServiceImpl implements ForumService, Startable {
     int mostOnline = 0;
     String mostUsersOnline = stats.getMostUsersOnline();
     if (mostUsersOnline != null && mostUsersOnline.length() > 0) {
-      String[] array = mostUsersOnline.split(","); // OMG responsible of this should loose a finger!
+      String[] array = mostUsersOnline.split(",");
       try {
         mostOnline = Integer.parseInt(array[0].trim());
       } catch (NumberFormatException e) {
@@ -1201,11 +1206,11 @@ public class ForumServiceImpl implements ForumService, Startable {
       }
     }
     if (maxOnline > mostOnline) {
-      stats.setMostUsersOnline(maxOnline + ", at " + timestamp.getTimeInMillis());
+      stats.setMostUsersOnline(maxOnline + "," + timestamp.getTimeInMillis());
     } else if (mostOnline == 0) {
       // this case is expected to appear when the first user logins to system and the statistic is not activated before.
       // the maximum number of online users will jump from N/A to 1
-      stats.setMostUsersOnline("1, at " + timestamp.getTimeInMillis());
+      stats.setMostUsersOnline("1," + timestamp.getTimeInMillis());
     }
     storage.saveForumStatistic(stats);
 
@@ -1495,20 +1500,6 @@ public class ForumServiceImpl implements ForumService, Startable {
   /**
    * {@inheritDoc}
    */
-  public void registerListenerForCategory(String categoryId) throws Exception {
-    storage.registerListenerForCategory(categoryId);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void unRegisterListenerForCategory(String path) throws Exception {
-    storage.unRegisterListenerForCategory(path);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public ForumAttachment getUserAvatar(String userName) throws Exception {
     return storage.getUserAvatar(userName);
   }
@@ -1672,5 +1663,4 @@ public class ForumServiceImpl implements ForumService, Startable {
   public String getCommentIdForOwnerPath(String ownerPath) {
     return storage.getActivityIdForOwner(ownerPath);
   }
-
 }

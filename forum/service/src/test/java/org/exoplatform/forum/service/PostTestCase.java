@@ -53,7 +53,7 @@ public class PostTestCase extends BaseForumServiceTestCase {
 
     // get ListPost
     JCRPageList pagePosts = forumService_.getPosts(categoryId, forumId, topicId, "", "", "", "root");
-    assertEquals(pagePosts.getAvailable(), posts.size() + 1);// size = 26 (first post and new postList)
+    assertEquals(posts.size() + 1, pagePosts.getAvailable());// size = 26 (first post and new postList)
     List page1 = pagePosts.getPage(1);
     assertEquals(page1.size(), 10);
     List page3 = pagePosts.getPage(3);
@@ -95,7 +95,6 @@ public class PostTestCase extends BaseForumServiceTestCase {
     }
     // getPost
     assertNotNull(forumService_.getPost(categoryId, forumId, topicId, posts.get(0).getId()));
-    assertEquals(25, forumService_.getTopic(categoryId, forumId, topicId, "").getPostCount());
 
     // get ListPost
     PostListAccess listAccess = (PostListAccess) forumService_.getPosts(new PostFilter(categoryId, forumId, topicId, "", "", "", "root"));

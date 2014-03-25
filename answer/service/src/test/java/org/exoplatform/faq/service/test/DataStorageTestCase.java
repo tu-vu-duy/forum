@@ -625,6 +625,22 @@ public class DataStorageTestCase extends FAQServiceBaseTestCase {
     //
     categoryInfo = dataStorage.getCategoryInfo(categoryId1, categoryIdScoped);
     assertEquals(5, categoryInfo.getQuestionInfos().size());
+    
+    Category cate4 = createCategory("Category 4 has not question", 4);
+    cate4.setUserPrivate(new String[] { USER_DEMO });
+    cate4.setModerators(new String[] { USER_DEMO });
+    faqService_.saveCategory(Utils.CATEGORY_HOME, cate4, true);
+    
+    //
+    loginUser(USER_DEMO);
+    categoryInfo = dataStorage.getCategoryInfo(Utils.CATEGORY_HOME, categoryIdScoped);
+    assertEquals(4, categoryInfo.getSubCateInfos().size());
+    
+    //
+    loginUser(USER_ROOT);
+    categoryInfo = dataStorage.getCategoryInfo(Utils.CATEGORY_HOME, categoryIdScoped);
+    assertEquals(3, categoryInfo.getSubCateInfos().size());
+    
   }
   
   public void testMoveCategory() throws Exception {
@@ -828,6 +844,7 @@ public class DataStorageTestCase extends FAQServiceBaseTestCase {
     eventQuery.setAdmin(true);
     eventQuery.setUserId(USER_ROOT);
     eventQuery.setType(FAQEventQuery.CATEGORY_AND_QUESTION);
+    eventQuery.setUserMembers(new ArrayList<String>());
     assertEquals(7, dataStorage.getSearchResults(eventQuery).size());
     
     //
@@ -893,9 +910,16 @@ public class DataStorageTestCase extends FAQServiceBaseTestCase {
   }
 
   public void testGetParentCategoriesName() throws Exception {
+    Category rootCate = dataStorage.getCategoryById(Utils.CATEGORY_HOME);
+    rootCate.setName("new name");
+    dataStorage.saveCategory(null, rootCate, false);
+    rootCate = dataStorage.getCategoryById(Utils.CATEGORY_HOME);
+    assertEquals("new name", rootCate.getName());
     assertEquals("categories > Category 1 to test question", dataStorage.getParentCategoriesName(categoryId1));
     assertEquals("categories > Category 2 to test question", dataStorage.getParentCategoriesName(categoryId2));
     assertEquals("categories > Category 3 has not question", dataStorage.getParentCategoriesName(categoryId3));
+    dataStorage.removeCategory(Utils.CATEGORY_HOME);
+    dataStorage.initRootCategory();
   }
   
   public void testGetPendingMessages() throws Exception {

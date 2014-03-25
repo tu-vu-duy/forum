@@ -10,7 +10,7 @@
 	}
 	.uiCategories, .uiCategory{
 		.uiGrid.table .noticeEmpty {
-			color: #999999;
+			color: @grayLight;
 		}
 	}
 	.uiCategories, .uiCategory, .forumContainer{
@@ -18,6 +18,16 @@
 			padding: 10px 5px;
 			vertical-align: top;
 		}
+	}
+	blockquote {
+		background: none;
+		 border-left: 5px solid #999;
+	    margin: 0 0 20px;
+	    padding: 0 0 0 15px;
+	    width: auto;
+	}
+	blockquote:after {
+		display: none;
 	}
 }
 /******************************************** UIForumActionBar ****************************************/
@@ -90,7 +100,30 @@
 			}
 		}
 	}
-
+	.menuMore {
+	.forumSeparatorLine + .forumSeparatorLine {
+		background: none;
+	}
+	.defaultStyle{
+		float: none;
+		.uiDropdownWithIcon  {
+			padding: 5px 12px;
+		}
+		.actionIcon {
+			&:hover {
+				border: 1px solid @dropdownLinkBackgroundHover;
+			}
+			&.uiDropdownWithIcon {
+				&:hover {
+					border: 1px solid @dropdownBorder;
+				}
+			}
+		}
+		a:hover {
+			color:@white;
+		}
+	 }
+	}
 	.defaultStyle{
 	   	cursor: pointer;
 	    float: left;
@@ -193,7 +226,7 @@
 	} 
 
 	.showHiddenConten{
-		 border:1px solid #cfcfcf;
+		 border:1px solid @borderColor;
 	
 		.form-horizontal 
 		{

@@ -1,15 +1,16 @@
 @import "mixins.less";
 @import "variables.less";
+@import "/faq/skin/css/answers.css";
 
 .uiFAQPortlet {
 	padding: 20px;
 	.goUp {
-		background-color: #F9F9F9;
-	    background-image: linear-gradient(to bottom, #FFFFFF, #F1F1F1);
+		background-color: @grayLighter;
+	    background-image: linear-gradient(to bottom, @white, @grayWhiteSmoke);
 	    background-repeat: repeat-x;
-	    border: 1px solid #CFCFCF;
+	    border: 1px solid @borderColor;
 	    border-radius: 3px 3px 3px 3px;
-	    box-shadow: 0 1px 2px 0 #FFFFFF;
+	    box-shadow: 0 1px 2px 0 @white;
 	    float: right; 
 	    position: fixed; 
 	    bottom: 45px; 
@@ -24,9 +25,13 @@
 .faqCont {
 	padding: 10px 20px;
 	.answersBlock {
-		margin-top: 20px;
+		margin-top: 15px;
+		.date{
+				color: @grayLight;
+				font-size: 12px;
+			}
 	}
-	.answersBlock [class^="uiIcon"] {
+	.answersBlock .uiIconMiniArrowDown  {
 		padding-left: 7px;
 	}
 }
@@ -38,16 +43,11 @@
 		line-height: 35px;
 		padding-left: 10px;
 	}
-	li {
-		line-height: 30px;
-	} 
+	
 }
 
 .viewerQuestion, .viewerAnswer {
-	padding: 10px 25px;
-	> div {
-		margin-bottom: 20px;
-	}
+	padding: 5px 25px;	
 	
 	> p {
 		padding-left: 22px;
@@ -55,9 +55,15 @@
 }
 
 .questionList {
-	padding: 0 15px 10px;
+	padding: 0 15px 0px;
 	> ul {
 		padding-left: 10px;
+		li + li {
+			padding: 10px 0 0 0;
+		}
+	}
+	h5 span{
+		font-weight: normal;
 	}
 	h5:first-child a:first-child, h5:first-child a:first-child:hover {
 		color: @textColor;
@@ -70,10 +76,10 @@
 }
 
 .answerList {
-	padding: 0 15px 10px;
+	padding: 0 15px 0px;
 	
 	> h5:first-child {
-		background-color: #f5f5f5;
+		background-color: @grayWhiteSmoke;
 		border-radius: 2px;
 		line-height: 30px;
 		padding-left: 10px;
@@ -90,24 +96,40 @@
 		word-wrap: break-word;
 		color: @gray;
 		padding-left: 22px;
+		font-style: italic;
 	}
 	
 	.answers {
 		word-wrap: break-word;
-		padding-left: 22px;
+		margin-left: 22px;
+		padding-bottom: 15px;
+		& + .answers {
+			padding: 15px 0 10px 0;
+			border-top: 1px solid #dadada;
+		}
+		.footerData {
+			.avatarMini img {
+				max-width: 16px;
+				max-height: 16px;
+				.border-radius(@borderRadiusSmall);
+				vertical-align: -4px;
+			}
+			.userName {
+				color: @linkColor;
+			}
+		}
 	}
 }
-
-
-
-//UISettingForm
 
 .uiFAQSettingForm {	
 	.actionButtonGroup {
 			margin-bottom: 20px;
+			.btn.active, .btn:active {
+				color: @linkColor; 
+			}
 	}
 	.uiTabContentContainers {
-		border: 1px solid @tableBorder;		
+		border: 1px solid @borderColor;		
 		.uiTabContent {
 				padding: 20px;
 		}

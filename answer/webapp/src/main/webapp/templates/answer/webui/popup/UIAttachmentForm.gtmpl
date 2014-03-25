@@ -7,8 +7,11 @@
         for(field in uiform.getChildren()) { 
           if(field.isRendered()) {
       %>
-		      	<label class="control-label" for="<%=field.getId()%>"><%=(uicomponent.getLabel("FileUpload")) %> :</label>
-		        <div class="controls"><% uiform.renderField(field) %></div>
+		        <div class="control-group">
+					<div class="controls-full">
+						<% uiform.renderField(field) %>
+					</div>
+				</div>
     <%		i ++ ;
     		}
 		}%>

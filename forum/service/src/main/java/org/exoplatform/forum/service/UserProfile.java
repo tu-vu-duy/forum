@@ -16,11 +16,14 @@
  ***************************************************************************/
 package org.exoplatform.forum.service;
 
+import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UserProfile {
+public class UserProfile implements Serializable {
+  private static final long serialVersionUID = 1L;
 
   public static final long    ADMIN                  = 0;
 
@@ -36,6 +39,8 @@ public class UserProfile {
 
   public static final String  USER_REMOVED           = "User deleted";
 
+  private String              path;
+  
   private String              userId;
 
   private String              screenName;
@@ -130,7 +135,6 @@ public class UserProfile {
 
   private long                totalMessage           = 0;
 
-  @SuppressWarnings("deprecation")
   public UserProfile() {
     userId = USER_GUEST;
     userTitle = "Guest";
@@ -142,15 +146,28 @@ public class UserProfile {
     collapCategories = new String[] {};
     lastReadPostOfTopic = new String[] { "" };
     lastReadPostOfForum = new String[] { "" };
-    Date dateHost = new Date();
-    timeZone = (double) dateHost.getTimezoneOffset() / 60;
+    timeZone = getDefaultTimeZone();
     shortDateformat = "MM/dd/yyyy";
     longDateformat = "EEE, MMM dd, yyyy";
     timeFormat = "hh:mm a";
   }
+  
+  private double getDefaultTimeZone() {
+    Calendar cal = Calendar.getInstance();
+    return ((cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET)) / (3600 * 1000));
+  }
 
-  public void setUserId(String userId) {
+  public String getPath() {
+    return path;
+  }
+
+  public void setPath(String path) {
+    this.path = path;
+  }
+
+  public UserProfile setUserId(String userId) {
     this.userId = userId;
+    return this;
   }
 
   public String getUserId() {

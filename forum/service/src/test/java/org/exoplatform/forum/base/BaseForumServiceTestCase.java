@@ -24,6 +24,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+
 import org.exoplatform.commons.testing.BaseExoTestCase;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
@@ -39,6 +43,7 @@ import org.exoplatform.forum.service.Tag;
 import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
+import org.exoplatform.forum.service.impl.JCRDataStorage;
 import org.exoplatform.services.jcr.util.IdGenerator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
@@ -93,7 +98,6 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
   }
   
 
-  @SuppressWarnings("unchecked")
   public <T> T getService(Class<T> clazz) {
     return (T) getContainer().getComponentInstanceOfType(clazz);
   }
@@ -111,12 +115,28 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
   }
 
   public void removeAllData() throws Exception {
-    List<Category> cats = forumService_.getCategories();
+    List<Category> cats = getService(JCRDataStorage.class).getCategories();
     if (cats.size() > 0) {
       for (Category category : cats) {
         forumService_.removeCategory(category.getId());
       }
     }
+  }
+  
+  protected void resetAllUserProfile() throws Exception {
+    // reset all user profile
+    Node node = dataLocation.getSessionManager().openSession().getRootNode();
+    NodeIterator iterator = node.getNode(dataLocation.getUserProfilesLocation()).getNodes();
+    while (iterator.hasNext()) {
+      Node n = iterator.nextNode();
+      if (n.isNodeType(Utils.EXO_FORUM_USER_PROFILE)) {
+        n.setProperty(Utils.EXO_TOTAL_POST, 0);
+        n.setProperty(Utils.EXO_TOTAL_TOPIC, 0);
+        n.setProperty(Utils.EXO_MODERATE_CATEGORY, new String[] {});
+        n.setProperty(Utils.EXO_MODERATE_FORUMS, new String[] {});
+      }
+    }
+    node.getSession().save();
   }
 
   public String ArrayToString(String[] strs) {
@@ -179,6 +199,13 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
     topicNew.setCanPost(new String[] {});
     return topicNew;
   }
+  
+  public Topic createTopic(String owner, int index) {
+    Topic topic = createdTopic(owner);
+    topic.setTopicName("TestTopic " + index);
+    return topic;
+
+  }
 
   public Forum createdForum() {
     Forum forum = new Forum();
@@ -226,10 +253,11 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
     }
   }
 
-  public Tag createTag(String name) {
+  protected Tag createTag(String name, String user) {
     Tag tag = new Tag();
     tag.setName(name);
-    tag.setUserTag(new String[] { "root" });
+    tag.setId(Utils.TAG + name);
+    tag.setUserTag(new String[] { user });
     return tag;
   }
 

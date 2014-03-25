@@ -134,17 +134,9 @@ public class FAQServiceImpl implements FAQService, Startable {
       log.error("Error while initializing FAQ template", e);
     }
 
-    // management views
-   /*try {
-      log.info("initializing management view...");
-      // Note: call FAQServiceManaged to register mgmt beans
-    } catch (Exception e) {
-      log.error("Error while initializing Management view: " + e.getMessage());
-    }*/
-
     try {
       log.info("initializing Question Node listeners...");
-      jcrData_.reInitQuestionNodeListeners();
+      jcrData_.initQuestionNodeListeners();
     } catch (Exception e) {
       log.error("Error while initializing Question Node listeners", e);
     }
@@ -462,6 +454,14 @@ public class FAQServiceImpl implements FAQService, Startable {
   }
 
   public void removeCategory(String categoryId) throws Exception {
+    //
+    List<String> activityIds = jcrData_.getAllActivityIdsByCatetory(categoryId);
+    for (String activityId : activityIds) {
+      for (AnswerEventListener ae : listeners_) {
+        ae.removeQuestion(activityId);
+      }
+    }
+    
     jcrData_.removeCategory(categoryId);
   }
 
@@ -1222,6 +1222,11 @@ public class FAQServiceImpl implements FAQService, Startable {
     try {
       Node answerNode = jcrData_.getFAQServiceHome(sProvider).getNode(answerPath);
       MultiLanguages.voteAnswer(answerNode, userName, isUp);
+      
+      for (AnswerEventListener ae : listeners_) {
+        ae.voteQuestion(answerNode.getParent().getParent().getName());
+      }
+      
     } catch (Exception e) {
       log.error("\nFail to vote answer\n", e);
     }
@@ -1309,6 +1314,9 @@ public class FAQServiceImpl implements FAQService, Startable {
     return jcrData_.createAnswerRSS(cateId);
   }
 
+  /** 
+   * @deprecated : not public anymore
+   */
   public void reCalculateLastActivityOfQuestion(String absPathOfProp) throws Exception {
     jcrData_.reCalculateInfoOfQuestion(absPathOfProp);
   }

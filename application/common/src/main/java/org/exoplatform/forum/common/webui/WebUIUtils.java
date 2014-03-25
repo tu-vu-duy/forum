@@ -30,10 +30,10 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.RequireJS;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
-import org.exoplatform.webui.form.wysiwyg.FCKEditorConfig;
 
 public class WebUIUtils {
   private static Log LOG = ExoLogger.getLogger(WebUIUtils.class);
+  private static final String SCRIPT = "<script src=\"/forumResources/syntaxhighlighter/Scripts/SCRIPT_NAME\" type=\"text/javascript\"></script>";
 
   public static String getRemoteIP() {
     String remoteAddr = "";
@@ -44,13 +44,7 @@ public class WebUIUtils {
       LOG.error("Can not get remote IP", e);
     }
     return remoteAddr;
-  }
-  
-  public static FCKEditorConfig getFCKConfig(){
-    FCKEditorConfig fckconfig = new FCKEditorConfig();
-    fckconfig.put("CustomConfigurationsPath", "/forumResources/fckconfig/fckconfig.js");
-    return fckconfig;
-  }
+  } 
   
   public String getLabel(String key) throws Exception {
     return getLabel(null, key);
@@ -99,6 +93,19 @@ public class WebUIUtils {
       }
     }
     return requireJS;
+  }
+  
+  static public String addScriptSyntaxhighlighter() {
+    StringBuilder scripts = new StringBuilder();
+    //
+    scripts.append(SCRIPT.replace("SCRIPT_NAME", "shCore.js"))
+           .append(SCRIPT.replace("SCRIPT_NAME", "shAutoloader.js"))
+           .append(SCRIPT.replace("SCRIPT_NAME", "shLegacy.js"))
+           .append(SCRIPT.replace("SCRIPT_NAME", "load_syntaxhighlighter.js"));
+    //
+    addScripts(new String[] { "SyntaxHighlighter.initLoader()", "SyntaxHighlighter.all()", "dp.SyntaxHighlighter.HighlightAll('code')" });
+    //
+    return scripts.toString();
   }
   
 }

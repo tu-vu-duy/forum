@@ -18,6 +18,7 @@ package org.exoplatform.forum.webui;
   
 import java.util.ArrayList;
 import java.util.List;
+
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.forum.ForumSessionUtils;
 import org.exoplatform.forum.ForumUtils;
@@ -184,12 +185,9 @@ public class UICategory extends BaseForumForm {
     return category;
   }
 
-  private boolean isShowForum(String id) {
-    if (this.getAncestorOfType(UIForumPortlet.class).getInvisibleCategories().isEmpty())
-      return true;
-    List<String> list = new ArrayList<String>();
-    list.addAll(this.getAncestorOfType(UIForumPortlet.class).getInvisibleForums());
-    return (list.contains(id)) ? true : false;
+  private boolean isShowForum(String forumId) {
+    List<String> list = getAncestorOfType(UIForumPortlet.class).getInvisibleForums();
+    return (list.isEmpty() || (list.contains(forumId)));
   }
 
   protected List<Forum> getForumList() throws Exception {
@@ -620,7 +618,7 @@ public class UICategory extends BaseForumForm {
 
   static public class AddWatchingActionListener extends BaseEventListener<UICategory> {
     public void onEvent(Event<UICategory> event, UICategory uiform, final String path) throws Exception {
-      isUnWatch = !uiform.addWatch(path, uiform.userProfile);
+      isUnWatch = !uiform.addWatch(path);
       if(!isUnWatch) uiform.isEditCategory = true;
       event.getRequestContext().addUIComponentToUpdateByAjax(uiform);
     }
@@ -628,7 +626,7 @@ public class UICategory extends BaseForumForm {
 
   static public class UnWatchActionListener extends BaseEventListener<UICategory> {
     public void onEvent(Event<UICategory> event, UICategory uiCategory, final String path) throws Exception {
-      if(uiCategory.unWatch(path, uiCategory.userProfile)) {
+      if(uiCategory.unWatch(path)) {
         isUnWatch = true;
         uiCategory.isEditCategory = true;
       }
@@ -642,7 +640,6 @@ public class UICategory extends BaseForumForm {
       forumPortlet.updateIsRendered(ForumUtils.FIELD_SEARCHFORUM_LABEL);
       forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath(ForumUtils.FIELD_EXOFORUM_LABEL);
       UISearchForm searchForm = forumPortlet.getChild(UISearchForm.class);
-      searchForm.setUserProfile(forumPortlet.getUserProfile());
       searchForm.setPath(uiCategory.category.getPath());
       searchForm.setSelectType(Utils.FORUM);
       searchForm.setSearchOptionsObjectType(Utils.FORUM);

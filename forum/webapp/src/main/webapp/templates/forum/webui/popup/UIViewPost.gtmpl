@@ -8,8 +8,7 @@
 	         "eXo.forum.UIForumPortlet.ReloadImage();",
 	         "eXo.forum.UIForumPortlet.reSizeImgViewPost();"
          ];
-  ForumUtils.addScripts(null, null, scripts);
-  ForumUtils.addScripts("Syntaxhighlighter", null, "eXo.dp.SyntaxHighlighter.HighlightAll('code');");
+    ForumUtils.addScripts(null, null, scripts);
   
 	Post post = uicomponent.getPostView(); 
 	String title = post.getName();	
@@ -24,7 +23,6 @@
 <div class="uiViewPost contentTopicDetail resizable" id="SizeImage">
 	<div class="viewContainer clearfix postViewContainer">
 		<h6><i class="uiIconComment uiIconLightGray"></i> $title</h6>
-		<!-- <span class="PostTime">$postCreatedDate</span> -->
 		<div class="postContent">
 			$message
 		</div>
@@ -37,9 +35,11 @@
 								 String fileName = ForumUtils.getSubString(titleFile, 30);
 								 long sizeNumber = attachment.getSize() ;
 								 String size =ForumUtils.getSizeFile(sizeNumber) ;
+								 String typeFile = attachment.getMimeType() ;
+								 String typeFileIcon = uicomponent.getCSSByFileType(titleFile, typeFile);
 						%>
 							<div class="attachmentBox">
-								<a rel="tooltip" data-placement="bottom" title="$titleFile" href="#"><i class="uiIconAttach"></i> $fileName</a>
+								<a rel="tooltip" data-placement="bottom" title="$titleFile" href="#"><i class="$typeFileIcon uiIconLightGray"></i> $fileName</a>
 								<div class="size"><%=_ctx.appRes("UITopicDetail.label.Size");%>: ${size}</div>
 							</div>
 						<% } %>
@@ -124,5 +124,5 @@
 	<button onclick="$link" class="btn" type="button">$actionLabel</button>
       <%}%>
 </div>
-
+<%=org.exoplatform.forum.common.webui.WebUIUtils.addScriptSyntaxhighlighter()%>
 <%uiform.end();%>

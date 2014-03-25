@@ -1,3 +1,4 @@
+
 <div class="uiResponse uiCommentForm uiForm">
 	<% uiform.begin() %>
 		<div class="form-horizontal resizable">
@@ -35,3 +36,4 @@
     </div>
 	<%uiform.end()%>
 </div>
+<%=org.exoplatform.forum.common.webui.WebUIUtils.addScriptSyntaxhighlighter()%>

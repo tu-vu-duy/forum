@@ -49,13 +49,13 @@
 			 
 				<td class="center">
 					<span class="uiCheckbox">
-						<input type="checkbox" rel="tooltip" data-placement="bottom" title="View Pages" $checked class="checkbox" onclick="<%=uicomponent.event("TogglePermission", owner + "," + permission)%>">
+						<input type="checkbox" $checked class="checkbox" onclick="<%=uicomponent.event("TogglePermission", owner + "," + permission)%>">
 						<span></span>
 					</span>
 				</td>
 			 <% } %>
 				<td class="center">
-					<a href="<%=uicomponent.event("RemoveOwner", owner)%>" rel="tooltip" data-placement="bottom" title="<%=_ctx.appRes("UIPermissionGrid.label.Remove");%>" class="actionIcon"><i class="uiIconDelete uiIconLightGray"></i></a>
+					<a href="javascript:void(0);" onclick="<%=uicomponent.event("RemoveOwner", owner)%>" rel="tooltip" data-placement="bottom" title="<%=_ctx.appRes("UIPermissionGrid.label.Remove");%>" class="actionIcon"><i class="uiIconDelete uiIconLightGray"></i></a>
 				</td>
 		  </tr>
 		  <% } 

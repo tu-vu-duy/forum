@@ -27,6 +27,7 @@ import java.util.ResourceBundle;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.portlet.PortletPreferences;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.container.ExoContainerContext;
@@ -43,6 +44,7 @@ import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.user.CommonContact;
 import org.exoplatform.forum.common.user.ContactProvider;
+import org.exoplatform.forum.common.webui.WebUIUtils;
 import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.log.ExoLogger;
@@ -139,6 +141,20 @@ public class FAQUtils {
       }
     }
   }
+  
+  
+  public static String getCategoryPathName(String categoryPathName, boolean isReplaceIcon) {
+    if (isFieldEmpty(categoryPathName)) {
+      return "";
+    }
+    StringBuffer buffer = new StringBuffer(WebUIUtils.getLabel("UIBreadcumbs", Utils.CATEGORY_HOME));
+    categoryPathName = categoryPathName.replaceFirst(Utils.CATEGORY_HOME, "");
+    if(isReplaceIcon == true) {
+      categoryPathName = categoryPathName.replaceAll(" > ", "<i class=\"uiIconArrowRightMini uiIconLightGray\"></i>");
+    }
+
+    return buffer.append(categoryPathName).toString();
+  } 
 
   public static InternetAddress[] getInternetAddress(String addressList) throws Exception {
     if (isFieldEmpty(addressList))
@@ -203,11 +219,11 @@ public class FAQUtils {
    * @return Full name of user. The current user is implied if userName is null.
    * @throws Exception
    */
-  static public String getFullName(String userName) throws Exception {
-    if (userName == null) {
-      return getUserFullName(getCurrentUserObject());
-    }
+  static public String getFullName(String userName) {
     try {
+      if (userName == null) {
+        return getUserFullName(getCurrentUserObject());
+      }
       OrganizationService organizationService = (OrganizationService) PortalContainer.getComponent(OrganizationService.class);
       User user = organizationService.getUserHandler().findUserByName(userName);
       return getUserFullName(user);
@@ -394,7 +410,7 @@ public class FAQUtils {
     } catch (Exception e) {
       log.debug("No forum settings found for date format. Will use format " + format);
     }
-    format = format.replace("EEE,MMM", "EEE, MMM").replaceAll("D", "E");
+    format = format.replaceAll("D", "E").replace("EEE,MMM", "EEE, MMM").replace("d,y", "d, y");
     return TimeConvertUtils.getFormatDate(myDate, format);
   }
 
@@ -406,7 +422,7 @@ public class FAQUtils {
     return getFormatDate(DateFormat.SHORT, myDate);
   }
 
-  public static String getUserAvatar(String userName) throws Exception {
+  public static String getUserAvatar(String userName) {
     String url = "";
     try {
       FAQService service = getFAQService();
@@ -450,6 +466,22 @@ public class FAQUtils {
     }
     return "";
   }
+
+  /**
+   * Get portlet uri
+   * 
+   * @return
+   */
+  public static String getPortletURI() {
+    try {
+      PortalRequestContext portalContext = Util.getPortalRequestContext();
+      String selectedNode = Util.getUIPortal().getSelectedUserNode().getURI();
+      return new StringBuilder(portalContext.getPortalURI()).append(selectedNode).toString();
+    } catch (Exception e) {
+      return ((HttpServletRequest) Util.getPortalRequestContext().getRequest()).getRequestURL().toString();
+    }
+  }
+  
   /**
    * Get question uri by question id of question relative path.
    * 
@@ -459,10 +491,7 @@ public class FAQUtils {
    * @throws Exception
   */
   public static String getQuestionURI(String param, boolean isAnswer) throws Exception {
-    PortalRequestContext portalContext = Util.getPortalRequestContext();
-    String selectedNode = Util.getUIPortal().getSelectedUserNode().getURI();
-    return  portalContext.getPortalURI().concat(selectedNode)
-                         .concat(Utils.QUESTION_ID).concat(param).concat((isAnswer)?Utils.ANSWER_NOW.concat("true"):"");
+    return  getPortletURI().concat(Utils.QUESTION_ID).concat(param).concat((isAnswer)?Utils.ANSWER_NOW.concat("true"):"");
   }
   
   public static String getLinkDiscuss(String topicId) throws Exception {

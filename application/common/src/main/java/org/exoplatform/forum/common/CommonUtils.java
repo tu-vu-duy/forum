@@ -24,12 +24,15 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -97,6 +100,8 @@ public class CommonUtils {
   public static final String         FROM_KEY     = "gatein.email.smtp.from";
 
   private static final String        SPECIAL_CHARACTOR_FORSERACH_REGEX = "[^\\pL\\pM\\p{Nd}\\p{Nl}\\p{Pc}[\\p{InEnclosedAlphanumerics}&&\\p{So}]\\?\\*%0-9]";
+  
+  private static final String        SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX = "[^\\pL\\pM\\p{Nd}\\p{Nl}\\p{Pc}[\\p{InEnclosedAlphanumerics}&&\\p{So}]0-9]";
   
   private static final String        SPECIAL_CHARACTOR_REGEX = "[^\\pL\\pM\\p{Nd}\\p{Nl}\\p{Pc}[\\p{InEnclosedAlphanumerics}&&\\p{So}]\\ %0-9]";
 
@@ -324,6 +329,49 @@ public class CommonUtils {
     result = result.replaceAll("\\s+", " ");
     return result.trim();
   }
+  
+  public static String removeSpecialCharacterForUnifiedSearch(String input) {
+    if (isEmpty(input)) {
+      return input;
+    }
+    StringBuilder builder = new StringBuilder();
+    String[] tab = input.split(" ");
+    for (String s : tab){
+      if (isEmpty(s)) continue;
+      String searchTerm = s.split("~")[0];
+      searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
+      builder.append(searchTerm).append(" ");
+    }
+    return builder.toString().trim();
+  }
+  
+  public static String processUnifiedSearchSearchCondition(String input) {
+    if (isEmpty(input) || input.indexOf("~") < 0 || input.indexOf("\\~") > 0) {
+      return input;
+    }
+    StringBuilder builder = new StringBuilder();
+    String[] tab = input.split(" ");
+    for (String s : tab){
+      if (isEmpty(s)) continue;
+      String searchTerm = s.split("~")[0];
+      String similarity = s.split("~").length > 1 ? s.split("~")[1] : "0.5";
+      searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
+      builder.append(searchTerm).append("~").append(similarity).append(" ");
+    }
+    return builder.toString().trim();
+  }
+  
+  public static String processLikeCondition(String input) {
+    StringBuilder builder = new StringBuilder();
+    String[] tab = input.split(" ");
+    for (String s : tab){
+      if (isEmpty(s)) continue;
+      String searchTerm = s.split("~")[0];
+      searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
+      builder.append(PERCENT_STR).append(searchTerm).append(PERCENT_STR).append(" ");
+    }
+    return builder.toString().trim();
+  }
 
   /**
    * To check the input content has special characters or not.
@@ -349,18 +397,9 @@ public class CommonUtils {
     StringBuffer searchConditionBuffer = new StringBuffer();
     //process the special characters
     searchCondition = removeSpecialCharacterForSearch(searchCondition);
+    searchCondition = searchCondition.replace(ASTERISK_STR, PERCENT_STR);
+    searchConditionBuffer.append(PERCENT_STR).append(searchCondition).append(PERCENT_STR);
     
-    if (!searchCondition.contains(ASTERISK_STR) && !searchCondition.contains(PERCENT_STR)) {
-      if (searchCondition.startsWith(ASTERISK_STR) == false) {
-        searchConditionBuffer.append(ASTERISK_STR).append(searchCondition);
-      }
-      if (searchCondition.endsWith(ASTERISK_STR) == false) {
-        searchConditionBuffer.append(ASTERISK_STR);
-      }
-    } else {
-      searchCondition = searchCondition.replace(ASTERISK_STR, PERCENT_STR);
-      searchConditionBuffer.append(PERCENT_STR).append(searchCondition).append(PERCENT_STR);
-    }
     return searchConditionBuffer.toString();
   }
   
@@ -548,20 +587,19 @@ public class CommonUtils {
     if (isEmpty(s)){
       return s;
     }
-    getValueTokens();
     for (String token : tokens) {
       if (lIgnore.contains(token)){
         continue;
       }
-      while (s.indexOf(token) >= 0) {
+      while (token != null && s.indexOf(token) >= 0) {
         s = StringUtils.replace(s, token, charcodes.get(token));
       }
     }
     return s;
   }
   
-  private static void getValueTokens() {
-    if(tokens.size() <= 0) {
+  static {
+    if(tokens.isEmpty()) {
       String token;
       // Tokens by HTML(Decimal) code.
       for (int t = Character.MIN_CODE_POINT; t < Character.MAX_CODE_POINT; t++) {
@@ -622,5 +660,5 @@ public class CommonUtils {
     SessionProviderService sessionProviderService = getComponent(SessionProviderService.class);
     return sessionProviderService.getSystemSessionProvider(null);
   }
-
+  
 }

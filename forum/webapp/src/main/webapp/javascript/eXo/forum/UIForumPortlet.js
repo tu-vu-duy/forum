@@ -368,24 +368,71 @@
         parentCheckBox.prop("checked", elm.checked);
       }
     },
-
+    
+    showTree: function(node) {
+      var jnode = $(node);
+      var pNode = jnode.parent('.node:first');
+      var groupNode = pNode.find(' > .nodeGroup');
+      if(groupNode.css('display') === 'none') {
+        var pNodeGroup = pNode.parent('.nodeGroup:first');
+        pNodeGroup.find('.nodeGroup').hide();
+        var nodes = pNodeGroup.find('.uiIconNode');
+        $.each(nodes, function(i, elm) {
+          var elm = $(this);
+          if (elm.parent('.node').find('.nodeGroup').exists()) {
+            elm.attr('class', 'uiIconNode collapseIcon');
+          } else {
+            elm.attr('class', 'uiIconNode uiIconEmpty');
+          }
+        });
+        
+        //
+        groupNode.show();
+        jnode.attr('class', 'uiIconNode expandIcon');
+      } else {
+        groupNode.hide();
+        jnode.attr('class', 'uiIconNode collapseIcon');
+      }
+      
+    },
+    
+    initTreeNode : function(formId) {
+      var container = $.fn.findId(formId);
+      var treeContainer = container.find('div.treeContainer:first');
+      var groupFirst = treeContainer.find('.nodeGroup:first');
+      var listNode = groupFirst.find('.uiIconNode');
+      listNode.on('click',  function(e) {
+        if($(this).parent('.node').find('.nodeGroup').exists()) {
+          UIForumPortlet.showTree(this)
+        }
+      });
+      groupFirst.find('.nodeGroup').hide();
+      
+      groupFirst.find('.nodeGroup:first').parent('.node:first')
+                .find('.uiIconNode:first').click();
+    },
+    
     initVote : function(voteId, rate) {
       var vote = $.fn.findId(voteId);
       rate = parseInt(rate);
       var optsContainer = vote.find('div.optionsContainer:first');
-    optsContainer.attr('data-rate', rate);
+      optsContainer.attr('data-rate', rate);
       var options = optsContainer.children('i');
       options.on('mouseover', UIForumPortlet.overVote);
       options.on('blur', UIForumPortlet.overVote);
 
-      vote.on('mouseover', UIForumPortlet.parentOverVote);
-      //vote.on('blur', UIForumPortlet.parentOverVote);
       optsContainer.on('mouseover', utils.cancelEvent);
       optsContainer.on('blur', utils.cancelEvent);
+      
+      vote.on('mouseover', function() {
+        UIForumPortlet.parentOverVote(this);
+      });
+
+      UIForumPortlet.parentOverVote(vote);
     },
 
-    parentOverVote : function(event) {
-      var optsCon = $(this).find('div.optionsContainer:first');
+    parentOverVote : function(elm) {
+      var optsCon = $(elm).find('div.optionsContainer:first');
       var opts = optsCon.children('i');
       var rate = optsCon.attr('data-rate');
       for ( var j = 0; j < opts.length; j++) {
@@ -405,7 +452,6 @@
           break;
         opts.eq(i).attr('class', 'uiIconNormalVote');
       }
-    optsCon.attr('data-rate', (i+1));
       if (opts.eq(i).attr('class') == "uiIconOverVote")
         return;
       for (; i >= 0; i--) {
@@ -433,14 +479,20 @@
           var body = $('body')[0];
           if (body.scrollTop > 250) {
             script: scroll(0, 0);
-            var viewPage = $('#KSMaskLayer');
-            if (viewPage.exists())
-              viewPage[0].scrollIntoView(true);
+            setTimeout(function() {
+              var viewPage = $('#KSMaskLayer');
+              if (viewPage.exists()) {
+                viewPage[0].scrollIntoView(true);
+              }
+            }, 1000);
           }
         } else {
-          var obj = document.getElementById(idLastPost);
-          if (obj)
-            obj.scrollIntoView(true);
+          setTimeout(function() {
+            var obj = document.getElementById(idLastPost);
+            if (obj) {
+              obj.scrollIntoView(true);
+            }
+          }, 1000);
         }
       }
     },
@@ -630,13 +682,16 @@
     },
 
     resetFielForm : function(idElm) {
-      var elm = $.fn.findId(idElm);
-      elm.find("input:checkbox").val('false');
-      elm.find("input:text").val('');
-      if (elm.find("input.UISliderInput").exists()) {
-        eXo.webui.UISliderControl.reset(elm.find("input.UISliderInput"));
+      var form = $.fn.findId(idElm);
+      form.find("input:checkbox").attr('checked', false);
+      form.find("input:text").val('');
+      var slider = form.find(".uiFormSliderInput");
+      if (slider.exists()) {
+        $.each(slider, function(i, item) {
+          eXo.forum.UISliderControl.reset($(item));
+        });
       }
-      elm.find("textarea").val('');
+      form.find("textarea").val('');
     },
 
     RightClickBookMark : function(elmId) {

@@ -55,7 +55,9 @@ public class Post {
 
   private boolean               isHidden        = false;
   
-  private boolean               isWaiting           = false;
+  private boolean               isWaiting       = false;
+
+  private boolean               isFirstPost     = false;
 
   private long                  numberAttach    = 0;
 
@@ -198,6 +200,9 @@ public class Post {
 
   public void setAttachments(List<ForumAttachment> attachments) {
     this.attachments = attachments;
+    if (attachments != null && this.numberAttach == 0) {
+      this.numberAttach = attachments.size();
+    }
   }
 
   public boolean getIsHidden() {
@@ -214,6 +219,14 @@ public class Post {
 
   public void setIsWaiting(boolean isWaiting) {
     this.isWaiting = isWaiting;
+  }
+
+  public boolean getIsFirstPost() {
+    return isFirstPost;
+  }
+
+  public void setFirstPost(boolean isFirstPost) {
+    this.isFirstPost = isFirstPost;
   }
 
   public boolean getIsActiveByTopic() {
