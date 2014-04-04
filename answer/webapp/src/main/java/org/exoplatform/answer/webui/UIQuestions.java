@@ -881,7 +881,7 @@ public class UIQuestions extends UIContainer {
       UIQuestions question = event.getSource();
       String userId = event.getRequestContext().getRequestParameter(OBJECTID);
       userId = CommonUtils.decodeSpecialCharToHTMLnumber(userId);
-      User user = UserHelper.getUserHandler().findUserByName(userId, UserStatus.BOTH);
+      User user = UserHelper.getUserHandler().findUserByName(userId, UserStatus.ANY);
       if (user != null) {
         UIAnswersPortlet portlet = question.getAncestorOfType(UIAnswersPortlet.class);
         UIPopupAction popupAction = portlet.getChild(UIPopupAction.class);

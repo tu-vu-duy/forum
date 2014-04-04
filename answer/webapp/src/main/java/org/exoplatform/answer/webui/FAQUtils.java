@@ -207,7 +207,7 @@ public class FAQUtils {
     if (userName == null) {
       return getCurrentUserObject().getEmail();
     } else {
-      User user = UserHelper.getUserHandler().findUserByName(userName, UserStatus.BOTH);
+      User user = UserHelper.getUserHandler().findUserByName(userName, UserStatus.ANY);
       if (user != null) {
         return user.getEmail();
       }
@@ -225,7 +225,7 @@ public class FAQUtils {
       if (userName == null) {
         return getUserFullName(getCurrentUserObject());
       }
-      User user = UserHelper.getUserHandler().findUserByName(userName, UserStatus.BOTH);
+      User user = UserHelper.getUserHandler().findUserByName(userName, UserStatus.ANY);
       return getUserFullName(user);
     } catch (Exception e) {
       return getScreenName(userName, "");
