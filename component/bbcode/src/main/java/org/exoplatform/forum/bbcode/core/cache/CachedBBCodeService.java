@@ -19,6 +19,7 @@ package org.exoplatform.forum.bbcode.core.cache;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.SerializationUtils;
 import org.exoplatform.forum.bbcode.api.BBCode;
 import org.exoplatform.forum.bbcode.api.BBCodeService;
 import org.exoplatform.forum.bbcode.core.BBCodeServiceImpl;
@@ -98,7 +99,9 @@ public class CachedBBCodeService implements Startable, BBCodeService {
           public ListBBCodeData execute() {
             try {
               List<BBCode> got = getBBCodeActive();
-              return buildBBCodeInput(got);
+              ListBBCodeData bb = buildBBCodeInput(got);
+              System.out.println("\nListBBCodeData:{ size: 1, capacity: " + SerializationUtils.serialize(bb).length + "}\n");
+              return bb;
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
@@ -112,7 +115,7 @@ public class CachedBBCodeService implements Startable, BBCodeService {
   public List<BBCode> getBBCodeActive() throws Exception {
     return this.bbCodeService.getBBCodeActive();
   }
-
+  private static ArrayList<BBCodeCacheData>data = new ArrayList<BBCodeCacheData>();
   @Override
   public BBCode findById(final String bbcodeId) throws Exception {
     return bbCodeDataFuture.get(
@@ -121,7 +124,10 @@ public class CachedBBCodeService implements Startable, BBCodeService {
           try {
             BBCode got = bbCodeService.findById(bbcodeId);
             if (got != null) {
-              return new BBCodeCacheData(got);
+              BBCodeCacheData dataC = new BBCodeCacheData(got);
+              data.add(dataC);
+              System.out.println("\nBBCodeCacheData:{ size: " + data.size() + ", capacity: " + SerializationUtils.serialize(data).length + "}\n");
+              return dataC ;
             } else {
               return BBCodeCacheData.NULL;
             }

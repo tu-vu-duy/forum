@@ -84,6 +84,7 @@ import org.exoplatform.forum.service.impl.JCRDataStorage;
 import org.exoplatform.forum.service.impl.model.PostFilter;
 import org.exoplatform.forum.service.impl.model.TopicFilter;
 import org.exoplatform.management.annotations.Managed;
+import org.exoplatform.management.annotations.ManagedBy;
 import org.exoplatform.management.annotations.ManagedDescription;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
@@ -93,6 +94,7 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.User;
 import org.picocontainer.Startable;
 
+@ManagedBy(ByteStaticManager.class)
 public class CachedDataStorage implements DataStorage, Startable {
 
   private static final Log LOG = ExoLogger.getLogger(CachedDataStorage.class);
@@ -145,6 +147,8 @@ public class CachedDataStorage implements DataStorage, Startable {
   private FutureExoCache<SimpleCacheKey, SimpleCacheData, ServiceContext<SimpleCacheData>> miscDataFuture;
 
   private ForumStatistic statistic;
+  
+  private ByteStaticManager byteStaticManager;
 
   public CachedDataStorage(CacheService service, JCRDataStorage storage) {
     
@@ -153,6 +157,10 @@ public class CachedDataStorage implements DataStorage, Startable {
     this.completionService = CommonsUtils.getService(LifeCycleCompletionService.class);
   }
 
+  public void setViewBean(ByteStaticManager byteStaticManager) {
+    this.byteStaticManager = byteStaticManager;
+  }
+  
   private void clearCategoryCache(String id) throws Exception {
     categoryData.remove(new CategoryKey(id));
   }
@@ -168,6 +176,7 @@ public class CachedDataStorage implements DataStorage, Startable {
   private void clearForumCache(Forum forum, boolean isPutNewKey) throws Exception {
     if (isPutNewKey) {
       forumData.put(new ForumKey(forum), new ForumData(forum));
+      byteStaticManager.put(ByteStaticManager.TYPE.forum, new ForumData(forum), new ForumKey(forum));
     } else {
       forumData.remove(new ForumKey(forum));
     }
@@ -252,6 +261,9 @@ public class CachedDataStorage implements DataStorage, Startable {
       if (isPutNewKey) {
         objectNameData.put(new ObjectNameKey(categoryId + "/" + forumId), forumData);
         objectNameData.put(new ObjectNameKey(forumId, Utils.FORUM), forumData);
+        
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, forumData, new ObjectNameKey(forumId, Utils.FORUM));
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, forumData, new ObjectNameKey(categoryId + "/" + forumId));
       } else {
         objectNameData.remove(new ObjectNameKey(categoryId + "/" + forumId));
         objectNameData.remove(new ObjectNameKey(forumId, Utils.FORUM));
@@ -263,6 +275,7 @@ public class CachedDataStorage implements DataStorage, Startable {
     
     if (isNew) {
       CategoryData categoryData = new CategoryData(category);
+      byteStaticManager.put(ByteStaticManager.TYPE.objectName, categoryData, new ObjectNameKey(category.getId(), Utils.CATEGORY));
       objectNameData.put(new ObjectNameKey(category.getId(), Utils.CATEGORY), categoryData);
     } else {
       objectNameData.remove(new ObjectNameKey(category.getId(), Utils.CATEGORY));
@@ -285,6 +298,7 @@ public class CachedDataStorage implements DataStorage, Startable {
    */
   public void refreshUserProfile(UserProfile profile) throws Exception {
     SimpleCacheKey key = new SimpleCacheKey(PROFILE_KEY, profile.getUserId());
+    byteStaticManager.put(ByteStaticManager.TYPE.miscData, new SimpleCacheData<UserProfile>(profile), key);
     miscData.put(key, new SimpleCacheData<UserProfile>(profile));
   }
   
@@ -306,6 +320,7 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public void start() {
 
+    byteStaticManager.registerManager(this);
     //
     this.categoryData = CacheType.CATEGORY_DATA.getFromService(service);
     this.categoryList = CacheType.CATEGORY_LIST.getFromService(service);
@@ -399,6 +414,7 @@ public class CachedDataStorage implements DataStorage, Startable {
       key = new PostKey(p);
       data.add(key);
       postData.put(key, new PostData(p));
+      byteStaticManager.put(ByteStaticManager.TYPE.post, new PostData(p), key);
     }
     return new ListPostData(data);
   }
@@ -558,7 +574,10 @@ public class CachedDataStorage implements DataStorage, Startable {
         categoryListFuture.get(
             new ServiceContext<ListCategoryData>() {
               public ListCategoryData execute() {
-                return buildCategoryInput(storage.getCategories());
+                ListCategoryData data = buildCategoryInput(storage.getCategories());
+                byteStaticManager.put(ByteStaticManager.TYPE.cateList, data, new CategoryListKey(null));
+                
+                return data;
               }
             },
             new CategoryListKey(null)
@@ -575,6 +594,7 @@ public class CachedDataStorage implements DataStorage, Startable {
           try {
             Category got = storage.getCategory(categoryId);
             if (got != null) {
+              byteStaticManager.put(ByteStaticManager.TYPE.category, new CategoryData(got), new CategoryKey(categoryId));
               return new CategoryData(got);
             }
             else {
@@ -601,6 +621,8 @@ public class CachedDataStorage implements DataStorage, Startable {
   public void saveCategory(Category category, boolean isNew) throws Exception {
     storage.saveCategory(category, isNew);
     categoryData.put(new CategoryKey(category), new CategoryData(category));
+    byteStaticManager.put(ByteStaticManager.TYPE.category, new CategoryData(category), new CategoryKey(category));
+    
     categoryList.select(new ScopeCacheSelector<CategoryListKey, ListCategoryData>());
     clearLinkListCache();
     clearObjectCache(category, isNew);
@@ -652,18 +674,22 @@ public class CachedDataStorage implements DataStorage, Startable {
   private List<Forum> getForums(final String categoryId, final String strQuery, final boolean isSummary) throws Exception {
     
     SortSettings sort = storage.getForumSortSettings();
-    SortField orderBy = sort.getField();
-    Direction orderType = sort.getDirection();
+    final SortField orderBy = sort.getField();
+    final Direction orderType = sort.getDirection();
 
     return buildForumOutput(
         forumListFuture.get(
             new ServiceContext<ListForumData>() {
               public ListForumData execute() {
                 try {
+                  ListForumData forumData;
                   if(isSummary) {
-                    return buildForumInput(storage.getForumSummaries(categoryId, strQuery));
+                    forumData= buildForumInput(storage.getForumSummaries(categoryId, strQuery));
                   }
-                  return buildForumInput(storage.getForums(categoryId, strQuery));
+                  forumData = buildForumInput(storage.getForums(categoryId, strQuery));
+                  byteStaticManager.put(ByteStaticManager.TYPE.forumList, forumData, new ForumListKey(categoryId, strQuery, orderBy, orderType));
+                  
+                  return forumData;
                 } catch (Exception e) {
                   throw new RuntimeException(e);
                 }
@@ -687,6 +713,7 @@ public class CachedDataStorage implements DataStorage, Startable {
           public ForumData execute() {
             Forum got = storage.getForum(categoryId, forumId);
             if (got != null) {
+              byteStaticManager.put(ByteStaticManager.TYPE.forum, new ForumData(got), new ForumKey(got));
               return new ForumData(got);
             }
             else {
@@ -763,13 +790,16 @@ public class CachedDataStorage implements DataStorage, Startable {
   @Override
   public List<Topic> getTopics(final TopicFilter filter, final int offset, final int limit) throws Exception {
 
-    TopicListKey key = new TopicListKey(filter, offset, limit);
+    final TopicListKey key = new TopicListKey(filter, offset, limit);
 
     ListTopicData data = topicListFuture.get(new ServiceContext<ListTopicData>() {
       @Override
       public ListTopicData execute() {
         try {
-          return buildTopicInput(storage.getTopics(filter, offset, limit));
+          ListTopicData data = buildTopicInput(storage.getTopics(filter, offset, limit));
+          byteStaticManager.put(ByteStaticManager.TYPE.topicList, data, key);
+          
+          return data;
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -785,6 +815,7 @@ public class CachedDataStorage implements DataStorage, Startable {
     for (Topic p : topics) {
       key = new TopicKey(p);
       data.add(key);
+      byteStaticManager.put(ByteStaticManager.TYPE.topic, new TopicData(p), key);
       topicData.put(key, new TopicData(p));
     }
     return new ListTopicData(data);
@@ -852,6 +883,7 @@ public class CachedDataStorage implements DataStorage, Startable {
             try {
               Topic got = storage.getTopicSummary(topicPath);
               if (got != null) {
+                byteStaticManager.put(ByteStaticManager.TYPE.topic, new TopicData(got), new TopicKey(Utils.getSubPath(topicPath.toUpperCase()), false));
                 return new TopicData(got);
               } else {
                 return TopicData.NULL;
@@ -883,6 +915,9 @@ public class CachedDataStorage implements DataStorage, Startable {
             try {
               Topic got = storage.getTopicByPath(topicPath, isLastPost);
               if (got != null) {
+                byteStaticManager.put(ByteStaticManager.TYPE.topic, new TopicData(got),new TopicKey(topicPath, isLastPost));
+                
+                
                 return new TopicData(got);
               } else {
                 return TopicData.NULL;
@@ -1006,7 +1041,7 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public Post getPost(final String categoryId, final String forumId, final String topicId, final String postId) throws Exception {
 
-    PostKey key = new PostKey(categoryId, forumId, topicId, postId);
+    final PostKey key = new PostKey(categoryId, forumId, topicId, postId);
 
     return postDataFuture.get(
         new ServiceContext<PostData>() {
@@ -1017,6 +1052,8 @@ public class CachedDataStorage implements DataStorage, Startable {
               if (got == null) {
                 return PostData.NULL;
               } else {
+                byteStaticManager.put(ByteStaticManager.TYPE.post, new PostData(got), key);
+                
                 return new PostData(got);
               }
             } catch (Exception e) {
@@ -1137,14 +1174,18 @@ public class CachedDataStorage implements DataStorage, Startable {
 
   public String getScreenName(final String userName) throws Exception {
 
-    SimpleCacheKey key = new SimpleCacheKey(SCREEN_NAME_KEY, userName);
+    final SimpleCacheKey key = new SimpleCacheKey(SCREEN_NAME_KEY, userName);
 
     return (String) miscDataFuture.get(
         new ServiceContext<SimpleCacheData>() {
           public SimpleCacheData<Comparable> execute() {
             try {
               String got = storage.getScreenName(userName);
-              return new SimpleCacheData<Comparable>(got);
+              
+              SimpleCacheData<Comparable> data = new SimpleCacheData<Comparable>(got);
+              byteStaticManager.put(ByteStaticManager.TYPE.miscData, data, key);
+              
+              return data;
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
@@ -1317,14 +1358,19 @@ public class CachedDataStorage implements DataStorage, Startable {
     if (data == null) {
       Object got = storage.getObjectNameByPath(path);
       if (got instanceof Post) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new PostData((Post) got), key);
         objectNameData.put(key, new PostData((Post) got));
       } else if (got instanceof Topic) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new TopicData((Topic) got), key);
         objectNameData.put(key, new TopicData((Topic) got));
       } else if (got instanceof Forum) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new ForumData((Forum) got), key);
         objectNameData.put(key, new ForumData((Forum) got));
       } else if (got instanceof Category) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new CategoryData((Category) got), key);
         objectNameData.put(key, new CategoryData((Category) got));
       } else if (got instanceof Tag) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new TagData((Tag) got), key);
         objectNameData.put(key, new TagData((Tag) got));
       } else {
         objectNameData.put(key, TopicData.NULL);
@@ -1344,14 +1390,19 @@ public class CachedDataStorage implements DataStorage, Startable {
     if (data == null) {
       Object got = storage.getObjectNameById(id, type);
       if (got instanceof Post) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new PostData((Post) got), key);
         objectNameData.put(key, new PostData((Post) got));
       } else if (got instanceof Topic) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new TopicData((Topic) got), key);
         objectNameData.put(key, new TopicData((Topic) got));
       } else if (got instanceof Forum) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new ForumData((Forum) got), key);
         objectNameData.put(key, new ForumData((Forum) got));
       } else if (got instanceof Category) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new CategoryData((Category) got), key);
         objectNameData.put(key, new CategoryData((Category) got));
       } else if (got instanceof Tag) {
+        byteStaticManager.put(ByteStaticManager.TYPE.objectName, new TagData((Tag) got), key);
         objectNameData.put(key, new TagData((Tag) got));
       } else {
         objectNameData.put(key, TopicData.NULL);
@@ -1421,14 +1472,17 @@ public class CachedDataStorage implements DataStorage, Startable {
   // TODO : need range
   public List<Watch> getWatchByUser(final String userId) throws Exception {
 
-    SimpleCacheKey key = new SimpleCacheKey(null, userId);
+    final SimpleCacheKey key = new SimpleCacheKey(null, userId);
 
     return buildWatchOutput(watchListDataFuture.get(
       new ServiceContext<ListWatchData>() {
         public ListWatchData execute() {
           try {
             List<Watch> got = storage.getWatchByUser(userId);
-            return buildWatchInput(got);
+            ListWatchData data = buildWatchInput(got);
+            byteStaticManager.put(ByteStaticManager.TYPE.watched, data, key);
+            
+            return data;
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -1706,14 +1760,16 @@ public class CachedDataStorage implements DataStorage, Startable {
   
   public List<Post> getPosts(final PostFilter filter, final int offset, final int limit) throws Exception {
 
-    PostListKey key = new PostListKey(filter, offset, limit);
+    final PostListKey key = new PostListKey(filter, offset, limit);
 
     return buildPostOutput(postListFuture.get(
         new ServiceContext<ListPostData>() {
           public ListPostData execute() {
             try {
               List<Post> got = storage.getPosts(filter, offset, limit);
-              return buildPostInput(got);
+              ListPostData data = buildPostInput(got);
+              byteStaticManager.put(ByteStaticManager.TYPE.postList, data, key);
+              return data;
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
@@ -1771,6 +1827,7 @@ public class CachedDataStorage implements DataStorage, Startable {
     return storage.getUnifiedSearch(textQuery, userId, offset, limit, sort, order);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public List<String> getForumUserCanView(final List<String> listOfUser, final List<String> listForumIds) throws Exception {
     String key = UserProfile.USER_GUEST;
@@ -1780,14 +1837,17 @@ public class CachedDataStorage implements DataStorage, Startable {
     if (listForumIds != null && listForumIds.isEmpty() == false) {
       key += listForumIds.toString();
     }
-    SimpleCacheKey canViewKey = new SimpleCacheKey(FORUM_CAN_VIEW_KEY, key);
+    final SimpleCacheKey canViewKey = new SimpleCacheKey(FORUM_CAN_VIEW_KEY, key);
 
     return (List<String>)miscDataFuture.get(
         new ServiceContext<SimpleCacheData>() {
           public SimpleCacheData<List<String>> execute() {
             try {
               List<String> got = storage.getForumUserCanView(listOfUser, listForumIds);
-              return new SimpleCacheData<List<String>>(got);
+              
+              SimpleCacheData<List<String>> data = new SimpleCacheData<List<String>>(got);
+              byteStaticManager.put(ByteStaticManager.TYPE.miscData, data, canViewKey);
+              return data;
             } catch (Exception e) {
               throw new RuntimeException(e);
             }

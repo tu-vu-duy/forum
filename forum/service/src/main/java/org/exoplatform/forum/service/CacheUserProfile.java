@@ -17,7 +17,9 @@
 package org.exoplatform.forum.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
+import org.apache.commons.lang.SerializationUtils;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
@@ -29,6 +31,7 @@ public class CacheUserProfile {
     return cacheService.getCacheInstance("forum.UserProfiles");
   }
 
+  private static ArrayList<UserProfile>data = new ArrayList<UserProfile>();
   /**
    * Store the UserProfile of the user online storage in cache
    * @param userName
@@ -38,6 +41,9 @@ public class CacheUserProfile {
     ExoCache<Serializable, UserProfile> cache = getCache();
     Serializable cacheKey = getCacheKey(userName);
     cache.put(cacheKey, userProfile);
+    
+    data.add(userProfile);
+    System.out.println("\nCacheUserProfiles:{ size: " + data.size() + ", capacity: " + SerializationUtils.serialize(data).length + "}\n");
   }
 
   /**
