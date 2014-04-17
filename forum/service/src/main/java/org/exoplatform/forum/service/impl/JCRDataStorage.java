@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
@@ -67,7 +68,6 @@ import org.exoplatform.commons.utils.ISO8601;
 import org.exoplatform.commons.utils.XPathUtils;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.TransformHTML;
@@ -79,6 +79,7 @@ import org.exoplatform.forum.common.jcr.KSDataLocation;
 import org.exoplatform.forum.common.jcr.KSDataLocation.Locations;
 import org.exoplatform.forum.common.jcr.PropertyReader;
 import org.exoplatform.forum.common.jcr.SessionManager;
+import org.exoplatform.forum.common.lifecycle.LifeCycleCompletionService;
 import org.exoplatform.forum.service.BufferAttachment;
 import org.exoplatform.forum.service.CalculateModeratorEventListener;
 import org.exoplatform.forum.service.Category;
@@ -204,6 +205,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   
   private DataStorage cachedStorage;
   
+  private LifeCycleCompletionService completionService;
+  
   public JCRDataStorage() {
   }
 
@@ -211,12 +214,19 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     setDataLocator(dataLocator);
   }
   
-  public DataStorage getCachedDataStorage()  {
+  private DataStorage getCachedDataStorage()  {
     if (cachedStorage == null) {
-      cachedStorage = (DataStorage) PortalContainer.getInstance().getComponentInstanceOfType(DataStorage.class);
+      cachedStorage = CommonsUtils.getService(DataStorage.class);
     }
     
     return cachedStorage;
+  }
+
+  private LifeCycleCompletionService getCompletionService() {
+    if (completionService == null) {
+      completionService = CommonsUtils.getService(LifeCycleCompletionService.class);
+    }
+    return completionService;
   }
 
 
@@ -2581,7 +2591,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
           }
           case Utils.APPROVE: {
             topicNode.setProperty(EXO_IS_APPROVED, topic.getIsApproved());
-            sendNotification(topicNode.getParent(), topic, null, new MessageBuilder(), true);
+            addNotificationTask(topicNode.getParent().getPath(), topic, null, new MessageBuilder(), true);
             setActivePostByTopic(sProvider, topicNode, topic.getIsApproved());
             getTotalJobWatting(sProvider, userIdsp);
             break;
@@ -2595,7 +2605,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
             topicNode.setProperty(EXO_IS_WAITING, isWaiting);
             setActivePostByTopic(sProvider, topicNode, !(isWaiting));
             if (!isWaiting) {
-              sendNotification(topicNode.getParent(), topic, null, new MessageBuilder(), true);
+              addNotificationTask(topicNode.getParent().getPath(), topic, null, new MessageBuilder(), true);
             }
             getTotalJobWatting(sProvider, userIdsp);
             break;
@@ -2758,7 +2768,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         else
           userProfileNode.save();*/
         
-        sendNotification(forumNode, topic, null, messageBuilder, true);
+        addNotificationTask(forumNode.getPath(), topic, null, messageBuilder, true);
       } else {
         topicNode = forumNode.getNode(topic.getId());
         isChangeClose = (topic.getIsClosed() != topicNode.getProperty(EXO_IS_CLOSED).getBoolean());
@@ -3563,7 +3573,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       post.setPath(postNode.getPath());
       
       if (!isFirstPost) {
-        sendNotification(topicNode, null, post, messageBuilder, true);
+        addNotificationTask(topicNode.getPath(), null, post, messageBuilder, true);
       }
         
       return sendAlertJob;
@@ -3720,9 +3730,16 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     return strs.length > 0;
   }
 
-  private void sendNotification(Node node, Topic topic, Post post, MessageBuilder messageBuilder, boolean isApprovePost) throws Exception {
-    SessionProvider sProvider = CommonUtils.createSystemProvider();
+  private void addNotificationTask(String nodePath, Topic topic, Post post, MessageBuilder messageBuilder, boolean isApprovePost) throws Exception {
+    Callable<Boolean> task = new ForumTaskCompletion.SendNotificationTask(nodePath, topic, post, messageBuilder, isApprovePost);
+    //
+    getCompletionService().addTask(task);
+  }
+
+  public void sendNotification(String nodePath, Topic topic, Post post, MessageBuilder messageBuilder, boolean isApprovePost) throws Exception {
+    SessionProvider sProvider = SessionProvider.createSystemProvider();
     try {
+      Node node = (Node) sessionManager.getSession(sProvider).getItem(nodePath);
       messageBuilder = getInfoMessageMove(sProvider, messageBuilder.getContent(), messageBuilder.getHeaderSubject(), false);
       
       List<String> listUser = new ArrayList<String>();
@@ -3959,6 +3976,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       }
     } catch (Exception e) {
       log.error("Failed to send notification.", e);
+    } finally {
+      sProvider.close();
     }
   }
 
@@ -3984,7 +4003,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
           case Utils.APPROVE: {
             postNode.setProperty(EXO_IS_APPROVED, true);
             post.setIsApproved(true);
-            sendNotification(topicNode, null, post, new MessageBuilder(), false);
+            addNotificationTask(topicNode.getPath(), null, post, new MessageBuilder(), false);
             break;
           }
           case Utils.WAITING: {
@@ -4004,7 +4023,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
               forumNode.setProperty(EXO_POST_COUNT, forumPostCount - 1);
             } else {
               postNode.setProperty(EXO_IS_WAITING, false);
-              sendNotification(topicNode, null, post, new MessageBuilder(), false);
+              addNotificationTask(topicNode.getPath(), null, post, new MessageBuilder(), false);
             }
             break;
           }
@@ -4025,7 +4044,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
               forumNode.setProperty(EXO_POST_COUNT, forumPostCount - 1);
             } else {
               postNode.setProperty(EXO_IS_HIDDEN, false);
-              sendNotification(topicNode, null, post, new MessageBuilder(), false);
+              addNotificationTask(topicNode.getPath(), null, post, new MessageBuilder(), false);
             }
             break;
           }
@@ -7321,40 +7340,47 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     Map<String, List<String>> map = updatingRead;
     updatingRead = new ConcurrentHashMap<String, List<String>>();
     //
-    SessionProvider sysSession = CommonUtils.createSystemProvider();
-
-    for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-      try {
-        if (!getUserProfileHome(sysSession).hasNode(entry.getKey())) {
-          return;
-        }
-        //
-        Node profile = getUserProfileHome(sysSession).getNode(entry.getKey());
-        List<String> values = new PropertyReader(profile).list(EXO_READ_TOPIC, Collections.EMPTY_LIST);
-        //
-        for (String topicId : entry.getValue()) {
+    SessionProvider sProvider = SessionProvider.createSystemProvider();
+    try {
+      Node userHome = getUserProfileHome(sProvider);
+      long currentTime = getGreenwichMeanTime().getTimeInMillis();
+      for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+        try {
+          if (!userHome.hasNode(entry.getKey())) {
+            return;
+          }
           //
-          int i = 0;
-          boolean isUpdated = false;
-          for (String vl : values) {
-            if (vl.indexOf(topicId) == 0) {
-              values.set(i, topicId + ":" + getGreenwichMeanTime().getTimeInMillis());
-              isUpdated = true;
-              break;
+          Node profile = userHome.getNode(entry.getKey());
+          List<String> values = new PropertyReader(profile).list(EXO_READ_TOPIC, new ArrayList<String>());
+          //
+          for (String topicId : entry.getValue()) {
+            //
+            int i = 0;
+            boolean isUpdated = false;
+            for (String vl : values) {
+              if (vl.indexOf(topicId) == 0) {
+                values.set(i, topicId + ":" + currentTime);
+                isUpdated = true;
+                break;
+              }
+              i++;
             }
-            i++;
+            //
+            if (!isUpdated) {
+              values.add(topicId + ":" + currentTime);
+            }
+            //
+            profile.setProperty(EXO_READ_TOPIC, values.toArray(new String[values.size()]));
           }
-          //
-          if (!isUpdated) {
-            values.add(topicId + ":" + getGreenwichMeanTime().getTimeInMillis());
-          }
-          
-          profile.setProperty(EXO_READ_TOPIC, values.toArray(new String[values.size()]));
-          profile.save();
+        } catch (Exception e) {
+          logDebug(String.format("Failed to update user %s acess for topic %s", entry.getKey(), "bar"), e);
         }
-      } catch (Exception e) {
-        logDebug(String.format("Failed to update user %s acess for topic %s", entry.getKey(), "bar"), e);
+        userHome.getSession().save();
       }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      sProvider.close();
     }
   }
 
