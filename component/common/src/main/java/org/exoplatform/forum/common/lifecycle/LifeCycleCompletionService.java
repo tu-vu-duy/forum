@@ -16,63 +16,90 @@
  */
 package org.exoplatform.forum.common.lifecycle;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 
 public class LifeCycleCompletionService {
-  private final String                 THREAD_NUMBER_KEY       = "thread-number";
 
-  private final String                 ASYNC_EXECUTION_KEY     = "async-execution";
+  private final String THREAD_NUMBER_KEY = "thread-number";
 
-  private Executor                     executor;
+  private final String ASYNC_EXECUTION_KEY = "async-execution";
+  
+  private final String KEEP_ALIVE_TIME = "keepAliveTime";
+
+  private Executor executor;
 
   private ExecutorCompletionService<?> ecs;
+  
+  private BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
 
-  private final int                   DEFAULT_THREAD_NUMBER   = 1;
+  private final int DEFAULT_THREAD_NUMBER = 1;
 
-  private final boolean               DEFAULT_ASYNC_EXECUTION = true;
+  private final boolean DEFAULT_ASYNC_EXECUTION = true;
 
-  private int                          configThreadNumber;
+  private int configThreadNumber;
+  
+  private int keepAliveTime;
 
-  private boolean                     configAsyncExecution;
-
+  private boolean configAsyncExecution;
+  
   public LifeCycleCompletionService(InitParams params) {
 
     //
-    ValueParam threadNumber = params.getValueParam(THREAD_NUMBER_KEY);
+    ValueParam threadNumberValue = params.getValueParam(THREAD_NUMBER_KEY);
     ValueParam asyncExecution = params.getValueParam(ASYNC_EXECUTION_KEY);
+    ValueParam aliveTime = params.getValueParam(KEEP_ALIVE_TIME);
 
     //
     try {
-      this.configThreadNumber = Integer.valueOf(threadNumber.getValue());
+      configThreadNumber = Integer.valueOf(threadNumberValue.getValue());
     } catch (Exception e) {
-      this.configThreadNumber = DEFAULT_THREAD_NUMBER;
+      configThreadNumber = DEFAULT_THREAD_NUMBER;
     }
 
     //
     try {
-      this.configAsyncExecution = Boolean.valueOf(asyncExecution.getValue());
+      keepAliveTime = Integer.valueOf(aliveTime.getValue());
     } catch (Exception e) {
-      this.configAsyncExecution = DEFAULT_ASYNC_EXECUTION;
+      keepAliveTime = 10;
     }
 
+    //
+    try {
+      configAsyncExecution = Boolean.valueOf(asyncExecution.getValue());
+    } catch (Exception e) {
+      configAsyncExecution = DEFAULT_ASYNC_EXECUTION;
+    }
+    
+    int threadNumber = configThreadNumber <= 0 ? configThreadNumber : Runtime.getRuntime().availableProcessors();
+
+    ThreadFactory threadFactory = new ThreadFactory() {
+      public Thread newThread(Runnable runable) {
+        Thread t = new Thread(runable, "Forum-Thread");
+        t.setPriority(Thread.MIN_PRIORITY);
+        return t;
+      }
+    };
     //
     if (configAsyncExecution) {
-      this.executor = Executors.newFixedThreadPool(this.configThreadNumber);
+      executor = new ThreadPoolExecutor(threadNumber, threadNumber, keepAliveTime, 
+                                              TimeUnit.SECONDS, workQueue, threadFactory);
+      ((ThreadPoolExecutor) executor).allowCoreThreadTimeOut(true);
     } else {
-      this.executor = new DirectExecutor();
+      executor = new DirectExecutor();
     }
-
     //
-    this.ecs = new ExecutorCompletionService(executor);
-
+    ecs = new ExecutorCompletionService(executor);
   }
 
   public void addTask(Callable callable) {
@@ -84,20 +111,20 @@ public class LifeCycleCompletionService {
       if (executor instanceof ExecutorService) {
         ((ExecutorService) executor).awaitTermination(1, TimeUnit.SECONDS);
       }
-    } catch (InterruptedException e) {
+    }
+    catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
   }
 
   public boolean isAsync() {
-    return this.configAsyncExecution;
+    return configAsyncExecution;
   }
 
   private class DirectExecutor implements Executor {
 
     public void execute(final Runnable runnable) {
-      if (Thread.interrupted())
-        throw new RuntimeException();
+      if (Thread.interrupted()) throw new RuntimeException();
 
       runnable.run();
     }

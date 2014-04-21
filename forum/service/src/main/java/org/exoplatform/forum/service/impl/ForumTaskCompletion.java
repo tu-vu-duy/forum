@@ -57,6 +57,20 @@ public abstract class ForumTaskCompletion implements Callable<Boolean> {
       return true;
     }
   }
+
+  public static class QueryLastPostTask extends ForumTaskCompletion {
+    private final String forumPath;
+
+    public QueryLastPostTask(String forumPath) {
+      this.forumPath = forumPath;
+    }
+
+    @Override
+    public Boolean call() throws Exception {
+      getJCRDataStorage().queryLastPostForum(forumPath);
+      return true;
+    }
+  }
   
   
   
