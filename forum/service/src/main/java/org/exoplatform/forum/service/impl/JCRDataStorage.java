@@ -2853,6 +2853,9 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       }
     } catch (Exception e) {
       log.error("Failed to save topic", e);
+      if (isNew) {
+        topic = null;
+      }
     }
   }
 
@@ -3491,7 +3494,6 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     
     if (isNew) {
       sendAlertJob = addNewPost(categoryNode, forumNode, topicNode, post, messageBuilder);
-      log.info(String.format("Done to save new post: %s of topic: %s", post.getId(), topicNode.getName()));
     } else {
       sendAlertJob = modifyPost(forumNode, topicNode, post);
     }
@@ -3500,7 +3502,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       getTotalJobWatting(sProvider, new HashSet<String>(new PropertyReader(forumNode).list(EXO_MODERATORS, new ArrayList<String>())));
     }
     
-    if (post.getUserPrivate().length > 1) {
+    if (post != null && post.getUserPrivate().length > 1) {
       ForumPrivateMessage message = new ForumPrivateMessage();
       message.setFrom(getScreenName(sProvider, post.getOwner()));
       message.setSendTo(post.getUserPrivate()[0] + "," + post.getUserPrivate()[1]);
@@ -3530,6 +3532,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       Calendar calendar = getGreenwichMeanTime();
 
       postNode = topicNode.addNode(post.getId(), EXO_POST);
+      forumNode.getSession().save();
+      //
       postNode.setProperty(EXO_ID, post.getId());
       postNode.setProperty(EXO_PATH, forumId);
       postNode.setProperty(EXO_OWNER, post.getOwner());
@@ -3586,6 +3590,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       return sendAlertJob;
     } catch (Exception e) {
       log.error("Failed to add new post" + post.getName(), e);
+      post = null;
       return false;
     }
   }

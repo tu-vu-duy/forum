@@ -894,25 +894,32 @@ public class CachedDataStorage implements DataStorage, Startable {
   }
 
   public Topic getTopicByPath(final String topicPath, final boolean isLastPost) throws Exception {
-    Topic got = topicDataFuture.get(
-        new ServiceContext<TopicData>() {
-          public TopicData execute() {
-            try {
-              Topic got = storage.getTopicByPath(topicPath, isLastPost);
-              if (got != null) {
-                return new TopicData(got);
-              } else {
-                return TopicData.NULL;
+    Topic got = null;
+    try {
+      TopicKey key =  new TopicKey(topicPath, isLastPost);
+      got = topicDataFuture.get(
+            new ServiceContext<TopicData>() {
+              public TopicData execute() {
+                try {
+                  Topic got = storage.getTopicByPath(topicPath, isLastPost);
+                  if (got != null) {
+                    return new TopicData(got);
+                  } else {
+                    return TopicData.NULL;
+                  }
+                } catch (Exception e) {
+                  return null;
+                }
               }
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          }
-        },
-        new TopicKey(topicPath, isLastPost)
-    ).build();
+            }, key
+          ).build();
+    } catch (Exception e) {
+      got = storage.getTopicByPath(topicPath, isLastPost);
+    }
     //
-    got.setIsPoll(topicHasPoll(got.getPath()));
+    if(got != null) {
+      got.setIsPoll(topicHasPoll(got.getPath()));
+    }
     
     return got;
   }
