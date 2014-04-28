@@ -32,6 +32,7 @@ import javax.jcr.Value;
 
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.RootContainer;
+import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.jcr.KSDataLocation;
