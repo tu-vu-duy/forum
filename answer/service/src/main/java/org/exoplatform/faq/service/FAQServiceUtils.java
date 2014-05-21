@@ -24,9 +24,10 @@ import java.util.Set;
 
 import javax.jcr.Node;
 
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.ListAccess;
-import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.forum.common.UserHelper;
+import org.exoplatform.forum.common.cache.model.key.SimpleCacheKey;
 import org.exoplatform.forum.common.jcr.KSDataLocation;
 import org.exoplatform.forum.common.jcr.SessionManager;
 import org.exoplatform.services.cache.CacheService;
@@ -34,14 +35,13 @@ import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.jcr.access.AccessControlEntry;
 import org.exoplatform.services.jcr.access.PermissionType;
 import org.exoplatform.services.jcr.core.ExtendedNode;
+import org.exoplatform.services.organization.Membership;
 import org.exoplatform.services.organization.MembershipHandler;
-import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.MembershipTypeHandler;
 import org.exoplatform.services.organization.User;
-import org.exoplatform.services.organization.UserHandler;
+import org.exoplatform.services.organization.UserStatus;
 
 public class FAQServiceUtils {
-
-  private static final String ANY   = "*".intern();
 
   private static final String COLON = ":".intern();
 
@@ -65,9 +65,9 @@ public class FAQServiceUtils {
     return ((expr.indexOf(SLASH) >= 0) && (expr.indexOf(COLON) >= 0));
   }
 
-  private static ListAccess<User> getUserByGroup(UserHandler userHandler, String group) throws Exception {
+  private static ListAccess<User> getUserByGroup(String group) {
     try {
-      return userHandler.findUsersByGroupId(group);
+      return UserHelper.getUserHandler().findUsersByGroupId(group, UserStatus.ENABLED);
     } catch (Exception e) {
       return null;
     }
@@ -81,27 +81,31 @@ public class FAQServiceUtils {
    * @throws Exception
    */
 
-  private static List<String> getUserByMembershipType(OrganizationService organizationService, String memberShip) throws Exception {
+  private static List<String> getUserByMembershipType(String memberShip) throws Exception {
     List<String> users = getFromCache(new String[] { memberShip });
     if (users != null) {
       return users;
     }
     users = new ArrayList<String>();
     String[] array = memberShip.trim().split(COLON);
-    UserHandler userHandler = organizationService.getUserHandler();
-    if (array[0].length() > 1) {
-      List<String> usersOfGroup = getUserByGroupId(userHandler, array[1]);
-      MembershipHandler membershipHandler = organizationService.getMembershipHandler();
-      for (String userName : usersOfGroup) {
-        if (membershipHandler.findMembershipByUserGroupAndType(userName, array[1], array[0]) != null) {
-          users.add(userName);
+    String groupId = array[1];
+    String memberShipType = array[0];
+    //
+    if (MembershipTypeHandler.ANY_MEMBERSHIP_TYPE.equals(memberShipType)) {
+      users.addAll(getUserByGroupId(groupId));
+    } else {
+      MembershipHandler membershipHandler = UserHelper.getMembershipHandler();
+      ListAccess<Membership> listAccess = membershipHandler.findAllMembershipsByGroup(UserHelper.getGroupHandler().findGroupById(groupId));
+
+      Membership[] mbs = listAccess.load(0, listAccess.getSize());
+      for (Membership mb : mbs) {
+        if (!UserHelper.isDisabledUser(mb.getUserName()) && 
+              (mb.getMembershipType().equals(memberShipType) || mb.getMembershipType().equals(MembershipTypeHandler.ANY_MEMBERSHIP_TYPE))) {
+          users.add(mb.getUserName());
         }
       }
-    } else {
-      if (ANY.equals(array[0])) {
-        users.addAll(getUserByGroupId(userHandler, array[1]));
-      }
-    }
+    } 
+    //
     storeInCache(new String[] { memberShip }, users);
     return users;
   }
@@ -113,21 +117,21 @@ public class FAQServiceUtils {
    * @return list of users that mach at least one of the group id
    * @throws Exception
    */
-  private static List<String> getUserByGroupId(UserHandler userHandler, String groupId) throws Exception {
-    List<String> users = getFromCache(new String[] { groupId });
+  private static List<String> getUserByGroupId(String groupId) throws Exception {
+    List<String> users = getFromCache(new String[]{groupId});
     if (users != null) {
       return users;
     }
     users = new ArrayList<String>();
-    ListAccess<User> pageList = getUserByGroup(userHandler, groupId);
-    if (pageList == null) {
+    ListAccess<User> pageList = getUserByGroup(groupId);
+    if (pageList == null){
       return users;
     }
     User[] userArray = (User[]) pageList.load(0, pageList.getSize());
     for (int i = 0; i < pageList.getSize(); i++) {
       users.add(userArray[i].getUserName());
     }
-    storeInCache(new String[] { groupId }, users);
+    storeInCache(new String[]{groupId}, users);
     return users;
   }
 
@@ -145,16 +149,15 @@ public class FAQServiceUtils {
     if (list != null) {
       return list;
     }
-    OrganizationService organizationService = (OrganizationService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(OrganizationService.class);
     Set<String> users = new HashSet<String>();
     for (int j = 0; j < userGroupMembership.length; j++) {
-      String str = userGroupMembership[j].trim();
-      if (isMembershipExpression(str)) {
-        users.addAll(getUserByMembershipType(organizationService, str));
-      } else if (isGroupExpression(str)) {
-        users.addAll(getUserByGroupId(organizationService.getUserHandler(), str));
-      } else {
-        users.add(str);
+      String inputValue = userGroupMembership[j].trim();
+      if (isMembershipExpression(inputValue)) {
+        users.addAll(getUserByMembershipType(inputValue));
+      } else if (isGroupExpression(inputValue)) {
+        users.addAll(getUserByGroupId(inputValue));
+      } else if (!UserHelper.isDisabledUser(inputValue)) {
+        users.add(inputValue);
       }
     }
     storeInCache(userGroupMembership, new ArrayList<String>(users));
@@ -187,17 +190,17 @@ public class FAQServiceUtils {
     return cache.get(cacheKey);
   }
 
-  private static Serializable getCacheKey(String[] userGroupMembership) {
+  private static SimpleCacheKey getCacheKey(String[] userGroupMembership) {
     StringBuilder sb = new StringBuilder();
     for (String item : userGroupMembership) {
       sb.append("#").append(item);
     }
-    return sb.toString();
+    return new SimpleCacheKey(sb.toString());
   }
 
   private static ExoCache<Serializable, List<String>> getCache() throws Exception {
-    CacheService cacheService = (CacheService) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(CacheService.class);
-    return cacheService.getCacheInstance("org.exoplatform.faq.PermissionsUsers");
+    CacheService cacheService = CommonsUtils.getService(CacheService.class);
+    return cacheService.getCacheInstance("user.PermissionCache");
   }
 
   /**
@@ -219,7 +222,7 @@ public class FAQServiceUtils {
   }
 
   public static SessionManager getSessionManager() {
-    KSDataLocation location = (KSDataLocation) ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(KSDataLocation.class);
+    KSDataLocation location = CommonsUtils.getService(KSDataLocation.class);
     return location.getSessionManager();
   }
 }

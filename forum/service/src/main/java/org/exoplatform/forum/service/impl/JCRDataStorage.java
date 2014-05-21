@@ -466,7 +466,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       if (list.contains(userName))
         return true;
       String[] adminrules = Utils.getStringsInList(list);
-      if (ForumServiceUtils.hasPermission(adminrules, userName))
+      if (ForumServiceUtils.isModerator(adminrules, userName))
         return true;
     }
     return false;
@@ -1752,7 +1752,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         if (isDelete) {
           String[] cateMods = PropertyReader.valuesToArray(cateNode.getProperty(EXO_MODERATORS).getValues());
           if (cateMods != null && cateMods.length > 0 && !Utils.isEmpty(cateMods[0])) {
-            if (ForumServiceUtils.hasPermission(cateMods, userName))
+            if (ForumServiceUtils.isModerator(cateMods, userName))
               continue;
           }
           if (forumNode.hasProperty(EXO_MODERATORS)) {
@@ -2325,6 +2325,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     topicNew.setId(topicNode.getName());
     topicNew.setPath(topicNode.getPath());
     topicNew.setIcon(reader.string(EXO_ICON));
+    topicNew.setOwner(reader.string(EXO_OWNER));
     topicNew.setTopicName(reader.string(EXO_NAME));
     topicNew.setLastPostBy(reader.string(EXO_LAST_POST_BY));
     topicNew.setLastPostDate(reader.date(EXO_LAST_POST_DATE));
@@ -3706,7 +3707,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
                 List<String> emails = Utils.valuesToList(node.getProperty(EXO_EMAIL_WATCHING).getValues());
                 int i = 0;
                 for (String user : Utils.valuesToList(node.getProperty(EXO_USER_WATCHING).getValues())) {
-                  if (ForumServiceUtils.hasPermission(listUser.toArray(new String[listUser.size()]), user)) {
+                  if (ForumServiceUtils.isModerator(listUser.toArray(new String[listUser.size()]), user)) {
                     emailList.add(emails.get(i));
                   }
                   i++;
