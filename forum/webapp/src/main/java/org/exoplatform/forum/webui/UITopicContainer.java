@@ -117,8 +117,6 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
 
   private List<Topic>            topicList;
 
-  private List<String>           moderators;
-
   private boolean                isModerator       = false;
 
   private boolean                canAddNewThread   = true;
@@ -128,8 +126,6 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
   private boolean                isLogin           = false;
 
   private boolean                isNull            = false;
-
-  private boolean                enableIPLogging   = true;
 
   private boolean                isShowActive      = false;
 
@@ -194,7 +190,6 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
       pageSelect = getPageTopicRemember(forumId);
     UIForumPortlet forumPortlet = this.getAncestorOfType(UIForumPortlet.class);
     isUseAjax = forumPortlet.isUseAjax();
-    enableIPLogging = forumPortlet.isEnableIPLogging();
     forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath((categoryId + ForumUtils.SLASH + forumId));
     forumPortlet.updateAccessForum(forumId);
     cleanCheckedList();
@@ -213,7 +208,6 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
       pageSelect = getPageTopicRemember(forumId);
     UIForumPortlet forumPortlet = this.getAncestorOfType(UIForumPortlet.class);
     this.isUseAjax = forumPortlet.isUseAjax();
-    enableIPLogging = forumPortlet.isEnableIPLogging();
     forumPortlet.updateAccessForum(forumId);
     if (!isBreadcumbs) {
       forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath((categoryId + ForumUtils.SLASH + forumId));
@@ -230,7 +224,7 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     return this.canAddNewThread;
   }
 
-  private void setForumModeratorPortlet(){
+  private void setForumModeratorPortlet() throws Exception {
     PortletRequestContext pcontext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
     PortletSession portletSession = pcontext.getRequest().getPortletSession();
     ActionResponse actionRes = null;
@@ -239,7 +233,7 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     }
     ForumParameter param = new ForumParameter();
     param.setRenderModerator(true);
-    param.setModerators(moderators);
+    param.setModerators(ForumServiceUtils.getUserPermission(forum.getModerators()));
     param.setRenderRule(true);
     List<String> list = param.getInfoRules();
     boolean isLock = forum.getIsClosed();
@@ -259,37 +253,18 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
   }
 
   public void setForum(boolean isSetModerator) throws Exception {
-    this.forum = getForum();
-    this.canAddNewThread = true;
-    moderators = ForumServiceUtils.getUserPermission(forum.getModerators());
-    String userId = getUserProfile().getUserId();
-    isModerator = (userProfile.getUserRole() == 0 || (!userProfile.getIsBanned() && !moderators.isEmpty() && moderators.contains(userId))) ? true : false;
-    boolean isCheck = true;
-    List<String> ipBaneds = forum.getBanIP();
-    if (ipBaneds != null && ipBaneds.contains(getRemoteIP()) || userProfile.getIsBanned()) {
-      canAddNewThread = false;
-      isCheck = false;
-    }
-    if (!isModerator && isCheck) {
-      String[] strings = this.forum.getCreateTopicRole();
-      boolean isEmpty = false;
-      if (!ForumUtils.isArrayEmpty(strings)) {
-        canAddNewThread = ForumServiceUtils.hasPermission(strings, userId);
-      } else
-        isEmpty = true;
+    forum = getForum();
+    //
+    canAddNewThread = getAncestorOfType(UIForumPortlet.class).checkForumHasAddTopic(categoryId, forumId);
+    isModerator = getUserProfile().getUserRole() == 0 ||
+                    (forum != null) && ForumServiceUtils.isModerator(forum.getModerators(), userProfile.getUserId());
 
-      if (isEmpty || !canAddNewThread) {
-        strings = getForumService().getPermissionTopicByCategory(categoryId, Utils.EXO_CREATE_TOPIC_ROLE);
-        if (!ForumUtils.isArrayEmpty(strings)) {
-          canAddNewThread = ForumServiceUtils.hasPermission(strings, userId);
-        }
-      }
-    }
-    if (isSetModerator)
+    if (isSetModerator) {
       setForumModeratorPortlet();
-    UIForumContainer forumContainer = this.getParent();
+    }
+    //
     if (this.forum != null) {
-      forumContainer.findFirstComponentOfType(UIForumInfos.class).setForum(this.forum);
+      this.getParent().findFirstComponentOfType(UIForumInfos.class).setForum(this.forum);
     }
   }
 
@@ -337,13 +312,6 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     return temp;
   }
 
-
-  private String getRemoteIP() throws Exception {
-    if (enableIPLogging) {
-      return WebUIUtils.getRemoteIP();
-    }
-    return ForumUtils.EMPTY_STR;
-  }
 
   public String[] getActionMenuForum() throws Exception {
     String[] actions = new String[] { "EditForum", "SetUnLockForum", "SetLockedForum", "SetOpenForum", 
@@ -591,7 +559,7 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
         }
         forum = forumService.getForum(topic.getCategoryId(), topic.getForumId());
         boolean isModerator = (component.getUserProfile().getUserRole() == 0 || (component.getUserProfile().getUserRole() == 1 &&
-                                  ForumServiceUtils.hasPermission(forum.getModerators(), component.getUserProfile().getUserId())));
+                                  ForumServiceUtils.isModerator(forum.getModerators(), component.getUserProfile().getUserId())));
         if (isModerator == false) {
           if (forum.getIsClosed()) {
             warning("UIForumPortlet.msg.do-not-permission", false);
