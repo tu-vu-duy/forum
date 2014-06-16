@@ -98,7 +98,7 @@ public class ForumServiceImpl implements ForumService, Startable {
 
   private ForumStatisticsService     forumStatisticsService;
 
-  private LifeCycleCompletionService completionService;
+//  private LifeCycleCompletionService completionService;
 
   private JobSchedulerService        jobSchedulerService;
 
@@ -109,7 +109,7 @@ public class ForumServiceImpl implements ForumService, Startable {
     this.storage = dataStorage;
     this.forumStatisticsService = staticsService;
     this.jobSchedulerService = jobService;
-    this.completionService = completionService;
+//    this.completionService = completionService;
   }
 
   /**
@@ -557,7 +557,8 @@ public class ForumServiceImpl implements ForumService, Startable {
     storage.saveTopic(categoryId, forumId, topic, isNew, isMove, messageBuilder);
     //
     Callable<Boolean> callAble = new ForumEventCompletion.ProcessTopic(((isNew) ? topic : edited), isNew).setListeners(listeners_);
-    completionService.addTask(callAble);
+    callAble.call();
+//    completionService.addTask(callAble);
   }
 
   /**
@@ -733,7 +734,8 @@ public class ForumServiceImpl implements ForumService, Startable {
     }
     //
     Callable<Boolean> callAble = new ForumEventCompletion.ProcessPost(post, isNew).setListeners(listeners_);
-    completionService.addTask(callAble);
+    callAble.call();
+//    completionService.addTask(callAble);
   }
 
   /**
