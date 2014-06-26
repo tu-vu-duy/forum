@@ -45,6 +45,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.jcr.ImportUUIDBehavior;
+import javax.jcr.InvalidItemStateException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -910,7 +911,15 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     cat.setPoster(reader.strings(EXO_POSTER));
     cat.setIncludedSpace(reader.bool(EXO_INCLUDED_SPACE));
     if (!cateNode.hasProperty(EXO_INCLUDED_SPACE)) {
-      LOG.warn(String.format("The category %s has not property exo:includedSpace. Please, excute the forum upgrade plugin.", cateNode.getName()));
+      try {
+        if (cateNode.canAddMixin(MIXIN_FORUM_CATEGORY)) {// mix:forumCategory
+          cateNode.addMixin(MIXIN_FORUM_CATEGORY);
+        }
+        cateNode.setProperty(EXO_INCLUDED_SPACE, false);
+        cateNode.save();
+      } catch (Exception e) {
+        LOG.debug(String.format("The category %s has not property exo:includedSpace. Please, excute the forum upgrade plugin.", cateNode.getName()));
+      }
     }
     return cat;
   }
@@ -3465,8 +3474,10 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   * @throws Exception
   */
   public void updateProfileAddPost(String owner, String postPath) {
+    ReentrantLock lock = this.lock;
     SessionProvider sProvider = SessionProvider.createSystemProvider();
     try {
+      lock.lock();
       Node profileHomeNode = getUserProfileHome(sProvider);
       Calendar lastPost = getGreenwichMeanTime();
       Node postNode = (Node) profileHomeNode.getSession().getItem(postPath);
@@ -3491,8 +3502,9 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       }
       profileHomeNode.getSession().save();
     } catch (Exception e) {
-      LOG.warn("Failed to save user profile of user: " + owner);
+      LOG.warn("Failed to save user profile of user: " + owner, e);
     } finally {
+      lock.unlock();
       sProvider.close();
     }
   }
@@ -3535,7 +3547,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
             nodeContent = nodeFile.addNode(JCR_CONTENT, EXO_FORUM_RESOURCE);
             nodeContent.setProperty(JCR_MIME_TYPE, file.getMimeType());
             nodeContent.setProperty(JCR_DATA, file.getInputStream());
-            nodeContent.setProperty(JCR_LAST_MODIFIED, Calendar.getInstance().getTimeInMillis());
+            nodeContent.setProperty(JCR_LAST_MODIFIED, getGreenwichMeanTime().getTimeInMillis());
             nodeContent.setProperty(EXO_FILE_NAME, file.getName());
           }
         } catch (Exception e) {
@@ -3559,24 +3571,26 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         postNode = updatePost(sProvider, topicNode, post);
       }
 
-      boolean sendAlertJob = messageBuilder.getLink().equals("link");
-      if (sendAlertJob == false) {
-        sendAlertJob = (!post.getIsApproved() || post.getIsHidden() || post.getIsWaiting()) && (post.getUserPrivate().length != 2);
-      }
-
       //
-      forumNode.getSession().save();
+      try {
+        forumNode.getSession().save();
+      } catch (InvalidItemStateException e) {
+        LOG.warn("Probably was save post by another session");
+        post = null;
+        return;
+      }
       if (isNew) {
         addQueryLastPostTask(forumNode.getPath());
       }
-
       //
       post.setPath(postNode.getPath());
-
       //
       if (topicNode.getName().replaceFirst(Utils.TOPIC, Utils.POST).equals(post.getId()) == false && isNew) {
         addNotificationTask(topicNode.getPath(), null, post, messageBuilder, false);
       }
+      //
+      boolean sendAlertJob = (!messageBuilder.getLink().equals("link") && (post.getUserPrivate().length != 2) && 
+                              (!post.getIsApproved() || post.getIsHidden() || post.getIsWaiting()));
       if (sendAlertJob) {
         getTotalJobWatting(sProvider, new HashSet<String>(new PropertyReader(forumNode).list(EXO_MODERATORS, new ArrayList<String>())));
       }
@@ -3598,8 +3612,8 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
   }
 
   private Node addPost(SessionProvider sProvider, Node categoryNode, Node forumNode, Node topicNode, Post post) throws Exception {
-    Calendar calendar = getGreenwichMeanTime();
     Node postNode = topicNode.addNode(post.getId(), EXO_POST);
+    Calendar calendar = getGreenwichMeanTime();
     postNode.setProperty(EXO_ID, post.getId());
     postNode.setProperty(EXO_PATH, forumNode.getName());
     postNode.setProperty(EXO_OWNER, post.getOwner());
@@ -4943,7 +4957,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       profileNode.setProperty(EXO_LAST_READ_POST_OF_TOPIC, lastReadPostOfTopic);
       profileNode.getSession().save();
     } catch (Exception e) {
-      logDebug("Failed to save last post id read.", e);
+      LOG.debug("Failed to save last post id read.", e);
     } finally {
       localLock.unlock();
     }
@@ -7534,7 +7548,9 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
   public void updateStatisticCounts(long topicCount, long postCount) throws Exception {
     SessionProvider sProvider = SessionProvider.createSystemProvider();
+    ReentrantLock lock = this.lock;
     try {
+      lock.lock();
       Node forumStatisticNode = getForumStatisticsNode(sProvider);
       PropertyReader reader = new PropertyReader(forumStatisticNode);
       if (topicCount != 0) {
@@ -7555,6 +7571,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
         LOG.debug("Failed to update statistic counts", e);
       }
     } finally {
+      lock.unlock();
       sProvider.close();
     }
   }
