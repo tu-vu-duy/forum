@@ -98,7 +98,7 @@ public class ForumServiceImpl implements ForumService, Startable {
 
   private ForumStatisticsService     forumStatisticsService;
 
-//  private LifeCycleCompletionService completionService;
+  private LifeCycleCompletionService completionService;
 
   private JobSchedulerService        jobSchedulerService;
 
@@ -109,7 +109,7 @@ public class ForumServiceImpl implements ForumService, Startable {
     this.storage = dataStorage;
     this.forumStatisticsService = staticsService;
     this.jobSchedulerService = jobService;
-//    this.completionService = completionService;
+    this.completionService = completionService;
   }
 
   /**
@@ -226,6 +226,11 @@ public class ForumServiceImpl implements ForumService, Startable {
   }
 
   public void stop() {
+    try {
+      completionService.shutdown();
+    } catch (Exception e) {
+      log.warn("LifeCycleCompletionService#shutdown() unsuccessfully.", e);
+    }
   }
 
   public void addMember(User user, UserProfile profileTemplate) throws Exception {

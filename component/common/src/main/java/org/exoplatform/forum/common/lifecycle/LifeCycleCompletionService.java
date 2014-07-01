@@ -21,7 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -121,6 +121,15 @@ public class LifeCycleCompletionService {
 
   public boolean isAsync() {
     return this.configAsyncExecution;
+  }
+
+  public boolean shutdown() {
+    boolean isDone = true;
+    Future<?> f;
+    while (ecs != null && (f = ecs.poll()) != null) {
+      isDone &= f.cancel(true);
+    }
+    return isDone;
   }
 
   private class DirectExecutor implements Executor {
