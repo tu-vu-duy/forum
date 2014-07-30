@@ -25,7 +25,7 @@ public class ScopeCacheKey implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public final static ScopeCacheKey NULL = new ScopeCacheKey();
-
+  
   private final String scope;
 
   public ScopeCacheKey() {
@@ -66,5 +66,4 @@ public class ScopeCacheKey implements Serializable {
       return "repository";
     }
   }
-
 }

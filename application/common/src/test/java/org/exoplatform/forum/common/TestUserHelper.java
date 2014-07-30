@@ -19,6 +19,11 @@ package org.exoplatform.forum.common;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.forum.common.UserHelper.FilterType;
+import org.exoplatform.forum.common.UserHelper.UserFilter;
+import org.exoplatform.services.organization.Query;
+import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.impl.UserImpl;
 
 public class TestUserHelper extends BaseCommonsTestCase {
   @Override
@@ -88,6 +93,73 @@ public class TestUserHelper extends BaseCommonsTestCase {
     assertEquals("", UserHelper.getDisplayNameOfOwner(owner));
     owner = "member:/platform/users";
     assertEquals("member in users", UserHelper.getDisplayNameOfOwner(owner));
+  }
+
+  public void testQueryFilter() {
+    assertEquals(true, true);
+    UserFilter filter = new UserFilter("", FilterType.EMAIL);
+    Query q = UserHelper.queryFilter(filter);
+    assertEquals(true, q.isEmpty());
+    //
+    filter = new UserFilter("email", FilterType.EMAIL);
+    q = UserHelper.queryFilter(filter);
+    assertEquals("*email*", q.getEmail());
+    //
+    filter = new UserFilter("*email", FilterType.EMAIL);
+    q = UserHelper.queryFilter(filter);
+    assertEquals("*email", q.getEmail());
+    //
+    filter = new UserFilter("email*", FilterType.EMAIL);
+    q = UserHelper.queryFilter(filter);
+    assertEquals("email*", q.getEmail());
+    //
+    filter = new UserFilter("*email*", FilterType.EMAIL);
+    q = UserHelper.queryFilter(filter);
+    assertEquals("*email*", q.getEmail());
+  }
+  
+  public void testMatchUser() {
+    User user = null;
+    UserFilter userFilter = new UserFilter("abc", FilterType.USER_NAME);
+    //
+    assertFalse(UserHelper.matchUser(userFilter, user));
+    //
+    user = new MockUser("abc", "ABC", "xABcD", "fooAbCbar");
+    assertTrue(UserHelper.matchUser(userFilter, user));
+    //
+    userFilter = new UserFilter("abc", FilterType.FIRST_NAME);
+    assertTrue(UserHelper.matchUser(userFilter, user));
+    //
+    userFilter = new UserFilter("abc", FilterType.LAST_NAME);
+    assertTrue(UserHelper.matchUser(userFilter, user));
+    //
+    userFilter = new UserFilter("abc", FilterType.EMAIL);
+    assertTrue(UserHelper.matchUser(userFilter, user));
+    
+    //
+    user = new MockUser("foo", "bar", "xyz", "bool");
+    userFilter = new UserFilter("abc", FilterType.USER_NAME);
+    assertFalse(UserHelper.matchUser(userFilter, user));
+    //
+    userFilter = new UserFilter("abc", FilterType.FIRST_NAME);
+    assertFalse(UserHelper.matchUser(userFilter, user));
+    //
+    userFilter = new UserFilter("abc", FilterType.LAST_NAME);
+    assertFalse(UserHelper.matchUser(userFilter, user));
+    //
+    userFilter = new UserFilter("abc", FilterType.EMAIL);
+    assertFalse(UserHelper.matchUser(userFilter, user));
+  }
+
+  private class MockUser extends UserImpl {
+
+    public MockUser(String userName, String firstName, String lastName, String email) {
+      setEmail(email);
+      setUserName(userName);
+      setFirstName(firstName);
+      setLastName(lastName);
+    }
+
   }
 
 }

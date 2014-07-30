@@ -22,10 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletSession;
-import javax.xml.namespace.QName;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.forum.ForumUtils;
@@ -34,7 +30,6 @@ import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.webui.BaseEventListener;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.WebUIUtils;
-import org.exoplatform.forum.info.ForumParameter;
 import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumSearchResult;
 import org.exoplatform.forum.service.ForumServiceUtils;
@@ -53,8 +48,6 @@ import org.exoplatform.forum.webui.popup.UIPageListTopicUnApprove;
 import org.exoplatform.forum.webui.popup.UIPollForm;
 import org.exoplatform.forum.webui.popup.UITopicForm;
 import org.exoplatform.forum.webui.popup.UIWatchToolsForm;
-import org.exoplatform.webui.application.WebuiRequestContext;
-import org.exoplatform.webui.application.portlet.PortletRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
@@ -116,6 +109,8 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
   private Forum                  forum;
 
   private List<Topic>            topicList;
+  
+  private List<String>           moderators;
 
   private boolean                isModerator       = false;
 
@@ -126,6 +121,8 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
   private boolean                isLogin           = false;
 
   private boolean                isNull            = false;
+
+  private boolean                enableIPLogging   = true;
 
   private boolean                isShowActive      = false;
 
@@ -190,6 +187,7 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
       pageSelect = getPageTopicRemember(forumId);
     UIForumPortlet forumPortlet = this.getAncestorOfType(UIForumPortlet.class);
     isUseAjax = forumPortlet.isUseAjax();
+    enableIPLogging = forumPortlet.isEnableIPLogging();
     forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath((categoryId + ForumUtils.SLASH + forumId));
     forumPortlet.updateAccessForum(forumId);
     cleanCheckedList();
@@ -208,6 +206,7 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
       pageSelect = getPageTopicRemember(forumId);
     UIForumPortlet forumPortlet = this.getAncestorOfType(UIForumPortlet.class);
     this.isUseAjax = forumPortlet.isUseAjax();
+    enableIPLogging = forumPortlet.isEnableIPLogging();
     forumPortlet.updateAccessForum(forumId);
     if (!isBreadcumbs) {
       forumPortlet.getChild(UIBreadcumbs.class).setUpdataPath((categoryId + ForumUtils.SLASH + forumId));
@@ -224,47 +223,36 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     return this.canAddNewThread;
   }
 
-  private void setForumModeratorPortlet() throws Exception {
-    PortletRequestContext pcontext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
-    PortletSession portletSession = pcontext.getRequest().getPortletSession();
-    ActionResponse actionRes = null;
-    if (pcontext.getResponse() instanceof ActionResponse) {
-      actionRes = (ActionResponse) pcontext.getResponse();
-    }
-    ForumParameter param = new ForumParameter();
-    param.setRenderModerator(true);
-    param.setModerators(ForumServiceUtils.getUserPermission(forum.getModerators()));
-    param.setRenderRule(true);
-    List<String> list = param.getInfoRules();
-    boolean isLock = forum.getIsClosed();
-    if (!isLock)
-      isLock = forum.getIsLock();
-    if (!isLock)
-      isLock = !canAddNewThread;
-    list.set(0, String.valueOf(isLock));
-    param.setInfoRules(list);
-    if (actionRes != null) {
-      actionRes.setEvent(new QName("ForumModerateEvent"), param);
-      actionRes.setEvent(new QName("ForumRuleEvent"), param);
-    } else {
-      portletSession.setAttribute(UIForumPortlet.FORUM_MODERATE_EVENT_PARAMS, param, PortletSession.APPLICATION_SCOPE);
-      portletSession.setAttribute(UIForumPortlet.RULE_EVENT_PARAMS, param, PortletSession.APPLICATION_SCOPE);      
-    }
-  }
-
   public void setForum(boolean isSetModerator) throws Exception {
-    forum = getForum();
-    //
-    canAddNewThread = getAncestorOfType(UIForumPortlet.class).checkForumHasAddTopic(categoryId, forumId);
-    isModerator = getUserProfile().getUserRole() == 0 ||
-                    (forum != null) && ForumServiceUtils.isModerator(forum.getModerators(), userProfile.getUserId());
-
-    if (isSetModerator) {
-      setForumModeratorPortlet();
+    this.forum = getForum();
+    this.canAddNewThread = true;
+    moderators = ForumServiceUtils.getUserPermission(forum.getModerators());
+    String userId = getUserProfile().getUserId();
+    isModerator = (userProfile.getUserRole() == 0 || (!userProfile.getIsBanned() && !moderators.isEmpty() && moderators.contains(userId))) ? true : false;
+    boolean isCheck = true;
+    List<String> ipBaneds = forum.getBanIP();
+    if (ipBaneds != null && ipBaneds.contains(getRemoteIP()) || userProfile.getIsBanned()) {
+      canAddNewThread = false;
+      isCheck = false;
     }
-    //
+    if (!isModerator && isCheck) {
+      String[] strings = this.forum.getCreateTopicRole();
+      boolean isEmpty = false;
+      if (!ForumUtils.isArrayEmpty(strings)) {
+        canAddNewThread = ForumServiceUtils.hasPermission(strings, userId);
+      } else
+        isEmpty = true;
+
+      if (isEmpty || !canAddNewThread) {
+        strings = getForumService().getPermissionTopicByCategory(categoryId, Utils.EXO_CREATE_TOPIC_ROLE);
+        if (!ForumUtils.isArrayEmpty(strings)) {
+          canAddNewThread = ForumServiceUtils.hasPermission(strings, userId);
+        }
+      }
+    }
+    UIForumContainer forumContainer = this.getParent();
     if (this.forum != null) {
-      this.getParent().findFirstComponentOfType(UIForumInfos.class).setForum(this.forum);
+      forumContainer.findFirstComponentOfType(UIForumInfos.class).setForum(this.forum);
     }
   }
 
@@ -312,6 +300,13 @@ public class UITopicContainer extends UIForumKeepStickPageIterator {
     return temp;
   }
 
+
+  private String getRemoteIP() throws Exception {
+    if (enableIPLogging) {
+      return WebUIUtils.getRemoteIP();
+    }
+    return ForumUtils.EMPTY_STR;
+  }
 
   public String[] getActionMenuForum() throws Exception {
     String[] actions = new String[] { "EditForum", "SetUnLockForum", "SetLockedForum", "SetOpenForum", 

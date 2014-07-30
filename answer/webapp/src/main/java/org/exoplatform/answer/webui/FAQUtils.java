@@ -185,6 +185,13 @@ public class FAQUtils {
     return new String[] {};
   }
 
+  /**
+   * Get current user's id
+   * 
+   * @return
+   * @throws Exception
+   * @deprecated use {@link UserHelper#getCurrentUser()}
+   */
   static public String getCurrentUser() throws Exception {
     return UserHelper.getCurrentUser();
   }
@@ -194,7 +201,7 @@ public class FAQUtils {
       ConversationState state = ConversationState.getCurrent();
       User user = (User) state.getAttribute(CacheUserProfileFilter.USER_PROFILE);
       if (user == null) {
-        user = UserHelper.getUserHandler().findUserByName(UserHelper.getCurrentUser());
+        user = UserHelper.getUserByUserId(state.getIdentity().getUserId());
       }
       return user;
     } catch (Exception e) {
@@ -226,7 +233,7 @@ public class FAQUtils {
    */
   static public String getFullName(String userName) {
     try {
-      if (userName == null) {
+      if (CommonUtils.isEmpty(userName)) {
         return getUserFullName(getCurrentUserObject());
       }
       User user = UserHelper.getUserHandler().findUserByName(userName, UserStatus.ANY);
@@ -237,20 +244,30 @@ public class FAQUtils {
   }
 
   public static String getUserFullName(User user) {
+    if (user == null) {
+      return "";
+    }
     String displayName = user.getDisplayName();
-    if (isFieldEmpty(displayName)) {
+    if (CommonUtils.isEmpty(displayName)) {
       displayName = new StringBuffer(user.getFirstName()).append(" ").append(user.getLastName()).toString();
     }
     return displayName;
   }
 
   public static String getScreenName(String userName, String fullName) {
-    return (userName.contains(Utils.DELETED)) ? ("<s>" + ((isFieldEmpty(fullName)) ? 
+    return (userName.contains(Utils.DELETED)) ? ("<s>" + ((CommonUtils.isEmpty(fullName)) ? 
                 (userName.substring(0, userName.indexOf(Utils.DELETED))) : fullName) + "</s>") : userName;
   }
   
+  /**
+   * Check string is null or empty
+   * 
+   * @param s
+   * @return
+   * @deprecated use {@link CommonUtils#isEmpty(String)}
+   */
   public static boolean isFieldEmpty(String s) {
-    return (s == null || s.trim().length() <= 0) ? true : false;
+    return CommonUtils.isEmpty(s);
   }
 
   public static boolean isValidEmailAddresses(String addressList) throws Exception {
@@ -614,9 +631,12 @@ public class FAQUtils {
           if (isAddSup && subTree.getCategory().getPath().indexOf(categoryId) >= 0){
             continue;
           }
-          builder.append("<li class=\"node\">");
-          builder.append(renderCategoryTree(subTree, uiForm, actionName, categoryId, isAddSup));
-          builder.append("</li>");
+          String subCategoryInfo = renderCategoryTree(subTree, uiForm, actionName, categoryId, isAddSup);
+          if (!CommonUtils.isEmpty(subCategoryInfo)) {
+            builder.append("<li class=\"node\">");
+            builder.append(subCategoryInfo);
+            builder.append("</li>");
+          }
         }
         builder.append("</ul>");
       }

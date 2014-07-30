@@ -21,6 +21,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class UserProfile implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -39,8 +41,6 @@ public class UserProfile implements Serializable {
 
   public static final String  USER_REMOVED           = "User deleted";
 
-  private String              path;
-  
   private String              userId;
 
   private String              screenName;
@@ -73,13 +73,9 @@ public class UserProfile implements Serializable {
 
   private String[]            bookmark;
 
-  private String[]            lastReadPostOfTopic;
+  private ConcurrentMap<String, String> lastPostIdReadOfTopic  = new ConcurrentHashMap<String, String>();
 
-  private String[]            lastReadPostOfForum;
-
-  private Map<String, String> lastPostIdReadOfTopic  = new HashMap<String, String>();
-
-  private Map<String, String> lastPostIdReadOfForum  = new HashMap<String, String>();
+  private ConcurrentMap<String, String> lastPostIdReadOfForum  = new ConcurrentHashMap<String, String>();
 
   private Date                joinedDate             = null;
 
@@ -146,8 +142,6 @@ public class UserProfile implements Serializable {
     bookmark = new String[] {};
     banReasonSummary = new String[] {};
     collapCategories = new String[] {};
-    lastReadPostOfTopic = new String[] { "" };
-    lastReadPostOfForum = new String[] { "" };
     timeZone = getDefaultTimeZone();
     shortDateformat = "MM/dd/yyyy";
     longDateformat = "EEE, MMM dd, yyyy";
@@ -157,14 +151,6 @@ public class UserProfile implements Serializable {
   private double getDefaultTimeZone() {
     Calendar cal = Calendar.getInstance();
     return ((cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET)) / (3600 * 1000));
-  }
-
-  public String getPath() {
-    return path;
-  }
-
-  public void setPath(String path) {
-    this.path = path;
   }
 
   public UserProfile setUserId(String userId) {
@@ -427,12 +413,11 @@ public class UserProfile implements Serializable {
   }
 
   public String[] getLastReadPostOfTopic() {
-    return lastReadPostOfTopic;
+    return Utils.mapToArray(lastPostIdReadOfTopic);
   }
 
   public void setLastReadPostOfTopic(String[] lastReadPostOfTopic) {
-    this.lastReadPostOfTopic = lastReadPostOfTopic;
-    lastPostIdReadOfTopic = Utils.arrayToMap(lastReadPostOfTopic);
+    lastPostIdReadOfTopic = new ConcurrentHashMap<String, String>(Utils.arrayToMap(lastReadPostOfTopic));
   }
 
   public String getLastPostIdReadOfTopic(String topicId) {
@@ -444,16 +429,14 @@ public class UserProfile implements Serializable {
 
   public void addLastPostIdReadOfTopic(String topicId, String postId) {
     lastPostIdReadOfTopic.put(topicId, postId);
-    lastReadPostOfTopic = Utils.mapToArray(lastPostIdReadOfTopic);
   }
 
   public String[] getLastReadPostOfForum() {
-    return lastReadPostOfForum;
+    return Utils.mapToArray(lastPostIdReadOfForum);
   }
 
   public void setLastReadPostOfForum(String[] lastReadPostOfForum) {
-    this.lastReadPostOfForum = lastReadPostOfForum;
-    lastPostIdReadOfForum = Utils.arrayToMap(lastReadPostOfForum);
+    lastPostIdReadOfForum = new ConcurrentHashMap<String, String>(Utils.arrayToMap(lastReadPostOfForum));
   }
 
   public String getLastPostIdReadOfForum(String forumId) {
@@ -465,7 +448,6 @@ public class UserProfile implements Serializable {
 
   public void addLastPostIdReadOfForum(String forumId, String postId) {
     lastPostIdReadOfForum.put(forumId, postId);
-    lastReadPostOfForum = Utils.mapToArray(lastPostIdReadOfForum);
   }
 
   public boolean isDisabled() {
@@ -562,5 +544,9 @@ public class UserProfile implements Serializable {
       return lastAccessForums.get(forumId);
     }
     return 0;
+  }
+  
+  public String toString() {
+    return "{ userId:" + userId + ", userTitle: " + userTitle + "}";
   }
 }

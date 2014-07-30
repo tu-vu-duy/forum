@@ -33,6 +33,7 @@ import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.forum.common.jcr.KSDataLocation;
 import org.exoplatform.forum.service.Category;
+import org.exoplatform.forum.service.DataStorage;
 import org.exoplatform.forum.service.Forum;
 import org.exoplatform.forum.service.ForumAdministration;
 import org.exoplatform.forum.service.ForumService;
@@ -43,6 +44,7 @@ import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.forum.service.impl.JCRDataStorage;
+import org.exoplatform.forum.service.impl.model.UserProfileFilter;
 import org.exoplatform.services.jcr.util.IdGenerator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
@@ -77,7 +79,9 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
   public String                      forumId;
 
   public String                      topicId;
-
+  
+  protected DataStorage storage;
+  
   @Override
   public void setUp() throws Exception {
     begin();
@@ -86,11 +90,15 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
       forumService_ = (ForumService) getService(ForumService.class);
       dataLocation = (KSDataLocation) getService(KSDataLocation.class);
     }
+    
+    if (storage == null) {
+      storage = getService(JCRDataStorage.class);
+    }
   }
 
   @Override
   public void tearDown() throws Exception {
-
+    Thread.sleep(1000);
     removeAllData();
     //
     end();
@@ -150,6 +158,7 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
     userProfile.setUserRole((long) 0);
     userProfile.setUserTitle(Utils.ADMIN);
     userProfile.setEmail(userName + "@exoplf.com");
+    userProfile.setScreenName(userName);
     userProfile.setJoinedDate(new Date());
     userProfile.setTimeZone(7.0);
     userProfile.setSignature("signature");

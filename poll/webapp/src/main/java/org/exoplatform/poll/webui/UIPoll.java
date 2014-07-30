@@ -173,6 +173,14 @@ public class UIPoll extends BasePollForm {
         }
         UIPollRadioBoxInput input = new UIPollRadioBoxInput(POLL_OPTION_ID, POLL_OPTION_ID, options);
         input.setAlign(1);
+        int c = 0;
+        for (int i = 0; i < poll_.getUserVote().length; i++) {
+          if (poll_.getUserVote()[i].startsWith(userId + ":")) {
+            c = Integer.valueOf(poll_.getUserVote()[i].split(":")[1]);
+            break;
+          }
+        }
+        input.setValue(getOptionId(POLL_OPTION_VALUE, c));
         addUIFormInput(input);
       } else {
         String[] options = poll_.getOption();
@@ -243,15 +251,8 @@ public class UIPoll extends BasePollForm {
     Poll poll = poll_;
     String[] voteNumber = poll.getVote();
     String[] userVotes = poll.getUserVote();
-    long size = 0, temp = 1;
-    if (!poll.getIsMultiCheck()) {
-      size = userVotes.length;
-    } else {
-      for (int i = 0; i < userVotes.length; i++) {
-        size += userVotes[i].split(org.exoplatform.poll.service.Utils.COLON).length - 1;
-      }
-    }
-    temp = size;
+    long size = userVotes.length;
+    long temp = size;
     if (size == 0)
       size = 1;
     int l = voteNumber.length;
@@ -265,9 +266,6 @@ public class UIPoll extends BasePollForm {
       infoVote[j] = string + org.exoplatform.poll.service.Utils.COLON + String.valueOf(t);
     }
     infoVote[l] = String.valueOf(temp);
-    if (poll.getIsMultiCheck()) {
-      infoVote[l] = String.valueOf(userVotes.length);
-    }
     return infoVote;
   }
 

@@ -39,10 +39,11 @@ import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.form.UIFormInputWithActions;
 import org.exoplatform.webui.form.UIFormInputWithActions.ActionData;
+import org.exoplatform.webui.form.UIFormRichtextInput;
 import org.exoplatform.webui.form.UIFormSelectBox;
 import org.exoplatform.webui.form.UIFormStringInput;
 import org.exoplatform.webui.form.input.UICheckBoxInput;
-import org.exoplatform.webui.form.UIFormRichtextInput;
+import org.exoplatform.webui.form.validator.MandatoryValidator;
 
 @ComponentConfig(
    lifecycle = UIFormLifecycle.class, 
@@ -164,11 +165,13 @@ public class UIAnswerEditModeForm extends BaseCategoryTreeInputForm implements U
     setAddColonInLabel(true);
   }
 
-  private UIFormRichtextInput addNewUIFormRichtextInput(String id) {
-	  UIFormRichtextInput wysiwygInput = new UIFormRichtextInput(id, id, "");
-    wysiwygInput.setToolbar(UIFormRichtextInput.FORUM_TOOLBAR);
-    wysiwygInput.setIsPasteAsPlainText(true);
-    return wysiwygInput;
+  private UIFormRichtextInput addNewUIFormRichtextInput(String id) throws Exception {
+	  UIFormRichtextInput richtext = new UIFormRichtextInput(id, id, "");
+    richtext.setIsPasteAsPlainText(true)
+            .setIgnoreParserHTML(true)
+            .setToolbar(UIFormRichtextInput.FORUM_TOOLBAR);
+    richtext.addValidator(MandatoryValidator.class);
+    return richtext;
   }
 
   public void activate() {}
@@ -237,13 +240,13 @@ public class UIAnswerEditModeForm extends BaseCategoryTreeInputForm implements U
   private void setValueEmailContent(String tabId, String editorId, String value) {
     UIFormInputWithActions emailTab = getChildById(SET_DEFAULT_EMAIL_TAB);
     UIFormInputWithActions inputWithActions = emailTab.getChildById(tabId);
-    ((UIFormRichtextInput) inputWithActions.getChildById(editorId)).setValue(value);
+    inputWithActions.getChild(UIFormRichtextInput.class).setValue(value);
   }
 
   private String getValueEmailContent(String tabId, String editorId) {
     UIFormInputWithActions emailTab = getChildById(SET_DEFAULT_EMAIL_TAB);
     UIFormInputWithActions inputWithActions = emailTab.getChildById(tabId);
-    return ((UIFormRichtextInput) inputWithActions.getChildById(editorId)).getValue();
+    return inputWithActions.getChild(UIFormRichtextInput.class).getValue();
   }
 
   public void setPathCatygory(List<String> idForumName) {
@@ -309,8 +312,10 @@ public class UIAnswerEditModeForm extends BaseCategoryTreeInputForm implements U
       List<UIComponent> childrens = scopingTab.getChildren();
       for (UIComponent child : childrens) {
         if(child instanceof UICheckBoxInput) {
-          if(Boolean.valueOf(((UICheckBoxInput)child).isChecked()).equals(settingForm.categoryStatus.get(child.getId())) == false) {
+          boolean ischecked = ((UICheckBoxInput)child).isChecked();
+          if(Boolean.valueOf(ischecked).equals(settingForm.categoryStatus.get(child.getId())) == false) {
             listCateIds.add(settingForm.categoryMap.get(child.getId()));
+            settingForm.categoryStatus.put(child.getId(), Boolean.valueOf(ischecked)) ;
           }
         }
       }
@@ -359,6 +364,20 @@ public class UIAnswerEditModeForm extends BaseCategoryTreeInputForm implements U
         settingForm.indexOfTab = Integer.parseInt(tabId[1]);
         settingForm.isResetMail = true;
       }
+      
+      UIFormInputWithActions categoryScoping = settingForm.getChildById(CATEGORY_SCOPING);
+      settingForm.categoriesChecked = new ArrayList<String>();
+      List<UIComponent> childs = categoryScoping.getChildren();
+      for (UIComponent child : childs) {
+        if(child instanceof UICheckBoxInput) {
+          boolean ischecked = ((UICheckBoxInput) child).isChecked();
+          if(ischecked) {
+            settingForm.categoriesChecked.add(child.getId());
+          }
+        }
+        
+      }
+      if (settingForm.categoriesChecked.size() == 0) settingForm.categoriesChecked = null;
       event.getRequestContext().addUIComponentToUpdateByAjax(settingForm.getParent());
     }
   }

@@ -862,7 +862,7 @@
       <propertyDefinition name="exo:isDisabled" requiredType="Boolean" autoCreated="true" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
         <valueConstraints/>
         <defaultValues>
-          <defaultValue>true</defaultValue>
+          <defaultValue>false</defaultValue>
         </defaultValues>
       </propertyDefinition>
     </propertyDefinitions>
