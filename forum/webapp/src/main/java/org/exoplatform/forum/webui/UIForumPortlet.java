@@ -30,6 +30,7 @@ import org.exoplatform.container.PortalContainer;
 import org.exoplatform.forum.ForumUtils;
 import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.UserHelper;
+import org.exoplatform.forum.common.webui.BuildRendering;
 import org.exoplatform.forum.common.webui.UIPopupAction;
 import org.exoplatform.forum.common.webui.UIPopupContainer;
 import org.exoplatform.forum.common.webui.WebUIUtils;
@@ -181,7 +182,9 @@ public class UIForumPortlet extends UIPortletApplication {
     } catch (Exception e) {
       log.error("Can not open component by url, view exception: ", e);
     }
+    BuildRendering.startRender(context);
     super.processRender(app, context);
+    BuildRendering.endRender(context);
   }
 
   private void removeAllChildPorletView() {
@@ -378,6 +381,7 @@ public class UIForumPortlet extends UIPortletApplication {
   }
   
   public void updateCurrentUserProfile() {
+    UserProfile lastProfile = userProfile;
     try {
       String userId = UserHelper.getCurrentUser();
       if (enableBanIP) {
@@ -391,6 +395,11 @@ public class UIForumPortlet extends UIPortletApplication {
         userProfile.setUserRole((long) 3);
     } catch (Exception e) {
       userProfile = new UserProfile();
+    }
+    if (lastProfile != null) {
+      userProfile.getLastAccessTopics().putAll(lastProfile.getLastAccessTopics());
+      userProfile.getLastAccessForums().putAll(lastProfile.getLastAccessForums());
+      lastProfile = null;
     }
     if(UserProfile.USER_DELETED == userProfile.getUserRole() ||
        UserProfile.GUEST == userProfile.getUserRole() ) {

@@ -25,6 +25,9 @@ import javax.jcr.Session;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.jcr.JCRSessionManager;
+import java.util.Calendar;
+
+import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.service.cache.CachedDataStorage;
 import org.exoplatform.forum.service.impl.model.UserProfileFilter;
 import org.exoplatform.services.organization.User;
@@ -111,7 +114,7 @@ public class UserProfileTestCase extends BaseForumServiceTestCase {
     userHandler.removeUser(userName, false);
   }
 
-  public void testUserProfileListAccess() throws Exception {
+  public void TestUserProfileListAccess() throws Exception {
     //
     UserProfile profile1 = createdUserProfile("username1");
     profile1.setScreenName("User " + profile1.getUserId());
@@ -169,7 +172,7 @@ public class UserProfileTestCase extends BaseForumServiceTestCase {
     assertEquals("Demo can't last Login", forumService_.getLastLogin(), USER_DEMO);
   }
   
-  public void testSearchUserProfile() throws Exception {
+  public void TestSearchUserProfile() throws Exception {
     //
     int numberUser = 20;
     // create user
@@ -287,6 +290,28 @@ public class UserProfileTestCase extends BaseForumServiceTestCase {
     profile = cachedStorage.getQuickProfile(userGhost);
     assertEquals(1, profile.getUserRole());
     assertEquals(Utils.MODERATOR, profile.getUserTitle());
+  }
+  
+  public void testAccessTopic() throws Exception{
+    //
+    initDefaultData();
+    //
+    String userTest = "test_user";
+    UserProfile userProfile = createdUserProfile(userTest);
+    userProfile.setUserRole(2l);
+    userProfile.setUserTitle(Utils.USER);
+    forumService_.saveUserProfile(userProfile, false, false);
+    //
+    userProfile = cachedStorage.getDefaultUserProfile(userTest, "");
+    assertEquals(0, userProfile.getLastTimeAccessTopic(topicId));
+    //
+    long timeBeforeRead = CommonUtils.getGreenwichMeanTime().getTimeInMillis();
+    forumService_.updateTopicAccess(userTest, topicId);
+    forumService_.writeReads();
+    //
+    userProfile = cachedStorage.getDefaultUserProfile(userTest, "");
+    //
+    assertTrue(userProfile.getLastTimeAccessTopic(topicId) >= timeBeforeRead);
   }
 
 }

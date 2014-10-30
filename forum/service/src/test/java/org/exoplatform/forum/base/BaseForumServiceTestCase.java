@@ -44,7 +44,8 @@ import org.exoplatform.forum.service.Topic;
 import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.forum.service.impl.JCRDataStorage;
-import org.exoplatform.forum.service.impl.model.UserProfileFilter;
+import org.exoplatform.forum.service.task.QueryLastPostTaskManager;
+import org.exoplatform.forum.service.task.SendNotificationTaskManager;
 import org.exoplatform.services.jcr.util.IdGenerator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
@@ -79,7 +80,8 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
   public String                      forumId;
 
   public String                      topicId;
-  
+  protected SendNotificationTaskManager sendNotificationManager;
+  protected QueryLastPostTaskManager queryLastPostManager;
   protected DataStorage storage;
   
   @Override
@@ -94,11 +96,14 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
     if (storage == null) {
       storage = getService(JCRDataStorage.class);
     }
+    sendNotificationManager = getService(SendNotificationTaskManager.class);
+    queryLastPostManager = getService(QueryLastPostTaskManager.class);
   }
 
   @Override
   public void tearDown() throws Exception {
-    Thread.sleep(1000);
+    sendNotificationManager.clear();
+    queryLastPostManager.clear();
     removeAllData();
     //
     end();
@@ -116,7 +121,7 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
     Forum forum = createdForum();
     this.forumId = forum.getId();
     forumService_.saveForum(categoryId, forum, true);
-    Topic topic = createdTopic("root");
+    Topic topic = createdTopic(USER_ROOT);
     forumService_.saveTopic(categoryId, forumId, topic, true, false, new MessageBuilder());
     this.topicId = topic.getId();
   }
@@ -159,6 +164,7 @@ public abstract class BaseForumServiceTestCase extends BaseExoTestCase {
     userProfile.setUserTitle(Utils.ADMIN);
     userProfile.setEmail(userName + "@exoplf.com");
     userProfile.setScreenName(userName);
+    userProfile.setEmail(userName + "@plf.com");
     userProfile.setJoinedDate(new Date());
     userProfile.setTimeZone(7.0);
     userProfile.setSignature("signature");

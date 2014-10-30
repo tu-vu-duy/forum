@@ -28,22 +28,25 @@ import javax.jcr.ImportUUIDBehavior;
 
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.FileUtils;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
 import org.exoplatform.forum.service.filter.model.CategoryFilter;
 import org.exoplatform.forum.service.filter.model.ForumFilter;
-import org.exoplatform.forum.service.impl.JCRDataStorage;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.forum.common.UserHelper;
+import org.exoplatform.forum.service.impl.JCRDataStorage;
+import org.exoplatform.services.organization.User;
 
 public class ForumServiceTestCase extends BaseForumServiceTestCase {
-  
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
   }
 
   @Override
   public void tearDown() throws Exception {
+    sendNotificationManager.clear();
+    queryLastPostManager.clear();
     //
     removeAllData();
     super.tearDown();
@@ -337,7 +340,7 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     values.add("exo@exoplf.com");
     forumService_.addWatch(1, forumPath, values, "root");
     // watch by user
-    List<Watch> watchs = forumService_.getWatchByUser("root");
+    List<Watch> watchs = forumService_.getWatchByUser(USER_ROOT);
     assertEquals(watchs.get(0).getEmail(), values.get(0));
     // remove watched
     forumService_.removeWatch(1, forumPath, "/" + values.get(0));
@@ -351,7 +354,6 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     forumService_.removeWatch(1, categoryId, "/" + values.get(0));
     assertEquals(0, forumService_.getCategory(categoryId).getEmailNotification().length);
     // Sleep to done run task notification.
-    Thread.sleep(5000);
   }
 
   public void testIpBan() throws Exception {
@@ -725,6 +727,7 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
   
   public void testLastTopicOfForum() throws Exception {
     initDefaultData();
+    
     //
     JCRDataStorage dataStorage = getService(JCRDataStorage.class);
     // create 20 topics
@@ -736,18 +739,31 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     //
     String lastTopicPath = dataStorage.getForum(categoryId, forumId).getLastTopicPath();
     assertNotSame(topic.getId(), Utils.getTopicId(lastTopicPath));
-    Thread.sleep(6000);
+    Thread.sleep(1000);
+    queryLastPostManager.doneSignal().await();
     //
     lastTopicPath = dataStorage.getForum(categoryId, forumId).getLastTopicPath();
     assertEquals(topic.getId(), Utils.getTopicId(lastTopicPath));
   }
   
   public void testSendEmailNotification() throws Exception {
-    initDefaultData();
+    //reset old mails
+    forumService_.getPendingMessages();
+    //
+    Category cat = createCategory(getId(Utils.CATEGORY));
+    String categoryId = cat.getId();
+    forumService_.saveCategory(cat, true);
+    Forum forum = createdForum();
+    String forumId = forum.getId();
+    forumService_.saveForum(categoryId, forum, true);
+    //
+    String owner = "user_email";
+    UserProfile profile = createdUserProfile(owner);
+    forumService_.saveUserProfile(profile, false, false);
     //
     JCRDataStorage dataStorage = getService(JCRDataStorage.class);
     // Add watch
-    dataStorage.addWatch(1, categoryId + "/" + forumId, Arrays.asList("test@plf.com"), USER_DEMO);
+    dataStorage.addWatch(1, categoryId + "/" + forumId, Arrays.asList(profile.getEmail()), owner);
     // create 20 topics
     Topic topic = null;
     for (int i = 0; i < 20; i++) {
@@ -755,9 +771,54 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
       dataStorage.saveTopic(categoryId, forumId, topic, true, false, new MessageBuilder());
     }
     //
-    Thread.sleep(10000);
+    Thread.sleep(5000);
+    sendNotificationManager.doneSignal().await();
     //
-    assertEquals(21, IteratorUtils.toList(dataStorage.getPendingMessages()).size());   
+    assertEquals(20, IteratorUtils.toList(dataStorage.getPendingMessages()).size());   
   }
   
+  public void testSendNotificationEmail () throws Exception {
+    //reset old mails
+    forumService_.getPendingMessages();
+    //
+    String postMsg  = "test notification email";
+    Category cat = createCategory(getId(Utils.CATEGORY));
+    forumService_.saveCategory(cat, true);
+    Forum forum = createdForum();
+    forumService_.saveForum(cat.getId(), forum, true);
+    forum = forumService_.getForum(cat.getId(), forum.getId());
+    // test send notification email if user registered for the Forum and Topic Watching notification 
+    String owner = "user_test_mail";
+    User user = UserHelper.getUserHandler().createUserInstance(owner);
+    user.setEmail(owner + "@plf.com");
+    user.setFirstName(owner);
+    user.setLastName(owner);
+    user.setDisplayName(owner);
+    user.setPassword("password");
+    //
+    UserHelper.getUserHandler().createUser(user, true);
+    //
+    UserProfile profile = forumService_.getUserInfo(owner);
+    assertNotNull(profile);
+    assertEquals(user.getEmail(), profile.getEmail());
+    //
+    MessageBuilder messageBuilder = new MessageBuilder();
+    messageBuilder.setContent(Utils.DEFAULT_EMAIL_CONTENT);
+    Topic topicNTF = createdTopic(owner);
+    topicNTF.setIsNotifyWhenAddPost(profile.getEmail());
+    // Save topic
+    forumService_.saveTopic(cat.getId(), forum.getId(), topicNTF, true, false, messageBuilder);
+    Post post = createdPost();
+    post.setMessage(postMsg);
+    // Save post
+    forumService_.savePost(cat.getId(), forum.getId(), topicNTF.getId(), post, true, messageBuilder);
+    Thread.sleep(5000);
+    sendNotificationManager.doneSignal().await();
+    // check result test
+    List messages = IteratorUtils.toList(forumService_.getPendingMessages());
+    assertEquals(1, messages.size());
+    SendMessageInfo msgInfo = (SendMessageInfo) messages.get(0);
+    assertTrue(msgInfo.getEmailAddresses().contains(profile.getEmail()));
+    assertTrue(msgInfo.getMessage().getBody().contains(postMsg));
+  }
 }

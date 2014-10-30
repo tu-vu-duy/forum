@@ -74,6 +74,7 @@ import org.exoplatform.forum.common.CommonUtils;
 import org.exoplatform.forum.common.TransformHTML;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.common.conf.RoleRulesPlugin;
+import org.exoplatform.forum.common.jcr.JCRQueryUtils;
 import org.exoplatform.forum.common.jcr.JCRSessionManager;
 import org.exoplatform.forum.common.jcr.JCRTask;
 import org.exoplatform.forum.common.jcr.KSDataLocation;
@@ -112,6 +113,7 @@ import org.exoplatform.forum.service.TopicListAccess;
 import org.exoplatform.forum.service.UserProfile;
 import org.exoplatform.forum.service.Utils;
 import org.exoplatform.forum.service.Watch;
+import org.exoplatform.forum.service.cache.CachedDataStorage;
 import org.exoplatform.forum.service.conf.CategoryData;
 import org.exoplatform.forum.service.conf.ForumData;
 import org.exoplatform.forum.service.conf.ForumInitialDataPlugin;
@@ -3603,12 +3605,14 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       //
       post.setPath(postNode.getPath());
       //
-      if (topicNode.getName().replaceFirst(Utils.TOPIC, Utils.POST).equals(post.getId()) == false && isNew) {
-        addNotificationTask(topicNode.getPath(), null, post, messageBuilder, false);
-      }
-      //
       boolean sendAlertJob = (!messageBuilder.getLink().equals("link") && (post.getUserPrivate().length != 2) && 
                               (!post.getIsApproved() || post.getIsHidden() || post.getIsWaiting()));
+      
+      if (topicNode.getName().replaceFirst(Utils.TOPIC, Utils.POST).equals(post.getId()) == false && isNew) {
+        addNotificationTask(topicNode.getPath(), null, post, messageBuilder, !sendAlertJob);
+      }
+      
+      //
       if (sendAlertJob) {
         getTotalJobWatting(sProvider, new HashSet<String>(new PropertyReader(forumNode).list(EXO_MODERATORS, new ArrayList<String>())));
       }
@@ -3889,14 +3893,21 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
           List<String> emailListForum = new ArrayList<String>();
           // Owner Notify
           if (isApprovePost) {
-            String ownerTopicEmail = "";
-            String owner = node.getProperty(EXO_OWNER).getString();
-            if (node.hasProperty(EXO_IS_NOTIFY_WHEN_ADD_POST) && !Utils.isEmpty(node.getProperty(EXO_IS_NOTIFY_WHEN_ADD_POST).getString())) {
+            PropertyReader reader = new PropertyReader(node);
+            String owner = reader.string(EXO_OWNER);
+            String ownerTopicEmail = reader.string(EXO_IS_NOTIFY_WHEN_ADD_POST, StringUtils.EMPTY);
+            if (!CommonUtils.isEmpty(ownerTopicEmail)) {
               try {
                 Node userOwner = userProfileHome.getNode(owner);
-                ownerTopicEmail = userOwner.getProperty(EXO_EMAIL).getString();
-              } catch (Exception e) {
-                ownerTopicEmail = node.getProperty(EXO_IS_NOTIFY_WHEN_ADD_POST).getString();
+                reader = new PropertyReader(userOwner);
+                if(reader.bool(EXO_IS_BANNED)) {
+                  ownerTopicEmail = StringUtils.EMPTY;
+                } else if (!Utils.isEmpty(reader.string(EXO_EMAIL, StringUtils.EMPTY))) {
+                  ownerTopicEmail = userOwner.getProperty(EXO_EMAIL).getString();
+                }
+              } catch (PathNotFoundException e) {
+                // owner not existing
+                ownerTopicEmail = StringUtils.EMPTY;
               }
             }
             String[] users = post.getUserPrivate();
@@ -3917,6 +3928,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
               }
             }
           }
+          
           /*
            * check is approved, is activate by topic and is not hidden before send mail
            */
@@ -5972,7 +5984,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       //String rootPath = categoryHome.getPath();
 
       //process query for asterisk 
-      String asteriskQuery = CommonUtils.processLikeCondition(textQuery).toUpperCase();
+      String asteriskQuery = CommonUtils.normalizeUnifiedSearchInput(textQuery);
       textQuery = CommonUtils.processUnifiedSearchSearchCondition(textQuery);
       //textQuery = CommonUtils.encodeSpecialCharToHTMLnumber(textQuery, "~", true);
 
@@ -5983,7 +5995,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
 
       //for (String type : types) {
         StringBuilder queryString = buildSQLQueryUnifiedSearch(listForumIds, asteriskQuery, textQuery, isAdmin, sort, order, userId, listOfUser);
-        //System.out.println("\n" + queryString.toString() + "\n");
+        LOG.debug("UnifiedSearch statement query: " + queryString.toString());
         QueryImpl query = (QueryImpl)qm.createQuery(queryString.toString(), Query.SQL);
         query.setLimit(30);
         query.setOffset(offset);
@@ -6028,12 +6040,11 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       queryString.append(") and ");
     }
     queryString.append("(")
-               //.append("(CONTAINS (exo:message, '").append(textQuery).append("')")
-               .append("UPPER(exo:message) LIKE '").append(asteriskQuery).append("'")
+               .append("CONTAINS (exo:message, '").append(asteriskQuery).append("')")
                .append(" or (exo:isFirstPost='true' and ")
-               //.append("(CONTAINS (exo:name, '").append(textQuery).append("')")
-               .append("UPPER(exo:name) LIKE '").append(asteriskQuery).append("'))");
-    
+               .append("CONTAINS (exo:name, '").append(asteriskQuery).append("'))")
+               .append(")");
+
     // if user isn't admin
     if (!isAdmin) {
       queryString.append(" and ");
@@ -7667,10 +7678,12 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     try {
       Node forumNode = (Node) getForumHomeNode(sProvider).getSession().getItem(pSetting.getForumPath());
       NodeIterator iter = getIteratorPrune(sProvider, pSetting);
+      List<String> topicPruned = new ArrayList<String>();
       while (iter.hasNext()) {
         Node topic = iter.nextNode();
         topic.setProperty(EXO_IS_ACTIVE, false);
         topic.save();
+        topicPruned.add(topic.getPath());
         try {
           Node forumN = topic.getParent();
           if (new PropertyReader(forumN).string(EXO_LAST_TOPIC_PATH, "").indexOf(topic.getName()) >= 0) {
@@ -7684,6 +7697,13 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       Node setting = forumNode.getNode(pSetting.getId());
       setting.setProperty(EXO_LAST_RUN_DATE, getGreenwichMeanTime());
       forumNode.save();
+      //
+      DataStorage storage = getCachedDataStorage();
+      if (storage instanceof CachedDataStorage) {
+        for (String topicPath : topicPruned) {
+          ((CachedDataStorage) storage).clearTopicCache(storage.getTopicByPath(topicPath, false));
+        }
+      }
     } catch (Exception e) {
       LOG.error("Failed to run prune", e);
     }
@@ -7696,7 +7716,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
     newDate.setTimeInMillis(newDate.getTimeInMillis() - pSetting.getInActiveDay() * 86400000);
     QueryManager qm = forumHome.getSession().getWorkspace().getQueryManager();
     StringBuffer stringBuffer = new StringBuffer();
-    stringBuffer.append(JCR_ROOT).append(forumNode.getPath()).append("//element(*,").append(EXO_TOPIC).append(")[ @").append(EXO_IS_ACTIVE).append("='true' and @").append(EXO_LAST_POST_DATE).append(" <= xs:dateTime('").append(ISO8601.format(newDate)).append("')]");
+    stringBuffer.append(JCR_ROOT).append(forumNode.getPath()).append("/element(*,").append(EXO_TOPIC).append(")[ @").append(EXO_IS_ACTIVE).append("='true' and @").append(EXO_LAST_POST_DATE).append(" <= xs:dateTime('").append(ISO8601.format(newDate)).append("')]");
     Query query = qm.createQuery(stringBuffer.toString(), Query.XPATH);
     QueryResult result = query.execute();
     return result.getNodes();
@@ -8399,7 +8419,7 @@ public class JCRDataStorage implements DataStorage, ForumNodeTypes {
       for (int i = 0; i < strs.length; i++) {
         if (i > 0)
           builder.append(" or ");
-        builder.append("(@").append(strs[i]).append("='").append(userName).append("')");
+        builder.append("(@").append(strs[i]).append("='").append(JCRQueryUtils.escapeSimpleQuoteCharacter(userName)).append("')");
       }
 
       StringBuilder pathQuery = new StringBuilder();

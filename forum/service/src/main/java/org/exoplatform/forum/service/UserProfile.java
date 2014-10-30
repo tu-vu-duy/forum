@@ -534,6 +534,14 @@ public class UserProfile implements Serializable {
     }
     return 0;
   }
+  
+  public Map<String, Long> getLastAccessTopics() {
+    return this.lastAccessTopics;
+  }
+
+  public void setLastAccessTopics(Map<String, Long> lastAccessTopics) {
+    this.lastAccessTopics = lastAccessTopics;
+  }
 
   public void setLastTimeAccessForum(String forumId, long lastTime) throws Exception {
     lastAccessForums.put(forumId, lastTime);
@@ -544,6 +552,14 @@ public class UserProfile implements Serializable {
       return lastAccessForums.get(forumId);
     }
     return 0;
+  }
+  
+  public Map<String, Long> getLastAccessForums() {
+    return this.lastAccessForums;
+  }
+
+  public void setLastAccessForums(Map<String, Long> lastAccessForums) {
+    this.lastAccessForums = lastAccessForums;
   }
   
   public String toString() {

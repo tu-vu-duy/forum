@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -105,6 +107,8 @@ public class CommonUtils {
   private static Map<String, String> charcodes  = new HashMap<String, String>();
 
   private static List<String> ignoreLessThanAndGreaterThan = Arrays.asList(LESS_THAN, GREATER_THAN, AMP);
+  
+  private static final Pattern EXCEPT_PATTERN = Pattern.compile("~(([1|0]\\.[0-9])|1)+");
   /*
    *  The distance code number content special character.
    *  Ex: from ' '(32) to '0'(48): ' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/'
@@ -353,23 +357,57 @@ public class CommonUtils {
     for (String s : tab){
       if (isEmpty(s)) continue;
       String searchTerm = s.split("~")[0];
-      String similarity = s.split("~").length > 1 ? s.split("~")[1] : "0.5";
+      String similarity = s.split("~")[1];
       searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
       builder.append(searchTerm).append("~").append(similarity).append(" ");
     }
     return builder.toString().trim();
   }
   
-  public static String processLikeCondition(String input) {
-    StringBuilder builder = new StringBuilder();
-    String[] tab = input.split(" ");
-    for (String s : tab){
-      if (isEmpty(s)) continue;
-      String searchTerm = s.split("~")[0];
-      searchTerm = encodeSpecialCharToHTMLnumber(searchTerm.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, ""), "~", true);
-      builder.append(PERCENT_STR).append(searchTerm).append(PERCENT_STR).append(" ");
+  /**
+   * Normalize Unified search input
+   * 
+   * @param input The key search
+   * @return 
+   */
+  public static String normalizeUnifiedSearchInput(String input) {
+    if (isEmpty(input)) {
+      return input;
     }
-    return builder.toString().trim();
+    StringBuilder builder = new StringBuilder();
+    String keySearch = removeExceptPattern(input);
+    String wildcardCharacters = (has2BytesCharacter(keySearch)) ? PERCENT_STR : ASTERISK_STR;
+    StringTokenizer tokenizer = new StringTokenizer(keySearch, SPACE);
+    while (tokenizer.hasMoreTokens()) {
+      String token = tokenizer.nextToken();
+      token = encodeSpecialCharToHTMLnumber(token.replaceAll(SPECIAL_CHARACTOR_FOR_UNIFIED_SERACH_REGEX, EMPTY_STR), "~", true);
+      builder.append(wildcardCharacters).append(token).append(wildcardCharacters).append((tokenizer.hasMoreTokens()) ? SPACE : EMPTY_STR);
+    }
+    return builder.toString();
+  }
+
+  /**
+   * Remove the except pattern
+   * 
+   * @param input
+   * @return
+   */
+  private static String removeExceptPattern(String input) {
+    return EXCEPT_PATTERN.matcher(input.trim()).replaceAll(EMPTY_STR);
+  }
+  /**
+   * Check the input text has 2 bytes character or 1 byte
+   * @param input
+   * @return
+   */
+  private static boolean has2BytesCharacter(String input) {
+    for (int i = 0; i < input.length(); i++) {
+      int c = input.charAt(i);
+      if (c > 255) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -393,7 +431,7 @@ public class CommonUtils {
     if (isEmpty(searchCondition)) {
       return searchCondition;
     }
-    StringBuffer searchConditionBuffer = new StringBuffer();
+    StringBuilder searchConditionBuffer = new StringBuilder();
     //process the special characters
     searchCondition = removeSpecialCharacterForSearch(searchCondition);
     searchCondition = searchCondition.replace(ASTERISK_STR, PERCENT_STR);

@@ -16,6 +16,9 @@
  */
 package org.exoplatform.forum.service.cache.model.data;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.exoplatform.forum.common.cache.model.CachedData;
 import org.exoplatform.forum.service.UserProfile;
 
@@ -65,6 +68,10 @@ public class LoginUserProfileData implements CachedData<UserProfile> {
   private String[]            moderateCategory;
   
   private long                newMessage             = 0;
+  
+  private Map<String, Long>   lastAccessTopics       = new HashMap<String, Long>();
+
+  private Map<String, Long>   lastAccessForums       = new HashMap<String, Long>();
 
   public LoginUserProfileData(UserProfile profile) {
     this.userId = profile.getUserId();
@@ -88,6 +95,8 @@ public class LoginUserProfileData implements CachedData<UserProfile> {
     this.lastReadPostOfTopic = profile.getLastReadPostOfTopic();
     this.collapCategories = profile.getCollapCategories();
     this.email = profile.getEmail();
+    this.lastAccessTopics = profile.getLastAccessTopics();
+    this.lastAccessForums = profile.getLastAccessForums();
   }
   
   @Override
@@ -114,6 +123,8 @@ public class LoginUserProfileData implements CachedData<UserProfile> {
     userProfile.setLastReadPostOfTopic(this.lastReadPostOfTopic);
     userProfile.setCollapCategories(this.collapCategories);
     userProfile.setEmail(this.email);
+    userProfile.setLastAccessTopics(this.lastAccessTopics);
+    userProfile.setLastAccessForums(this.lastAccessForums);
     return userProfile;
   }
 

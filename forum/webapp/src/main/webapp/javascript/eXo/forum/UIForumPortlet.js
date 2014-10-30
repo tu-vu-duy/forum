@@ -13,6 +13,12 @@
         UIForumPortlet.initShowUserInfo();
         UIForumPortlet.disableOnClickMenu('SearchForm');
         UIForumPortlet.initTooltip(id);
+        jportlet.find('.dropdown').parent().on('click', function(evt) {
+          var menu = $(this).find('.dropdown-menu:first');
+          if (menu.find('input:first').exists()) {
+            var t = setTimeout(function() { menu.find('input:first').focus(); clearTimeout(t); }, 200)
+          }
+        });
       }
       utils.onResize(UIForumPortlet.resizeCallback);
 
@@ -78,7 +84,7 @@
       var leftNav = $('.LeftNavigationTDContainer:first');
       if(leftNav.exists()) {
         leftNav.css('height', 'auto');
-        setTimeout(forumLeftNavigation.resize, 100);
+        setTimeout(forumLeftNavigation.resize, 1000);
       }
     },
 
@@ -646,9 +652,9 @@
 
     reSizeImagesInMessageForm : function() {
       if (eXo.core.Browser.isIE6())
-        setTimeout('eXo.forum.UIForumPortlet.setSizeImages(130, "UIViewPrivateMessageForm")', 800);
+        setTimeout('eXo.forum.UIForumPortlet.setSizeImages(130, "uiViewPrivateMessage")', 800);
       else
-        setTimeout('eXo.forum.UIForumPortlet.setSizeImages(10, "UIViewPrivateMessageForm")', 400);
+        setTimeout('eXo.forum.UIForumPortlet.setSizeImages(10, "uiViewPrivateMessage")', 400);
     },
 
     setSizeImages : function(delta, classParant) {
@@ -949,7 +955,7 @@
       var textContent = uiRightActionBar.text();
       textContent = textContent.replace(/\n/g, '').replace(/\s\s|\t\t|\r\r/g, '');
       var l = (textContent.length) * 1 + 1;
-      uiRightActionBar.css('width', ((l * 6.5) + 65) + "px");
+      uiRightActionBar.css('width', ((l * 7) + 70) + "px");
     }
   };
 
