@@ -43,6 +43,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
 import org.exoplatform.webui.config.annotation.EventConfig;
+import org.exoplatform.webui.container.UIPermissionContainer;
 import org.exoplatform.webui.core.UIPopupComponent;
 import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
 import org.exoplatform.webui.core.model.SelectItemOption;
@@ -211,6 +212,21 @@ public class UIForumForm extends BaseForumForm implements UIPopupComponent {
                                             new String[] { MODERATOR, VIEWER, TOPICABLE, POSTABLE }; 
     permissionTab.setPermission(spaceGroupId, permssion);
     addChild(permissionTab);
+    //
+    
+    UIFormInputWithActions permissionTap = new UIFormInputWithActions("permissionTap");
+    UIPermissionContainer permissionContainer1 = createUIComponent(UIPermissionContainer.class, null, "TestModerator1");
+    permissionTap.addChild(permissionContainer1);
+    UIPermissionContainer permissionContainer2 = createUIComponent(UIPermissionContainer.class, null, "TestModerator2");
+    permissionTap.addChild(permissionContainer2);
+    UIPermissionContainer permissionContainer3 = createUIComponent(UIPermissionContainer.class, null, "TestModerator3");
+    permissionTap.addChild(permissionContainer3);
+    
+    addUIFormInput(permissionTap);
+    //
+    permissionContainer1.setId("TestModerator1");
+    permissionContainer2.setId("TestModerator2");
+    permissionContainer3.setId("TestModerator3");
 
     setActions(new String[] { "Save", "Cancel" });
   }
@@ -306,6 +322,10 @@ public class UIForumForm extends BaseForumForm implements UIPopupComponent {
       UIForumPortlet forumPortlet = uiForm.getAncestorOfType(UIForumPortlet.class);
 
       UIFormInputWithActions newForumForm = uiForm.getChildById(FIELD_NEWFORUM_FORM);
+      UIFormInputWithActions permissionTap = uiForm.getChildById("permissionTap");
+      System.out.println("TestModerator1: " + ((UIPermissionContainer)permissionTap.getChildById("TestModerator1")).getValue());
+      System.out.println("TestModerator2: " + ((UIPermissionContainer)permissionTap.getChildById("TestModerator2")).getValue());
+      System.out.println("TestModerator3: " + ((UIPermissionContainer)permissionTap.getChildById("TestModerator3")).getValue());
       
       UIFormSelectBox categorySelectBox = newForumForm.getUIFormSelectBox(FIELD_CATEGORY_SELECTBOX);
       String categoryId = categorySelectBox.getValue();
