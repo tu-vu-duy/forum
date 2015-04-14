@@ -28,10 +28,12 @@ import javax.jcr.ImportUUIDBehavior;
 
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.FileUtils;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.forum.base.BaseForumServiceTestCase;
 import org.exoplatform.forum.common.UserHelper;
 import org.exoplatform.forum.service.impl.JCRDataStorage;
+import org.exoplatform.services.organization.Group;
+import org.exoplatform.services.organization.GroupHandler;
+import org.exoplatform.services.organization.MembershipType;
 import org.exoplatform.services.organization.User;
 
 public class ForumServiceTestCase extends BaseForumServiceTestCase {
@@ -688,7 +690,7 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
       dataStorage.saveTopic(categoryId, forumId, topic, true, false, new MessageBuilder());
     }
     //
-    Thread.sleep(5000);
+    Thread.sleep(500);
     sendNotificationManager.doneSignal().await();
     //
     assertEquals(20, IteratorUtils.toList(dataStorage.getPendingMessages()).size());   
@@ -738,4 +740,68 @@ public class ForumServiceTestCase extends BaseForumServiceTestCase {
     assertTrue(msgInfo.getEmailAddresses().contains(profile.getEmail()));
     assertTrue(msgInfo.getMessage().getBody().contains(postMsg));
   }
+  
+  public void testEmailPermission() throws Exception {
+    //reset old mails
+    forumService_.getPendingMessages();
+    Group parent = createGroup(null, "spaces");
+    //
+    Category normalCat = createCategory(getId(Utils.CATEGORY));
+    forumService_.saveCategory(normalCat, true);
+    Forum forum = createdForum();
+    forumService_.saveForum(normalCat.getId(), forum, true);
+    forum = forumService_.getForum(normalCat.getId(), forum.getId());
+    //
+    Group spaceTest = createGroup(parent, "test_space");
+    //
+    
+    Category spaceCat = createCategory(Utils.CATEGORY_SPACE_ID_PREFIX);
+    forumService_.saveCategory(spaceCat, true);
+    Forum spaceForum = createdForum();
+    spaceForum.setId(Utils.FORUM_SPACE_ID_PREFIX+ "test_space");
+    spaceForum.setModerators(new String[]{"manager:/spaces/" + Utils.FORUM_SPACE_ID_PREFIX+ "test_space"});
+    spaceForum.setViewer(new String[]{"/spaces/" + Utils.FORUM_SPACE_ID_PREFIX+ "test_space"});
+    forumService_.saveForum(spaceCat.getId(), spaceForum, true);
+    spaceForum = forumService_.getForum(spaceCat.getId(), spaceForum.getId());
+    //
+    addUserToGroup(USER_DEMO, spaceTest, "member");
+    addUserToGroup(USER_JOHN, spaceTest, "member");
+    // demo watch space forum
+    forumService_.addWatch(1, spaceCat.getId() + "/" + spaceForum.getId(), Arrays.asList(USER_DEMO + "@mail.com"), USER_DEMO);
+    // root watch space category
+    forumService_.addWatch(1, spaceCat.getId(), Arrays.asList(USER_ROOT + "@mail.com"), USER_ROOT);
+    MessageBuilder messageBuilder = new MessageBuilder();
+    messageBuilder.setContent(Utils.DEFAULT_EMAIL_CONTENT);
+    Topic topic = createdTopic(USER_JOHN);
+    forumService_.saveTopic(spaceCat.getId(), spaceForum.getId(), topic, true, false, messageBuilder);
+    //
+    Thread.sleep(5000);
+    sendNotificationManager.doneSignal().await();
+    List<?> messages = IteratorUtils.toList(forumService_.getPendingMessages());
+    assertEquals(1, messages.size());
+    
+    
+  }
+  
+  private Group createGroup(Group parent, String groupName) throws Exception {
+    GroupHandler groupHandler = UserHelper.getGroupHandler();
+    String parentId = (parent == null) ? "" : parent.getId();
+    if(groupHandler.findGroupById(parentId + "/" + groupName) == null) {
+      Group group = groupHandler.createGroupInstance();
+      group.setGroupName(groupName);
+      group.setLabel(groupName);
+      group.setDescription(groupName);
+      //
+      groupHandler.addChild(null, group, true);
+    }
+    //
+    return groupHandler.findGroupById(parentId + "/" + groupName);
+  }
+
+  private void addUserToGroup(String userId, Group group, String type) throws Exception {
+    MembershipType m = (MembershipType) UserHelper.getOrganizationService().getMembershipTypeHandler().findMembershipType(type);
+    UserHelper.getMembershipHandler().linkMembership(UserHelper.getUserByUserId(userId), group, m, true);
+  }
+  
+  
 }
