@@ -81,7 +81,7 @@ public class ForumServiceUtils {
           entries.add(new MembershipEntry(membership.getGroupId(), membership.getMembershipType()));
         }
       }
-      //
+      //           sss
       identity = new Identity(userId, entries);
     }
 
