@@ -1,14 +1,23 @@
+// Require 
+// + forumResources: forum mask layer, context menu, utils
+// + platform: platformLeftNavigation
+// + jQuery
+// TODO:
+// + All logic for check IE6 need remove on 4.3.x. The PLF-4.3.x do not support for IE6.
+// + Remove some methods un-use
 (function(maskLayer, contextMenu, utils, forumLeftNavigation, $, window, document) {
   var UIForumPortlet = {
+    // Common variable
     obj : null,
     event : null,
     wait : false,
     id : 'UIForumPortlet',
-
+    // initialization method 
     init : function(id) {
       UIForumPortlet.id = id;
       var jportlet = $.fn.findId(id);
       if (jportlet.exists()) {
+        // disable context menu
         jportlet.find('.oncontextmenu').on('contextmenu', utils.returnFalse);
         UIForumPortlet.initShowUserInfo();
         UIForumPortlet.disableOnClickMenu('SearchForm');
@@ -28,14 +37,18 @@
         })
       });
     },
-    
+    /*
+     * Disable mouse event on element.
+     */
     disableOnClickMenu : function (id) {
       var jportlet = $.fn.findId(UIForumPortlet.id);
       if(id != null) {
         jportlet.find('#'+id).off('click mousedown mouseover').on('click mousedown mouseover', utils.cancelEvent);
       }
     },
-
+    /*
+     * Register event onClick to show UserDropDownMenu for element DOM has class is 'uiUserInfo'
+     */
     initShowUserInfo : function(id) {
       var jportlet = $.fn.findId(UIForumPortlet.id);
       if(id != null) {
@@ -44,15 +57,24 @@
         jportlet.find('.uiUserInfo').off('click').on('click', utils.showUserMenu);
       }
     },
-
+    /*
+     * Register tooltips
+     */
     initTooltip : function(id) {
       utils.initTooltip(id);
     },
-
+    /*
+     * This method will call after Browser resize.
+     */
     resizeCallback : function() {
       utils.setMaskLayer(UIForumPortlet.id);
     },
-    
+    /*
+     * Initilization confirm popup.
+     * On forum, this method need calculate the number items selected to process action. The items check on one or more than one pages
+     * If number checked == 0 then show message: need check less one item
+     * Else show meesage: process with x items
+     */
     initConfirm : function(id) {
       var component = $.fn.findId(id);
       var confirms = component.find('.confirm');
@@ -79,7 +101,9 @@
         thizz.confirmation(settings);
       });
     },
-
+    /*
+     * Re-calculate height of left navigation of platform. 
+     */
     controlLeftNavigation : function() {
       var leftNav = $('.LeftNavigationTDContainer:first');
       if(leftNav.exists()) {
@@ -87,7 +111,11 @@
         setTimeout(forumLeftNavigation.resize, 1000);
       }
     },
-
+    /*
+     * Manager checked forums/topics items.
+     * - Control behavior of check all
+     * - Control active items on menu of category manager
+     */
     selectItem : function(obj) {
       var jobj = $(obj);
       var tr = jobj.parents('tr');
@@ -144,7 +172,9 @@
         UIForumPortlet.setChecked(elm.checked);
       }
     },
-
+    /*
+     * Count number checkbox is checked on all pages of forums or topics list.
+     */
     setChecked : function(isChecked) {
       var divChecked = $('#divChecked');
       if (divChecked.exists()) {
@@ -245,7 +275,11 @@
         });
       }
     },
-    
+    /*
+     * The method controll list actions have activie-link or not, it controll by value of 'checked'
+     * If checked == true: All actions have link is active. If has class disabled, need remove this class and move back link value from data-action to href
+     * Else All action is inactive, all href value move to data-action and set is javascript:void(0);, add class disabled for all actions.
+     */
     enableDisableAction : function(actions, checked) {
       $.each(actions, function(index, elm) {
         var thizz = $(elm);
@@ -265,7 +299,10 @@
         }
       });
     },
-
+    /*
+     * Controll the actions add-catgory/add-forum on UIForumActionBar. Two action only active all on Forum home page. Only Forum actions active when view category.
+     * when View topic list/ post list - tow actions is disabled.
+     */
     visibleAction : function(id) {
       var parent = $.fn.findId(id);
       var addCategory = parent.find('#AddCategory');
@@ -284,7 +321,9 @@
         }
       }
     },
-
+    /*
+     * Controll checkbox list on UITopicContainer.gtmpl (show list topics).
+     */
     checkActionTopic : function(obj, evt) {
       UIForumPortlet.showPopup(obj, evt);
       var parentMenu = $("#ModerationMenu");
@@ -328,7 +367,9 @@
         }
       }
     },
-
+    /*
+     * Controll expand/collapse box on forum: forum list, forum static, forum moderators, topics list
+     */
     expandCollapse : function(obj) {
       var jobject = $(obj)
       var forumToolbar = jobject.parents(".uiCollapExpand");
@@ -345,7 +386,13 @@
         forumToolbar.find('.uiIconArrowDown').show().tooltip();
       }
     },
-
+    /*
+     * Show/hide tree nodes: It use for show/hide tree category/forum
+     * This method use for case click on one node, it run by step:
+     * + hide all children nodes - change icon to collapseIcon
+     * + show and expand current node - change icon to expandIcon
+     * This method only use on UISettingEditModeForm.gtmpl
+     */
     showTreeNode : function(obj) {
       var jobject = $(obj);
       var parentNode = jobject.parents(".nodeGroup:first");
@@ -359,14 +406,18 @@
       selectedNode.find('.uiIconNode:first').addClass("expandIcon");
       selectedNode.find('.nodeGroup:first').show();
     },
-
+    /*
+     * This method handle action click on checkbox has position before parent node of treeNode
+     */
     checkedNode : function(elm) {
       var jinput = $(elm);
       var node = jinput.parents('.node:first');
       var inputs = node.find('.nodeGroup:first').find('input[type=checkbox]');
       inputs.prop("checked", elm.checked);
     },
-
+    /*
+     * This method handle action click on children node, it will auto checked on checkbox has position before parent node.
+     */
     checkedChildNode : function(elm) {
       if (elm.checked) {
         var parentNode = $(elm).parents('.nodeGroup:first').parents('.node:first');
@@ -374,7 +425,10 @@
         parentCheckBox.prop("checked", elm.checked);
       }
     },
-    
+    /*
+     * Show/hide tree nodes: It use for show/hide tree category/forum/topic
+     * This method use for case click on one node for show/hide tree.
+     */
     showTree: function(node) {
       var jnode = $(node);
       var pNode = jnode.parent('.node:first');
@@ -391,7 +445,6 @@
             elm.attr('class', 'uiIconNode uiIconEmpty');
           }
         });
-        
         //
         groupNode.show();
         jnode.attr('class', 'uiIconNode expandIcon');
@@ -401,7 +454,9 @@
       }
       
     },
-    
+    /*
+     * Initilization tree node
+     */
     initTreeNode : function(formId) {
       var container = $.fn.findId(formId);
       var treeContainer = container.find('div.treeContainer:first');
@@ -417,7 +472,10 @@
       groupFirst.find('.nodeGroup:first').parent('.node:first')
                 .find('.uiIconNode:first').click();
     },
-    
+    /*
+     * Initilization vote topic on forum
+     * This method handle action on mouseover, blur on each stars.
+     */
     initVote : function(voteId, rate) {
       var vote = $.fn.findId(voteId);
       rate = parseInt(rate);
@@ -436,7 +494,9 @@
 
       UIForumPortlet.parentOverVote(vote);
     },
-
+    /*
+     * Handle on mouseover on popup vote, it will display highlight the old number stars that user voted.
+     */
     parentOverVote : function(elm) {
       var optsCon = $(elm).find('div.optionsContainer:first');
       var opts = optsCon.children('i');
@@ -448,7 +508,9 @@
           opts.eq(j).attr('class', 'uiIconNormalVote');
       }
     },
-
+    /*
+     * Handle on mouseover on stars, and highlight the stars that user hovered.
+     */
     overVote : function(event) {
       var optsCon = $(this).parents('div.optionsContainer:first');
       var opts = optsCon.children('i');
@@ -464,7 +526,9 @@
         opts.eq(i).attr('class', 'uiIconOverVote');
       }
     },
-
+    /*
+     * Handle show/hide popup-menu on forum: Administrators, Moderators, Search menu.
+     */
     showPopup : function(elm, e) {
       var strs = [ '#goPageBottom', '#SearchForm', '.CancelEvent' ];
       for ( var t = 0; t < strs.length; t++) {
@@ -477,7 +541,9 @@
       utils.cancelEvent(e);
       utils.addhideElement($(elm).find('div.UIPopupCategory'));
     },
-
+    /*
+     *  Handle scroll into view the post give by post's id.
+     */
     goLastPost : function(idLastPost) {
       var isDesktop = $('#UIPageDesktop');
       if (!isDesktop.exists()) {
@@ -492,7 +558,9 @@
         }
       }
     },
-
+    /*
+     * Handle scroll into view of element, give by element's id
+     */
     scrollIntoView : function(id) {
       var timer = setTimeout(function() {
         var obj = document.getElementById(id);
@@ -511,7 +579,9 @@
         clearTimeout(timer);
       }, 1000);
     },
-
+    /*
+     *  Handle enable/disable of checkbox on banned User tab on User-management form.
+     */
     setEnableInput : function() {
       var parend = $("#ForumUserBan");
       if (parend.exists()) {
@@ -537,7 +607,10 @@
         }
       }
     },
-
+    /*
+     * The methods: hidePicture, showPicture, getImageSize, showFullScreen
+     * Support to show/hidden masklayer when open the images attched on topic/posts
+     */
     hidePicture : function() {
       eXo.core.Browser.onScrollCallback.remove('MaskLayerControl');
       $(eXo.core.UIMaskLayer.object).remove();
@@ -570,7 +643,9 @@
         imageNode.width(widthMax - 40);
       }
     },
-
+    /*
+     * Handle enable/disable checkbox on moderations tab on Forum from.
+     */
     setDisableTexarea : function() {
       var objCmdElm = $('#moderationOptions');
       var input = objCmdElm.find('input.checkbox');
@@ -599,7 +674,9 @@
         }
       }
     },
-
+    /*
+     * @deprecated: This method unuse on 4.2.x. need remove (on template and js)
+     */
     setDisableInfo : function() {
       var strs = new Array("#CanPost", "#CanView");
       for ( var i = 0; i < strs.length; i++) {
@@ -612,7 +689,9 @@
         }
       }
     },
-
+    /*
+     * @deprecated: This method unuse on 4.2.x. need remove (on template and js)
+     */
     setShowInfo : function(elm) {
       var info = $($(elm).attr('id') + "Info");
       if (elm.val() === '') {
@@ -621,7 +700,9 @@
         info.hide();
       }
     },
-
+    /*
+     * @deprecated: This method unuse on 4.2.x. need remove (on template and js)
+     */
     controlWorkSpace : function() {
       var slidebar = $('#ControlWorkspaceSlidebar');
       if (slidebar.exists()) {
@@ -632,6 +713,9 @@
       }
       setTimeout(UIForumPortlet.reSizeImages, 1500);
     },
+    /*
+     * @deprecated: This method unuse on 4.2.x. need remove (on template and js)
+     */
     onClickSlidebarButton : function() {
       var workspaceContainer = $('#UIWorkspaceContainer');
       if (workspaceContainer.exists()) {
@@ -640,6 +724,9 @@
         }
       }
     },
+    /*
+     * Handle register the event click attchments on topic/posts
+     */
     reSizeImgViewPost : function() {
       setTimeout('eXo.forum.UIForumPortlet.setSizeImages(10, "SizeImage")', 1000);
     },
@@ -695,7 +782,9 @@
     showImage : function() {
       UIForumPortlet.showPicture(this);
     },
-
+    /*
+     * Handle reset all fields on form.
+     */
     resetFielForm : function(idElm) {
       var form = $.fn.findId(idElm);
       form.find("input:checkbox").attr('checked', false);
@@ -708,7 +797,9 @@
       }
       form.find("textarea").val('');
     },
-
+    /*
+     * Build and register right-click-menu for each topic on Category/Forum container.
+     */
     RightClickBookMark : function(elmId) {
       var ancestor = $.fn.findId(elmId);
       var popupContents = ancestor.find('ul.ClickPopupContent');
@@ -764,8 +855,11 @@
         });
       }
     },
-
+    /*
+     * Register on resize for all images display on topic/posts
+     */
     ReloadImage : function() {
+      // This logic don't need for 4.3.x
       if (eXo.core.Browser.isIE6()) {
         var aImage = document.getElementsByTagName("img");
         var length = aImage.length;
@@ -777,7 +871,9 @@
       }
       utils.onResize('eXo.forum.UIForumPortlet.reSizeImages');
     },
-
+    /*
+     * @deprecated: This method unuse on 4.2.x. need remove (on template and js)
+     */
     shareLink : function(obj) {
       var shareLinkContainer = $("#popupShareLink");
       if (shareLinkContainer.css('display') != "none")
@@ -785,10 +881,15 @@
       else
         shareLinkContainer.show();
     },
-
+    /*
+     * @deprecated: This method unuse on 4.2.x. need remove (on template and js)
+     */
     closeShareLink : function(obj) {
       $(obj).parents('.UIPopupWindow').hide();
     },
+    /*
+     * Auto add More button for list actions on UIForumActionBar
+     */
     loadScroll : function() {
       UIForumPortlet.loadMoreForumActionBar('UIForumActionBar', 'More');
     },
@@ -807,9 +908,9 @@
       var widthMoreItem = parent.width() - uiRightActionBar.outerWidth() - 20;
       return widthMoreItem;
     },
-/*
- * Load more tags items.
- * */
+    /*
+     * Auto add More button for list tags on UITopicDetail
+     */
     loadMoreItem : function(id, moreTagLabel) {
       var parent = $.fn.findId(id);
       parent.loadMoreItem({
@@ -817,7 +918,6 @@
         processContainerWidth : UIForumPortlet.processTagContainerWidth
       });
     },
-
     processTagContainerWidth : function(parent) {
       var topContainer = parent.find('.topContainer:first');
       var actionContainer = parent.find('.actionContainer:first');
@@ -828,7 +928,11 @@
       var widthMoreItem = topContainer.width() - actionContainer.width() - pageIterContainer.width() - titleTag.width() - 20;
       return widthMoreItem;
     },
-
+    /*
+     * Execute the link storage on attibute data-link.
+     * This method support for case: the tags A existing href value, but when user click on this tag 'A'
+     * it do not open this href but execute other action.
+     */
     executeLink : function(elm, evt) {
       var onclickAction = String($(elm).attr('data-link'));
       $.globalEval(onclickAction);
@@ -851,7 +955,9 @@
         });
       }
     },
-
+    /*
+     * @deprecated: This method unuse on 4.2.x. need remove (on template and js)
+     */
     setAutoScrollTable : function(idroot, idParent, idChild) {
       var rootEl = document.getElementById(idroot);
       var grid = document.getElementById(idChild);
@@ -878,7 +984,9 @@
         tableContent.style.height = "auto";
       }
     },
-
+    /*
+     * Initialization event right click for container (disable right-click of browser, register event)
+     */
     initContextMenu : function(id) {
       var cont = document.getElementById(id);
       var uiContextMenu = contextMenu;
@@ -889,7 +997,9 @@
       uiContextMenu.setContainer(cont);
       uiContextMenu.setup();
     },
-
+    /*
+     * Initialization show help-popup on UIAddBBCodeForm form.
+     */
     initShowBBcodeHelp : function(id) {
       var parent = $.fn.findId(id);
       if (parent.exists()) {
@@ -899,7 +1009,10 @@
         parent.parents('.UIPopupWindow:first').css('z-index', 1000);
       }
     },
-
+    /*
+     * Handle event onmouseover on icon-question on UIAddBBCodeForm form.
+     * Calculate the with of popup by length of text content and max with to display.
+     */
     showBBCodeHelp : function(evt) {
       utils.hideElements();
       var thiz = $(this);
@@ -923,7 +1036,10 @@
       utils.addhideElement(popupContent);
       utils.cancelEvent(evt);
     },
-
+    /*
+     * Handle event onkeydown when users press key enter on input - it will submit this form.
+     * This logic apply for search input.
+     */
     submitOnKey : function(id) {
       var parentElm = $.fn.findId(id);
       if(parentElm.exists() === false) {
@@ -949,7 +1065,9 @@
         });
       }
     },
-
+    /*
+     * Calculate width value of right-action-bar on UIForumActionBar
+     */
     calculateWidthOfActionBar : function(uiRightActionBar) {
       var uiRightActionBar = $.fn.findId(uiRightActionBar);
       var textContent = uiRightActionBar.text();
