@@ -1,6 +1,11 @@
+/**
+ * This module use for auto send pedding jobs of Adminstrators/moderators - waiting for validate.
+ * Use cCometD 3 to send messages information.
+ */
 (function(cCometD, $, window, document) {
   var ForumTotalJob = {
     currentUser : '',
+    // Register cCometD
     init : function(eXoUser, eXoToken, contextName) {
       if (String(eXoToken)) {
         var me = ForumTotalJob;
@@ -18,6 +23,7 @@
         }//end user
       }
     },
+    // Parse result and update new information on UIForumActionBar
     alarm : function(eventObj) {
       var a = JSON.parse(eventObj.data);
       var pr = $('#PendingJob');
