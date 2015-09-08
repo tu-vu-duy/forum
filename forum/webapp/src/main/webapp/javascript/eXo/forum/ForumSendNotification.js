@@ -1,3 +1,7 @@
+/**
+ * This module use for auto send private message/posts when user online and have new private message/post
+ * Use cCometD 3 to send messages information.
+ */
 (function(cCometD, $, document, window) {
 
   var ForumSendNotification = {
@@ -16,14 +20,19 @@
       currentUser : "",
       postLink :"/portal/intranet/forum/topic/topicID"
   };
-
+  /**
+   * Initialization some information:
+   * + i18n: The i18n help for build message-box
+   * + portletId: The portlet'id
+   * + postLink: The url use for open new post.
+   */
   ForumSendNotification.initParam = function(portletId, postLink, i18n) {
     ForumSendNotification.i18n = $.extend(true, {}, ForumSendNotification.i18n, i18n);
     ForumSendNotification.portletId = portletId || ForumSendNotification.portletId;
     ForumSendNotification.postLink = postLink || ForumSendNotification.postLink;
     ForumSendNotification.currentUser = '';
   };
-
+  // Register cCometD
   ForumSendNotification.initCometd = function(eXoUser, eXoToken, contextName) {
     if (String(eXoToken)) {
       var me = ForumSendNotification;
@@ -42,7 +51,7 @@
       }//end user
     }
   };
-  
+  //Get plain-text from HTML
   ForumSendNotification.getPlainText = function(str) {
     return $.trim($('<span></span>').html(str).text().replace(/</gi, '&lt;').replace(/>/gi, '&gt;'));
   };
@@ -50,7 +59,9 @@
   ForumSendNotification.buildLink = function(linktype, alink) {
     return linktype + ': <a style="color:#204AA0" href="javascript:void(0);" onclick="' + alink + '">' + ForumSendNotification.i18n.clickHere + '</a>';
   };
-
+  /**
+   * Build message-box from json message.
+   */
   ForumSendNotification.createMessage = function(message) {
     var component = ForumSendNotification;
     var i18n = component.i18n;
@@ -94,7 +105,9 @@
       eval(String(reloadLink.attr('href')).replace('javascript:', '')); 
     }
   };
-
+  /**
+   * Get information of existing message-box. The new message-box need display under existing message-box.
+   */
   ForumSendNotification.getInfo = function() {
     var info = {top:0, left:0};
     var jPortlet = $.fn.findId(ForumSendNotification.portletId);
@@ -111,21 +124,27 @@
     info.top = top;
     return info;
   };
-
+  /**
+   * Handle click event on (x) icon.
+   */
   ForumSendNotification.closeBox = function(e) {
     if(e && e.type) {
       e.stopPropagation();
     }
     ForumSendNotification.hideBox($(this).parents('.forumBoxNotification:first'));
   };
-
+  /**
+   * Handle behavior close message-box
+   */
   ForumSendNotification.hideBox = function(container) {
     if(container.exists()) {
       container.find('.uiNotification').css('overflow', 'hidden')
       .animate({height: '0px'}, 300, function() {container.remove();});
     }
   };
-  
+  /**
+   * Handle behavior auto close message-box by timer.
+   */
   ForumSendNotification.closeTimeBox = function() {
     var containers = $(document.body).find('.forumBoxNotification');
     if(containers.exists()) {
