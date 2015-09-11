@@ -1,17 +1,36 @@
+/**
+ * Some simple jquery plugin apply on Forum
+ */
 (function($) {
 
-  //check has attribute
+  /**
+   * Check has attribute
+   * Ex: $('body').hasAttr('class')
+   */
   $.fn.hasAttr = function(name) {
     var attr = $(this).attr(name);
     return (typeof attr !== 'undefined' && attr !== false) ? true : false;
   };
  
-  // check existing element.
+  /**
+   * Check existing element.
+   * Ex:
+   *  if($('.ABC').exists()) {
+   *    $('.ABC').remove();
+   *  }
+   */
   $.fn.exists = function() {
     return ($(this).length > 0);
   }
 
-  // find element by id.
+  /**
+   * find element by id.
+   * Ex:
+   *  var portlet = $.fn.findId('UIForumPortlet');
+   *  var cat = porltet.findId('UICategory');
+   * or
+   *  var cat = porltet.findId('#UICategory');
+   */
   $.fn.findId = function(elm) {
 
     if (!$(elm).exists() && String(elm).indexOf('#') != 0
