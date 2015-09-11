@@ -1,3 +1,6 @@
+/**
+ * This module use for auto suggestion the IPs that banned on forum sytem or on the forum.
+ */
 (function(utils, $) {
   var SearchIpBan = {
     searchIpBan : null,
@@ -5,7 +8,10 @@
     data : null,
     jTabContent : null,
     request : null,
-    
+    /**
+     * Initialization this module and regiester on 'keyup' on the input, that we want to trigger suggestion
+     * containerId: The component's Id
+     */
     init : function(containerId) {
       SearchIpBan.jSearchIpBan = $.fn.findId(containerId);
       if (SearchIpBan.jSearchIpBan.exists()) {
@@ -14,7 +20,12 @@
         SearchIpBan.jTabContent.find('input[name=searchIpBan]').on('keyup', SearchIpBan.searchIpBan);
       }
     },
-    
+    /**
+     * The method to build suggestion list.
+     * Step:
+     *  + get data from rest APIs by ajax
+     *  + Build the UI data-table to display IPs list from json
+     */
     searchIpBan : function() {
       // Get data from service, url: /portal/rest/ks/forum/filter/{strIP}/
       var keyword = $.trim($(this).val());
@@ -38,7 +49,9 @@
         }
       });
     },
-
+    /**
+     *  Build the UI data-table to display IPs list from json
+     */
     updateIpBanList : function() {
       // Remove all old items
       var tBodyNode = SearchIpBan.JUIGrid.find('tbody');
@@ -61,7 +74,9 @@
         tBodyNode.append(SearchIpBan.buildIpBanItemNode(SearchIpBan.data.jsonList[i].ip, i));
       }
     },
-    
+    /**
+     *  Build the UI row item of table for one IP
+     */
     buildIpBanItemNode : function(ip, index) {
       var JTrItem = SearchIpBan.JUIGrid.find('tfoot').find('tr').clone();
       JTrItem.find('td:first').html(ip);
