@@ -1,3 +1,10 @@
+/**
+ * Control slider-bar to choose the number of topic count/post count on advance-search of FORUM
+ * - Use technical about mouse drop and drap. When use mousedown into slider-bar ==> we will keep the position of point,
+ * after that, use will mouseover on slider-bar ==> change position of point in bar + calculate the value according to percent of 
+ * value position of point ==> set this value into right input ==> when user mouseup ==> end process mouseover.
+ * - Use cookie to keep the current value - support for case reload browser or ajax update.
+ */
 (function(utils, $) {
   var UISliderControl = {
     parent : null,
@@ -53,17 +60,23 @@
         UISliderControl.end(evt);
       });
     },
-
+    /**
+     *  Start of mousedown
+     */
     start : function(evt) {
       var circleDefault = $(this);
       UISliderControl.saveInfoStart(circleDefault, 0, evt);
     },
-
+    /**
+     * Process bar when mouseover.
+     */
     execute : function(evt) {
       var container = $(this);
       UISliderControl.runExecute(container, evt);
     },
-
+    /**
+     * Save value of point position when user mousedown/onclick
+     */
     saveInfoStart : function(circleDefault, currentMouse, evt) {
       var datas = UISliderControl.readData(circleDefault);
       if (typeof evt !== 'undefined') {
@@ -75,7 +88,9 @@
       //
       UISliderControl.saveData(circleDefault, datas);
     },
-
+    /**
+     * Process when mouseup
+     */
     end : function(evt) {
       var id = $(document.body).attr('data-currentslider');
       if (id != null) {
@@ -90,7 +105,9 @@
         $(document.body).removeAttr('data-currentslider');
       }
     },
-
+    /**
+     * Calculate the data when position of point is changed.
+     */
     runExecute : function(container, evt) {
       var circleDefault = container.find('.circleDefault:first');
       var datas = UISliderControl.readData(circleDefault);
@@ -121,7 +138,9 @@
         $(document.body).attr('data-currentslider', container.attr('id'))
       }
     },
-    
+    /**
+     *  Reset the slider-input
+     */
     reset : function(elm) {
       if (typeof elm === 'string') {
         elm = $('#' + elm);
@@ -137,14 +156,23 @@
         elm.find('input.uiSliderInput:first').val('0');
       }
     },
+    /**
+     * Read data information from parent container (set value)
+     */
     readData : function(child) {
       return UISliderControl.parent.data(child.data('parent-id'));
     },
+    /**
+     * Save the data information into cookie
+     */
     saveData : function(child, datas) {
       UISliderControl.parent.data(child.data('parent-id'), datas);
       utils.setCookies(child.data('parent-id')+'_currentMouse', datas.currentMouse*1, 1);
       utils.setCookies(child.data('parent-id')+'_percent', datas.percent*1, 1);
     },
+    /**
+     *  Read data information from cookie
+     */
     fromCookie : function(parentId) {
       var currentMouse = utils.getCookie(parentId + '_currentMouse');
       if(!currentMouse) {
